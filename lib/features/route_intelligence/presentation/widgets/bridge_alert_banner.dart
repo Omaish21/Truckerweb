@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/route_models.dart';
 
 class BridgeAlertBanner extends StatelessWidget {
@@ -14,6 +15,8 @@ class BridgeAlertBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(14),
@@ -44,7 +47,7 @@ class BridgeAlertBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '⚠️ CRITICAL: LOW BRIDGE AHEAD',
+                      l10n.criticalLowBridgeAhead,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
@@ -54,38 +57,22 @@ class BridgeAlertBanner extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'خبردار: آگے پل کی اونچائی کم ہے',
+                      '${alert.bridgeName} (${alert.roadSegment})',
                       style: const TextStyle(
                         color: Colors.white70,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
+                        fontSize: 12,
                       ),
                     ),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  '${alert.distanceAheadKm.toStringAsFixed(1)} km',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.2),
+              color: Colors.black.withValues(alpha: 0.25),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -93,84 +80,53 @@ class BridgeAlertBanner extends StatelessWidget {
               children: [
                 Column(
                   children: [
-                    const Text(
-                      'Bridge Clearance',
-                      style: TextStyle(color: Colors.white70, fontSize: 11),
-                    ),
                     Text(
-                      '${alert.clearanceHeightFt.toStringAsFixed(1)} ft',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                      ),
+                      l10n.bridgeClearance(alert.clearanceHeightFt.toString()),
+                      style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ],
                 ),
-                Container(width: 1, height: 28, color: Colors.white24),
+                Container(height: 20, width: 1, color: Colors.white24),
                 Column(
                   children: [
-                    const Text(
-                      'Your Truck Height',
-                      style: TextStyle(color: Colors.white70, fontSize: 11),
-                    ),
                     Text(
-                      '${alert.truckHeightFt.toStringAsFixed(1)} ft',
-                      style: const TextStyle(
-                        color: Color(0xFFFEF08A),
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                      ),
+                      l10n.truckHeight(alert.truckHeightFt.toString()),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ],
                 ),
-                Container(width: 1, height: 28, color: Colors.white24),
+                Container(height: 20, width: 1, color: Colors.white24),
                 Column(
                   children: [
-                    const Text(
-                      'Deficit',
-                      style: TextStyle(color: Colors.white70, fontSize: 11),
-                    ),
                     Text(
-                      '-${alert.differenceFt.toStringAsFixed(1)} ft',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                      ),
+                      l10n.distanceAhead(alert.distanceAheadKm.toString()),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Location: ${alert.bridgeName} (${alert.roadSegment})',
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                  overflow: TextOverflow.ellipsis,
+          if (onRerouteTap != null) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.danger,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                ),
+                onPressed: onRerouteTap,
+                icon: const Icon(Icons.alt_route, size: 16),
+                label: Text(
+                  l10n.tapToRecalculate,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
               ),
-              if (onRerouteTap != null)
-                ElevatedButton.icon(
-                  onPressed: onRerouteTap,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppColors.danger,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    minimumSize: Size.zero,
-                  ),
-                  icon: const Icon(Icons.alt_route, size: 16),
-                  label: const Text(
-                    'REROUTE NOW',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
-                  ),
-                ),
-            ],
-          ),
+            ),
+          ],
         ],
       ),
     );

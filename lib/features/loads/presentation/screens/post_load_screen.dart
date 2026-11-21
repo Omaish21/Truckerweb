@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/vehicle_types.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/widgets/language_toggle_button.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class PostLoadScreen extends StatefulWidget {
   const PostLoadScreen({super.key});
@@ -31,15 +33,16 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
   }
 
   void _handleSubmit() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isSubmitting = true);
       await Future.delayed(const Duration(milliseconds: 700));
       if (mounted) {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             backgroundColor: AppColors.success,
-            content: Text('Load posted successfully! PostGIS search activated for nearby drivers.'),
+            content: Text(l10n.postLoadSuccess),
           ),
         );
         Navigator.pop(context);
@@ -49,9 +52,16 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Post a Load / نیا مال بک کریں'),
+        title: Text(l10n.postNewLoad),
+        actions: const [
+          Center(child: LanguageToggleButton(compact: true)),
+          SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -63,20 +73,20 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
               // Origin & Destination
               TextFormField(
                 controller: _originController,
-                decoration: const InputDecoration(
-                  labelText: 'Pickup City & Area / روانگی کا مقام',
-                  prefixIcon: Icon(Icons.trip_origin, color: AppColors.primary),
+                decoration: InputDecoration(
+                  labelText: l10n.pickupLocationLabel,
+                  prefixIcon: const Icon(Icons.trip_origin, color: AppColors.primary),
                 ),
-                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                validator: (val) => val == null || val.isEmpty ? l10n.requiredField : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _destController,
-                decoration: const InputDecoration(
-                  labelText: 'Drop-off City & Destination / منزل',
-                  prefixIcon: Icon(Icons.location_on, color: AppColors.accent),
+                decoration: InputDecoration(
+                  labelText: l10n.dropoffLocationLabel,
+                  prefixIcon: const Icon(Icons.location_on, color: AppColors.accent),
                 ),
-                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                validator: (val) => val == null || val.isEmpty ? l10n.requiredField : null,
               ),
 
               const SizedBox(height: 16),
@@ -84,14 +94,14 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
               // Vehicle Type Selection
               DropdownButtonFormField<String>(
                 initialValue: _selectedVehicleId,
-                decoration: const InputDecoration(
-                  labelText: 'Vehicle Required / گاڑی کی قسم',
-                  prefixIcon: Icon(Icons.local_shipping, color: AppColors.primary),
+                decoration: InputDecoration(
+                  labelText: l10n.vehicleRequiredLabel,
+                  prefixIcon: const Icon(Icons.local_shipping, color: AppColors.primary),
                 ),
                 items: VehicleType.all.map((v) {
                   return DropdownMenuItem(
                     value: v.id,
-                    child: Text('${v.nameEn} (${v.nameUr})'),
+                    child: Text(isUrdu ? v.nameUr : v.nameEn),
                   );
                 }).toList(),
                 onChanged: (val) {
@@ -108,11 +118,11 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
                     child: TextFormField(
                       controller: _weightController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Weight (Tons) / وزن',
-                        prefixIcon: Icon(Icons.scale),
+                      decoration: InputDecoration(
+                        labelText: l10n.loadWeightLabel,
+                        prefixIcon: const Icon(Icons.scale_outlined),
                       ),
-                      validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                      validator: (val) => val == null || val.isEmpty ? l10n.requiredField : null,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -120,14 +130,34 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
                     child: TextFormField(
                       controller: _heightController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Height (Feet) / اونچائی',
-                        prefixIcon: Icon(Icons.height),
+                      decoration: InputDecoration(
+                        labelText: l10n.truckHeightLabel,
+                        prefixIcon: const Icon(Icons.height_outlined),
                       ),
-                      validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                      validator: (val) => val == null || val.isEmpty ? l10n.requiredField : null,
                     ),
                   ),
                 ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // Goods Category
+              DropdownButtonFormField<String>(
+                initialValue: _goodsType,
+                decoration: InputDecoration(
+                  labelText: l10n.goodsTypeLabel,
+                  prefixIcon: const Icon(Icons.category_outlined),
+                ),
+                items: [
+                  DropdownMenuItem(value: 'general', child: Text(l10n.goodsGeneral)),
+                  DropdownMenuItem(value: 'textile', child: Text(l10n.goodsTextile)),
+                  DropdownMenuItem(value: 'agri', child: Text(l10n.goodsAgri)),
+                  DropdownMenuItem(value: 'chemical', child: Text(l10n.goodsChemical)),
+                ],
+                onChanged: (val) {
+                  if (val != null) setState(() => _goodsType = val);
+                },
               ),
 
               const SizedBox(height: 16),
@@ -136,41 +166,33 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
               TextFormField(
                 controller: _rateController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Offered Rate (PKR) / کرایہ (روپے)',
-                  prefixIcon: Icon(Icons.payments_outlined, color: AppColors.success),
-                  hintText: 'e.g. 250000',
+                decoration: InputDecoration(
+                  labelText: l10n.offeredRateLabel,
+                  prefixIcon: const Icon(Icons.payments_outlined, color: AppColors.success),
                 ),
-                validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+                validator: (val) => val == null || val.isEmpty ? l10n.requiredField : null,
               ),
 
-              const SizedBox(height: 16),
-
-              // Goods type chips
-              const Text('Goods Type / مال کی قسم:', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: ['general', 'fragile', 'hazardous', 'refrigerated'].map((type) {
-                  final isSelected = _goodsType == type;
-                  return ChoiceChip(
-                    label: Text(type.toUpperCase()),
-                    selected: isSelected,
-                    selectedColor: AppColors.accent,
-                    onSelected: (val) {
-                      if (val) setState(() => _goodsType = type);
-                    },
-                  );
-                }).toList(),
-              ),
-
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
 
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
                 onPressed: _isSubmitting ? null : _handleSubmit,
                 child: _isSubmitting
-                    ? const CircularProgressIndicator(color: Colors.black)
-                    : const Text('Post Load & Find Drivers / لوڈ شائع کریں'),
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(
+                        l10n.submitLoadButton,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
               ),
             ],
           ),

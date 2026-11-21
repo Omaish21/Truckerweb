@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/language_toggle_button.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -41,13 +43,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.primary,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: const [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: Center(
+              child: LanguageToggleButton(),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -65,9 +80,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  'TruckLink PK',
-                  style: TextStyle(
+                Text(
+                  l10n.appTitle,
+                  style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -75,14 +90,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  'پاکستان ٹرک ڈرائیور و لوڈ لاجسٹکس پلیٹ فارم',
-                  style: TextStyle(
+                Text(
+                  l10n.appSubtitle,
+                  style: const TextStyle(
                     fontSize: 16,
                     color: Colors.white70,
                     fontWeight: FontWeight.w600,
                   ),
-                  textDirection: TextDirection.rtl,
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 36),
 
@@ -98,18 +113,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           if (!authState.isOtpSent) ...[
-                            const Text(
-                              'Driver & Transporter Login',
-                              style: TextStyle(
+                            Text(
+                              l10n.loginTitle,
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimaryLight,
                               ),
                             ),
                             const SizedBox(height: 6),
-                            const Text(
-                              'Enter your phone number to receive a 6-digit verification code.',
-                              style: TextStyle(
+                            Text(
+                              l10n.loginSubtitle,
+                              style: const TextStyle(
                                 fontSize: 13,
                                 color: AppColors.textSecondaryLight,
                               ),
@@ -118,10 +133,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             TextFormField(
                               controller: _phoneController,
                               keyboardType: TextInputType.phone,
-                              decoration: const InputDecoration(
-                                prefixIcon: Icon(Icons.phone_android, color: AppColors.primary),
-                                labelText: 'Mobile Number / موبائل نمبر',
-                                hintText: '0300 1234567',
+                              decoration: InputDecoration(
+                                prefixIcon: const Icon(Icons.phone_android, color: AppColors.primary),
+                                labelText: l10n.mobileNumberLabel,
+                                hintText: l10n.mobileNumberHint,
                               ),
                               validator: AppValidators.validatePhone,
                             ),
@@ -134,7 +149,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       width: 20,
                                       child: CircularProgressIndicator(strokeWidth: 2),
                                     )
-                                  : const Text('Send Verification Code / کوڈ حاصل کریں'),
+                                  : Text(l10n.sendVerificationCode),
                             ),
                           ] else ...[
                             Row(
@@ -143,9 +158,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   icon: const Icon(Icons.arrow_back),
                                   onPressed: () => ref.read(authProvider.notifier).logout(),
                                 ),
-                                const Text(
-                                  'Verify OTP / کوڈ تصدیق',
-                                  style: TextStyle(
+                                Text(
+                                  l10n.verifyOtpTitle,
+                                  style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -154,7 +169,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Code sent to ${authState.phoneNumber}. (Demo OTP: 123456)',
+                              l10n.codeSentTo(authState.phoneNumber ?? ''),
                               style: const TextStyle(fontSize: 13, color: AppColors.textSecondaryLight),
                             ),
                             const SizedBox(height: 20),
@@ -162,10 +177,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               controller: _otpController,
                               keyboardType: TextInputType.number,
                               maxLength: 6,
-                              decoration: const InputDecoration(
-                                prefixIcon: Icon(Icons.lock_clock_outlined),
-                                labelText: '6-digit OTP Code',
-                                hintText: '123456',
+                              decoration: InputDecoration(
+                                prefixIcon: const Icon(Icons.lock_clock_outlined),
+                                labelText: l10n.otpLabel,
+                                hintText: l10n.otpHint,
                               ),
                             ),
                             if (authState.errorMessage != null) ...[
@@ -184,7 +199,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       width: 20,
                                       child: CircularProgressIndicator(strokeWidth: 2),
                                     )
-                                  : const Text('Verify & Continue / آگے بڑھیں'),
+                                  : Text(l10n.verifyAndContinue),
                             ),
                           ],
                         ],

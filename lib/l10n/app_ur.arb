@@ -1,18 +1,148 @@
 {
   "@@locale": "ur",
   "appTitle": "ٹرک لنک پاکستان",
+  "appSubtitle": "پاکستان ٹرک ڈرائیور و لوڈ لاجسٹکس پلیٹ فارم",
+  "switchToTransporter": "ٹرانسپورٹر موڈ میں تبدیل کریں",
+  "switchToDriver": "ڈرائیور موڈ میں تبدیل کریں",
+  "logout": "لاگ آؤٹ",
+  "inspectRoute": "راستہ دیکھیں",
+  "viewAll": "سب دیکھیں",
+  "requiredField": "یہ خانہ پر کرنا ضروری ہے",
+  "onlineStatus": "آن لائن: لوڈ کی درخواستیں موصول ہو رہی ہیں",
+  "offlineStatus": "آف لائن: تلاش میں پوشیدہ",
+  "htvPlusLicense": "ایچ ٹی وی پلس لائسنس",
+  "verifiedBadgeText": "نادرا سے تصدیق شدہ",
+  "unverifiedBadgeText": "غیر تصدیق شدہ",
+  "tonsUnit": "{weight} ٹن",
+  "@tonsUnit": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "loginTitle": "ڈرائیور و ٹرانسپورٹر لاگ ان",
+  "loginSubtitle": "۶ ہندسوں کا تصدیقی کوڈ حاصل کرنے کے لیے اپنا موبائل نمبر درج کریں۔",
+  "mobileNumberLabel": "موبائل نمبر",
+  "mobileNumberHint": "۰۳۰۰ ۱۲۳۴۵۶۷",
+  "sendVerificationCode": "تصدیقی کوڈ بھیجیں",
+  "verifyOtpTitle": "کوڈ کی تصدیق کریں",
+  "codeSentTo": "کوڈ {phone} پر بھیجا گیا ہے۔ (ڈیمو کوڈ: 123456)",
+  "@codeSentTo": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "otpLabel": "۶ ہندسوں کا کوڈ",
+  "otpHint": "123456",
+  "verifyAndContinue": "تصدیق کر کے آگے بڑھیں",
+  "validPhoneRequired": "درست پاکستانی موبائل نمبر درج کریں (مثلاً 0300 1234567)",
+  "phoneRequired": "فون نمبر درج کرنا ضروری ہے",
+  "validCnicRequired": "درست ۱۳ ہندسوں کا شناختی کارڈ نمبر درج کریں",
+  "cnicRequired": "شناختی کارڈ نمبر درج کرنا ضروری ہے",
+  "selectRoleTitle": "کردار کا انتخاب",
+  "selectRoleHeader": "آپ ٹرک لنک کس حیثیت سے استعمال کرنا چاہتے ہیں؟",
   "driverRole": "ڈرائیور (ملازمت تلاش کنندہ)",
+  "driverRoleSubtitle": "لوڈز، پلوں کے انتباہات اور کرفیو کے اوقات",
+  "driverRoleDescription": "بہترین کرایے کے لوڈز، پلوں کی محفوظ اونچائی کے الرٹس، شہروں کے کرفیو اوقات اور تصدیق شدہ پروفائل پائیں۔",
   "ownerRole": "گاڑی کا مالک / ٹرانسپورٹر",
-  "loginTitle": "فون نمبر سے لاگ ان کریں",
-  "phoneNumberHint": "۰۳۰۰ ۱۲۳۴۵۶۷",
-  "sendOtp": "تصدیقی کوڈ بھیجیں",
-  "verifyOtp": "کوڈ کی تصدیق کریں",
-  "enterOtp": "۶ ہندسوں کا کوڈ درج کریں",
+  "ownerRoleSubtitle": "لوڈ بک کریں اور جی پی ایس ٹریکنگ کریں",
+  "ownerRoleDescription": "نیا مال / لوڈ پوسٹ کریں، قریبی تصدیق شدہ ڈرائیورز تلاش کریں اور لائیو جی پی ایس روٹس ٹریک کریں۔",
+  "driverDashboardTitle": "Driver Dashboard / ڈرائیور پینل",
   "routeIntelligence": "راستے کی معلومات و الرٹس",
-  "bridgeHeightWarning": "پل کی اونچائی کا انتباہ",
+  "routeIntelligenceSubtitle": "پلوں کی اونچائی اور محفوظ ترین راستے",
+  "cityCurfewTimings": "شہروں میں داخلے کے اوقات",
+  "cityCurfewSubtitle": "بڑی گاڑیوں کے داخلے کے اوقات",
+  "reportRoadHazard": "سڑک کی خرابی درج کریں",
+  "reportHazardSubtitle": "قریبی ڈرائیورز کو خطرات سے آگاہ کریں",
+  "allAvailableLoads": "دستیاب لوڈز دیکھیں",
+  "allLoadsSubtitle": "کھلی لوڈ مارکیٹ میں تلاش کریں",
+  "matchedLoadsNearYou": "آپ کے لیے موزوں قریبی لوڈز",
+  "criticalLowBridgeAhead": "⚠️ خبردار: آگے کم اونچائی والا پل ہے",
+  "bridgeClearance": "پل کی اونچائی: {height} فٹ",
+  "@bridgeClearance": {
+    "placeholders": {
+      "height": {
+        "type": "String"
+      }
+    }
+  },
+  "truckHeight": "آپ کا ٹرک: {height} فٹ",
+  "@truckHeight": {
+    "placeholders": {
+      "height": {
+        "type": "String"
+      }
+    }
+  },
+  "distanceAhead": "{distance} کلومیٹر آگے",
+  "@distanceAhead": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
+  "recommendedReroute": "تجویز: بائی پاس کے راستے جائیں",
+  "tapToRecalculate": "محفوظ روٹ دوبارہ معلوم کریں",
+  "availableLoadsTitle": "دستیاب لوڈز",
+  "postNewLoad": "نیا مال / لوڈ بک کریں",
+  "postLoadSuccess": "لوڈ کامیابی سے پوسٹ ہو گیا! قریبی ڈرائیورز کے لیے تلاش فعال ہو گئی۔",
+  "pickupLocationLabel": "روانگی کا مقام و شہر",
+  "dropoffLocationLabel": "منزل و ترسیل کا شہر",
+  "vehicleRequiredLabel": "گاڑی کی قسم",
+  "loadWeightLabel": "وزن (ٹن)",
+  "truckHeightLabel": "کل اونچائی (فٹ)",
+  "offeredRateLabel": "پیشکش کرایہ (روپے)",
+  "goodsTypeLabel": "مال کی قسم",
+  "goodsGeneral": "عام سامان",
+  "goodsTextile": "ٹیکسٹائل و دھاگہ",
+  "goodsAgri": "زرعی اجناس",
+  "goodsChemical": "صنعتی و کیمیکل",
+  "submitLoadButton": "لوڈ مارکیٹ میں شائع کریں",
+  "statusOpen": "دستیاب",
+  "statusAssigned": "تفویض شدہ",
+  "statusInTransit": "راستے میں",
+  "statusDelivered": "پہنچ گیا",
+  "statusCancelled": "منسوخ",
+  "routePlannerTitle": "روٹ انٹیلیجنس",
+  "hereTruckProfile": "HERE ٹرک پروفائل",
+  "activeConfiguration": "فعال کنفیگریشن",
+  "avoidLowBridges": "کم اونچائی والے پلوں سے بچاؤ",
+  "avoidLowBridgesDesc": "ٹرک کی اونچائی سے نیچے والے پلوں کا ازخود پتہ لگاتا ہے",
+  "useMotorwayBypass": "موٹروے اور بائی پاس کو ترجیح دیں",
+  "useMotorwayBypassDesc": "شہری رش اور تنگ سڑکوں سے پرہیز",
+  "startGpsNavigation": "جی پی ایس نیویگیشن شروع کریں",
+  "detectedClearanceAlerts": "راستے میں شناخت شدہ انتباہات",
+  "recalculatingOptimalRoute": "محفوظ ترین ٹرک روٹ کا حساب لگایا جا رہا ہے...",
   "cityTimingTitle": "شہروں میں داخلے کے اوقات",
-  "roadReportsTitle": "سڑک کی خرابی و خطرات کی اطلاعات",
-  "nearbyDrivers": "قریبی دستیاب ڈرائیورز",
-  "postLoadTitle": "نیا مال / لوڈ بک کریں",
-  "activeTrips": "جاری سفر"
+  "heavyCurfewHeader": "بڑی گاڑیوں کے لیے ممنوعہ اوقات",
+  "curfewExplanation": "یہ اوقات ٹریفک پولیس کے نوٹیفکیشن اور ڈرائیورز کی اطلاعات کے مطابق ہیں تاکہ بھاری چالان سے بچا جا سکے۔",
+  "allowedEntryWindow": "داخلے کے کھلے اوقات: {from} سے {to}",
+  "@allowedEntryWindow": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "verifiedConfidence": "{percent}٪ مصدقہ معلومات",
+  "@verifiedConfidence": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "selectHazardCategory": "خرابی یا خطرے کی قسم منتخب کریں",
+  "exactLocationLabel": "سڑک کا درست مقام",
+  "descriptionLabel": "مزید تفصیلات یا قریبی نشانی",
+  "descriptionHint": "مثلاً بائیں لین میں گہرا گڑھا، سڑک پر پانی جمع ہے...",
+  "submitHazardButton": "خطرے کی اطلاع قریبی ڈرائیورز کو بھیجیں",
+  "hazardBroadcastSuccess": "اطلاع کامیابی سے جمع ہو گئی اور ۲۰ کلومیٹر کے دائرے میں تمام ڈرائیورز کو الرٹ بھیج دیا گیا!"
 }

@@ -1,18 +1,148 @@
 {
   "@@locale": "en",
   "appTitle": "TruckLink PK",
+  "appSubtitle": "Pakistan Truck Driver & Load Logistics Platform",
+  "switchToTransporter": "Switch to Transporter Mode",
+  "switchToDriver": "Switch to Driver Mode",
+  "logout": "Logout",
+  "inspectRoute": "Inspect Route",
+  "viewAll": "View All",
+  "requiredField": "Required",
+  "onlineStatus": "Online: Receiving Load Requests",
+  "offlineStatus": "Offline: Hidden from search",
+  "htvPlusLicense": "HTV+ License",
+  "verifiedBadgeText": "NADRA Verified",
+  "unverifiedBadgeText": "Unverified",
+  "tonsUnit": "{weight} Tons",
+  "@tonsUnit": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "loginTitle": "Driver & Transporter Login",
+  "loginSubtitle": "Enter your phone number to receive a 6-digit verification code.",
+  "mobileNumberLabel": "Mobile Number",
+  "mobileNumberHint": "0300 1234567",
+  "sendVerificationCode": "Send Verification Code",
+  "verifyOtpTitle": "Verify OTP",
+  "codeSentTo": "Code sent to {phone}. (Demo OTP: 123456)",
+  "@codeSentTo": {
+    "placeholders": {
+      "phone": {
+        "type": "String"
+      }
+    }
+  },
+  "otpLabel": "6-digit OTP Code",
+  "otpHint": "123456",
+  "verifyAndContinue": "Verify & Continue",
+  "validPhoneRequired": "Enter a valid Pakistani mobile number (e.g. 0300 1234567)",
+  "phoneRequired": "Phone number is required",
+  "validCnicRequired": "Valid 13-digit CNIC required (e.g. 42101-1234567-1)",
+  "cnicRequired": "CNIC number is required",
+  "selectRoleTitle": "Select Role",
+  "selectRoleHeader": "How do you want to use TruckLink PK?",
   "driverRole": "Driver (Job Seeker)",
+  "driverRoleSubtitle": "Find high-paying loads & route alerts",
+  "driverRoleDescription": "Find high-paying loads, live bridge clearance alerts, city curfews, and verified profile.",
   "ownerRole": "Fleet Owner / Shipper",
-  "loginTitle": "Login with Phone",
-  "phoneNumberHint": "03XX XXXXXXX",
-  "sendOtp": "Send Verification Code",
-  "verifyOtp": "Verify Code",
-  "enterOtp": "Enter 6-digit OTP",
+  "ownerRoleSubtitle": "Post loads & track GPS trips",
+  "ownerRoleDescription": "Post loads, find nearby PostGIS verified drivers, track active GPS trips and routes.",
+  "driverDashboardTitle": "Driver Dashboard",
   "routeIntelligence": "Route Intelligence",
-  "bridgeHeightWarning": "Bridge Clearance Alert",
+  "routeIntelligenceSubtitle": "Clearances & optimal paths",
+  "cityCurfewTimings": "City Curfew Timings",
+  "cityCurfewSubtitle": "Heavy vehicle entry windows",
+  "reportRoadHazard": "Report Road Hazard",
+  "reportHazardSubtitle": "Broadcast warnings to drivers",
+  "allAvailableLoads": "All Available Loads",
+  "allLoadsSubtitle": "Browse active load market",
+  "matchedLoadsNearYou": "Matched Loads Near You",
+  "criticalLowBridgeAhead": "⚠️ CRITICAL: LOW BRIDGE AHEAD",
+  "bridgeClearance": "Clearance: {height} ft",
+  "@bridgeClearance": {
+    "placeholders": {
+      "height": {
+        "type": "String"
+      }
+    }
+  },
+  "truckHeight": "Your Truck: {height} ft",
+  "@truckHeight": {
+    "placeholders": {
+      "height": {
+        "type": "String"
+      }
+    }
+  },
+  "distanceAhead": "{distance} km ahead",
+  "@distanceAhead": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
+  "recommendedReroute": "Recommended: Reroute via Bypass",
+  "tapToRecalculate": "Recalculate Safe Route",
+  "availableLoadsTitle": "Available Loads",
+  "postNewLoad": "Post a Load",
+  "postLoadSuccess": "Load posted successfully! PostGIS search activated for nearby drivers.",
+  "pickupLocationLabel": "Pickup City & Area",
+  "dropoffLocationLabel": "Drop-off City & Destination",
+  "vehicleRequiredLabel": "Vehicle Required",
+  "loadWeightLabel": "Weight (Tons)",
+  "truckHeightLabel": "Total Height (Feet)",
+  "offeredRateLabel": "Offered Rate (PKR)",
+  "goodsTypeLabel": "Type of Goods",
+  "goodsGeneral": "General Cargo",
+  "goodsTextile": "Textile & Yarn",
+  "goodsAgri": "Agricultural Produce",
+  "goodsChemical": "Industrial & Chemical",
+  "submitLoadButton": "Publish Load Broadcast",
+  "statusOpen": "Open",
+  "statusAssigned": "Assigned",
+  "statusInTransit": "In Transit",
+  "statusDelivered": "Delivered",
+  "statusCancelled": "Cancelled",
+  "routePlannerTitle": "Route Intelligence",
+  "hereTruckProfile": "HERE Truck Profile",
+  "activeConfiguration": "Active Configuration",
+  "avoidLowBridges": "Avoid Low Clearance Bridges",
+  "avoidLowBridgesDesc": "Automatically detects bridges below truck height",
+  "useMotorwayBypass": "Prefer Motorway & Bypass",
+  "useMotorwayBypassDesc": "Bypasses city traffic and congestion",
+  "startGpsNavigation": "Start GPS Navigation",
+  "detectedClearanceAlerts": "Detected Clearance Alerts",
+  "recalculatingOptimalRoute": "Recalculating optimal truck route...",
   "cityTimingTitle": "City Entry Timing Windows",
-  "roadReportsTitle": "Road Hazard Reports",
-  "nearbyDrivers": "Nearby Drivers",
-  "postLoadTitle": "Post a Load",
-  "activeTrips": "Active Trips"
+  "heavyCurfewHeader": "Heavy Vehicle Curfew Windows",
+  "curfewExplanation": "Timings are actively verified via traffic police bulletins and driver reports to avoid costly fines or impounds.",
+  "allowedEntryWindow": "Allowed Entry Window: {from} - {to}",
+  "@allowedEntryWindow": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "verifiedConfidence": "{percent}% Verified Confidence",
+  "@verifiedConfidence": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "selectHazardCategory": "Select Hazard Category",
+  "exactLocationLabel": "Exact Road Location",
+  "descriptionLabel": "Additional Details & Landmark",
+  "descriptionHint": "e.g., Deep crater on left lane, heavy waterlogging...",
+  "submitHazardButton": "Broadcast Hazard Alert",
+  "hazardBroadcastSuccess": "Road report submitted & broadcast to nearby drivers within 20km!"
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/widgets/language_toggle_button.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/route_models.dart';
 import '../widgets/bridge_alert_banner.dart';
 
@@ -38,13 +40,18 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final criticalBridge = _detectedBridges.firstWhere(
       (b) => b.isCritical && b.truckHeightFt > b.clearanceHeightFt,
     );
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Route Intelligence / روٹ انٹیلیجنس'),
+        title: Text(l10n.routePlannerTitle),
+        actions: const [
+          Center(child: LanguageToggleButton(compact: true)),
+          SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -62,9 +69,9 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'HERE Truck Profile',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        Text(
+                          l10n.hereTruckProfile,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -72,127 +79,30 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
                             color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text(
-                            'Active Configuration',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
+                          child: Text(
+                            l10n.activeConfiguration,
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
                           ),
                         ),
                       ],
-                    ),
-                    const Divider(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _SpecItem(label: 'Origin', value: _origin),
-                        const Icon(Icons.arrow_forward, color: AppColors.accent, size: 20),
-                        _SpecItem(label: 'Destination', value: _destination),
-                        _SpecItem(label: 'Height', value: '${_truckHeightFt.toStringAsFixed(1)} ft'),
-                        _SpecItem(label: 'Gross Weight', value: '${_grossWeightTons.toInt()} Tons'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // USP Bridge Alert Banner if critical restriction found
-            if (!_useMotorwayBypass)
-              BridgeAlertBanner(
-                alert: criticalBridge,
-                onRerouteTap: () {
-                  setState(() {
-                    _useMotorwayBypass = true;
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      backgroundColor: AppColors.success,
-                      content: Text('Alternative Route Activated: Diverting via M-5 Motorway (Clearance > 18ft)'),
-                    ),
-                  );
-                },
-              )
-            else
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle, color: AppColors.success, size: 28),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'Bypass Route Active (M-5 Sukkur-Multan)',
-                            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.success),
-                          ),
-                          Text(
-                            'All low bridges bypassed. Minimum clearance: 18.5 ft.',
-                            style: TextStyle(fontSize: 12, color: Colors.black87),
-                          ),
-                        ],
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => setState(() => _useMotorwayBypass = false),
-                      child: const Text('Reset'),
-                    ),
-                  ],
-                ),
-              ),
-
-            const SizedBox(height: 12),
-
-            // Route Summary & Timing Windows Card
-            Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Corridor Analysis & ETA',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 12),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _RouteStat(
-                          icon: Icons.straighten,
-                          title: 'Distance',
-                          value: _useMotorwayBypass ? '1,210 km' : '1,180 km',
+                        Expanded(
+                          child: _ParameterChip(
+                            icon: Icons.height,
+                            label: l10n.truckHeight(_truckHeightFt.toString()),
+                          ),
                         ),
-                        _RouteStat(
-                          icon: Icons.timer_outlined,
-                          title: 'Est. Drive Time',
-                          value: _useMotorwayBypass ? '21 Hours' : '23 Hours',
-                        ),
-                        _RouteStat(
-                          icon: Icons.nightlight_round,
-                          title: 'Karachi Curfew',
-                          value: '11 PM - 5 AM',
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _ParameterChip(
+                            icon: Icons.scale,
+                            label: l10n.tonsUnit(_grossWeightTons.toInt().toString()),
+                          ),
                         ),
                       ],
-                    ),
-                    const Divider(height: 24),
-                    const Text(
-                      'Destination Timing Advice:',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Heavy vehicles cannot enter Karachi Toll Plaza before 11:00 PM. Recommended layover parking at Hyderabad Bypass or Nooriabad.',
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondaryLight),
                     ),
                   ],
                 ),
@@ -201,44 +111,139 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
 
             const SizedBox(height: 16),
 
-            // Bridge Clearance Points
-            const Text(
-              'Bridge Height Clearance Points on Route',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            // Critical Clearance Warning
+            BridgeAlertBanner(
+              alert: criticalBridge,
+              onRerouteTap: () {
+                setState(() => _useMotorwayBypass = true);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    backgroundColor: AppColors.primary,
+                    content: Text(l10n.recalculatingOptimalRoute),
+                  ),
+                );
+              },
             ),
-            const SizedBox(height: 8),
 
-            ..._detectedBridges.map((bridge) {
-              final isUnder = bridge.truckHeightFt > bridge.clearanceHeightFt;
-              return Card(
-                margin: const EdgeInsets.only(bottom: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: isUnder ? AppColors.danger.withValues(alpha: 0.15) : AppColors.success.withValues(alpha: 0.15),
-                    child: Icon(
-                      isUnder ? Icons.close : Icons.check,
-                      color: isUnder ? AppColors.danger : AppColors.success,
+            const SizedBox(height: 16),
+
+            // Routing Controls & Settings
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    title: Text(l10n.avoidLowBridges, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    subtitle: Text(l10n.avoidLowBridgesDesc, style: const TextStyle(fontSize: 12)),
+                    value: true,
+                    activeThumbColor: AppColors.primary,
+                    onChanged: (val) {},
+                  ),
+                  const Divider(height: 1),
+                  SwitchListTile(
+                    title: Text(l10n.useMotorwayBypass, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    subtitle: Text(l10n.useMotorwayBypassDesc, style: const TextStyle(fontSize: 12)),
+                    value: _useMotorwayBypass,
+                    activeThumbColor: AppColors.primary,
+                    onChanged: (val) {
+                      setState(() => _useMotorwayBypass = val);
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Route Summary & Milestones
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '$_origin ➔ $_destination',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _useMotorwayBypass ? AppColors.success.withValues(alpha: 0.12) : AppColors.danger.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            _useMotorwayBypass ? 'M-5 / M-3 Clearance Verified' : 'N-5 Hazard Detected',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: _useMotorwayBypass ? AppColors.success : AppColors.danger,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  title: Text(
-                    bridge.bridgeName,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                  subtitle: Text(
-                    '${bridge.roadSegment} • Clearance: ${bridge.clearanceHeightFt} ft',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  trailing: Text(
-                    isUnder ? 'LOW (-${bridge.differenceFt.toStringAsFixed(1)} ft)' : 'OK (+${(bridge.clearanceHeightFt - bridge.truckHeightFt).toStringAsFixed(1)} ft)',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isUnder ? AppColors.danger : AppColors.success,
+                    const SizedBox(height: 8),
+                    Text(
+                      _useMotorwayBypass
+                          ? '1,210 km via M-3 / M-5 Motorway. All bridge clearances exceed 16.5 ft. Safe for 15.2 ft container truck.'
+                          : '1,180 km via N-5 National Highway. Obstruction at Sahiwal Railway Bridge (14.0 ft).',
+                      style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
                     ),
-                  ),
+                    const Divider(height: 24),
+                    Text(
+                      l10n.detectedClearanceAlerts,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                    ..._detectedBridges.map((b) {
+                      final hasCollision = b.truckHeightFt > b.clearanceHeightFt;
+                      return ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          hasCollision ? Icons.error_outline : Icons.check_circle_outline,
+                          color: hasCollision ? AppColors.danger : AppColors.success,
+                        ),
+                        title: Text(b.bridgeName, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        subtitle: Text('${b.roadSegment} • ${l10n.distanceAhead(b.distanceAheadKm.toInt().toString())}'),
+                        trailing: Text(
+                          l10n.bridgeClearance(b.clearanceHeightFt.toString()),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: hasCollision ? AppColors.danger : Colors.black87,
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
                 ),
-              );
-            }),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Starting GPS Turn-by-Turn Navigation with Bridge Proximity Monitor...'),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.navigation),
+              label: Text(l10n.startGpsNavigation, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
           ],
         ),
       ),
@@ -246,46 +251,34 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen> {
   }
 }
 
-class _SpecItem extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _SpecItem({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 11)),
-        const SizedBox(height: 2),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-      ],
-    );
-  }
-}
-
-class _RouteStat extends StatelessWidget {
+class _ParameterChip extends StatelessWidget {
   final IconData icon;
-  final String title;
-  final String value;
+  final String label;
 
-  const _RouteStat({
-    required this.icon,
-    required this.title,
-    required this.value,
-  });
+  const _ParameterChip({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, color: AppColors.primary, size: 22),
-        const SizedBox(height: 4),
-        Text(title, style: const TextStyle(color: Colors.grey, fontSize: 11)),
-        const SizedBox(height: 2),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: AppColors.primary),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

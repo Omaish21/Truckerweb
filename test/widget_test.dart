@@ -1,13 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trucklink_pk/app.dart';
 import 'package:trucklink_pk/core/constants/vehicle_types.dart';
+import 'package:trucklink_pk/core/localization/locale_provider.dart';
 import 'package:trucklink_pk/core/utils/formatters.dart';
 import 'package:trucklink_pk/core/utils/urdu_text.dart';
 import 'package:trucklink_pk/core/utils/validators.dart';
 import 'package:trucklink_pk/features/loads/domain/load_model.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   group('TruckLink PK Unit & Smoke Tests', () {
     test('Pakistani CNIC Validator correctly validates 13-digit numbers', () {
       expect(AppValidators.validateCnic('35202-1234567-1'), isNull);
@@ -57,6 +64,14 @@ void main() {
       expect(model.originCity, 'Lahore');
       expect(model.destinationCity, 'Karachi');
       expect(model.weightTons, 35.0);
+    });
+
+    test('LocaleNotifier switches between en and ur', () {
+      final notifier = LocaleNotifier();
+      expect(notifier.state.languageCode, 'en');
+      notifier.setLocale(const Locale('ur'));
+      expect(notifier.state.languageCode, 'ur');
+      expect(notifier.isUrdu, isTrue);
     });
 
     testWidgets('App initializes and renders Driver Dashboard without errors', (WidgetTester tester) async {

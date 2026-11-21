@@ -104,11 +104,197 @@ abstract class AppLocalizations {
   /// **'TruckLink PK'**
   String get appTitle;
 
+  /// No description provided for @appSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pakistan Truck Driver & Load Logistics Platform'**
+  String get appSubtitle;
+
+  /// No description provided for @switchToTransporter.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Transporter Mode'**
+  String get switchToTransporter;
+
+  /// No description provided for @switchToDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Driver Mode'**
+  String get switchToDriver;
+
+  /// No description provided for @logout.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout'**
+  String get logout;
+
+  /// No description provided for @inspectRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Inspect Route'**
+  String get inspectRoute;
+
+  /// No description provided for @viewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View All'**
+  String get viewAll;
+
+  /// No description provided for @requiredField.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get requiredField;
+
+  /// No description provided for @onlineStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Online: Receiving Load Requests'**
+  String get onlineStatus;
+
+  /// No description provided for @offlineStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline: Hidden from search'**
+  String get offlineStatus;
+
+  /// No description provided for @htvPlusLicense.
+  ///
+  /// In en, this message translates to:
+  /// **'HTV+ License'**
+  String get htvPlusLicense;
+
+  /// No description provided for @verifiedBadgeText.
+  ///
+  /// In en, this message translates to:
+  /// **'NADRA Verified'**
+  String get verifiedBadgeText;
+
+  /// No description provided for @unverifiedBadgeText.
+  ///
+  /// In en, this message translates to:
+  /// **'Unverified'**
+  String get unverifiedBadgeText;
+
+  /// No description provided for @tonsUnit.
+  ///
+  /// In en, this message translates to:
+  /// **'{weight} Tons'**
+  String tonsUnit(String weight);
+
+  /// No description provided for @loginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver & Transporter Login'**
+  String get loginTitle;
+
+  /// No description provided for @loginSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your phone number to receive a 6-digit verification code.'**
+  String get loginSubtitle;
+
+  /// No description provided for @mobileNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile Number'**
+  String get mobileNumberLabel;
+
+  /// No description provided for @mobileNumberHint.
+  ///
+  /// In en, this message translates to:
+  /// **'0300 1234567'**
+  String get mobileNumberHint;
+
+  /// No description provided for @sendVerificationCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Verification Code'**
+  String get sendVerificationCode;
+
+  /// No description provided for @verifyOtpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify OTP'**
+  String get verifyOtpTitle;
+
+  /// No description provided for @codeSentTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Code sent to {phone}. (Demo OTP: 123456)'**
+  String codeSentTo(String phone);
+
+  /// No description provided for @otpLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'6-digit OTP Code'**
+  String get otpLabel;
+
+  /// No description provided for @otpHint.
+  ///
+  /// In en, this message translates to:
+  /// **'123456'**
+  String get otpHint;
+
+  /// No description provided for @verifyAndContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify & Continue'**
+  String get verifyAndContinue;
+
+  /// No description provided for @validPhoneRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid Pakistani mobile number (e.g. 0300 1234567)'**
+  String get validPhoneRequired;
+
+  /// No description provided for @phoneRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number is required'**
+  String get phoneRequired;
+
+  /// No description provided for @validCnicRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid 13-digit CNIC required (e.g. 42101-1234567-1)'**
+  String get validCnicRequired;
+
+  /// No description provided for @cnicRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'CNIC number is required'**
+  String get cnicRequired;
+
+  /// No description provided for @selectRoleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Role'**
+  String get selectRoleTitle;
+
+  /// No description provided for @selectRoleHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'How do you want to use TruckLink PK?'**
+  String get selectRoleHeader;
+
   /// No description provided for @driverRole.
   ///
   /// In en, this message translates to:
   /// **'Driver (Job Seeker)'**
   String get driverRole;
+
+  /// No description provided for @driverRoleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find high-paying loads & route alerts'**
+  String get driverRoleSubtitle;
+
+  /// No description provided for @driverRoleDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Find high-paying loads, live bridge clearance alerts, city curfews, and verified profile.'**
+  String get driverRoleDescription;
 
   /// No description provided for @ownerRole.
   ///
@@ -116,35 +302,23 @@ abstract class AppLocalizations {
   /// **'Fleet Owner / Shipper'**
   String get ownerRole;
 
-  /// No description provided for @loginTitle.
+  /// No description provided for @ownerRoleSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Login with Phone'**
-  String get loginTitle;
+  /// **'Post loads & track GPS trips'**
+  String get ownerRoleSubtitle;
 
-  /// No description provided for @phoneNumberHint.
+  /// No description provided for @ownerRoleDescription.
   ///
   /// In en, this message translates to:
-  /// **'03XX XXXXXXX'**
-  String get phoneNumberHint;
+  /// **'Post loads, find nearby PostGIS verified drivers, track active GPS trips and routes.'**
+  String get ownerRoleDescription;
 
-  /// No description provided for @sendOtp.
+  /// No description provided for @driverDashboardTitle.
   ///
   /// In en, this message translates to:
-  /// **'Send Verification Code'**
-  String get sendOtp;
-
-  /// No description provided for @verifyOtp.
-  ///
-  /// In en, this message translates to:
-  /// **'Verify Code'**
-  String get verifyOtp;
-
-  /// No description provided for @enterOtp.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter 6-digit OTP'**
-  String get enterOtp;
+  /// **'Driver Dashboard'**
+  String get driverDashboardTitle;
 
   /// No description provided for @routeIntelligence.
   ///
@@ -152,11 +326,269 @@ abstract class AppLocalizations {
   /// **'Route Intelligence'**
   String get routeIntelligence;
 
-  /// No description provided for @bridgeHeightWarning.
+  /// No description provided for @routeIntelligenceSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Bridge Clearance Alert'**
-  String get bridgeHeightWarning;
+  /// **'Clearances & optimal paths'**
+  String get routeIntelligenceSubtitle;
+
+  /// No description provided for @cityCurfewTimings.
+  ///
+  /// In en, this message translates to:
+  /// **'City Curfew Timings'**
+  String get cityCurfewTimings;
+
+  /// No description provided for @cityCurfewSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Heavy vehicle entry windows'**
+  String get cityCurfewSubtitle;
+
+  /// No description provided for @reportRoadHazard.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Road Hazard'**
+  String get reportRoadHazard;
+
+  /// No description provided for @reportHazardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Broadcast warnings to drivers'**
+  String get reportHazardSubtitle;
+
+  /// No description provided for @allAvailableLoads.
+  ///
+  /// In en, this message translates to:
+  /// **'All Available Loads'**
+  String get allAvailableLoads;
+
+  /// No description provided for @allLoadsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse active load market'**
+  String get allLoadsSubtitle;
+
+  /// No description provided for @matchedLoadsNearYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Matched Loads Near You'**
+  String get matchedLoadsNearYou;
+
+  /// No description provided for @criticalLowBridgeAhead.
+  ///
+  /// In en, this message translates to:
+  /// **'⚠️ CRITICAL: LOW BRIDGE AHEAD'**
+  String get criticalLowBridgeAhead;
+
+  /// No description provided for @bridgeClearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Clearance: {height} ft'**
+  String bridgeClearance(String height);
+
+  /// No description provided for @truckHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Truck: {height} ft'**
+  String truckHeight(String height);
+
+  /// No description provided for @distanceAhead.
+  ///
+  /// In en, this message translates to:
+  /// **'{distance} km ahead'**
+  String distanceAhead(String distance);
+
+  /// No description provided for @recommendedReroute.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended: Reroute via Bypass'**
+  String get recommendedReroute;
+
+  /// No description provided for @tapToRecalculate.
+  ///
+  /// In en, this message translates to:
+  /// **'Recalculate Safe Route'**
+  String get tapToRecalculate;
+
+  /// No description provided for @availableLoadsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Loads'**
+  String get availableLoadsTitle;
+
+  /// No description provided for @postNewLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Post a Load'**
+  String get postNewLoad;
+
+  /// No description provided for @postLoadSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Load posted successfully! PostGIS search activated for nearby drivers.'**
+  String get postLoadSuccess;
+
+  /// No description provided for @pickupLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pickup City & Area'**
+  String get pickupLocationLabel;
+
+  /// No description provided for @dropoffLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop-off City & Destination'**
+  String get dropoffLocationLabel;
+
+  /// No description provided for @vehicleRequiredLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle Required'**
+  String get vehicleRequiredLabel;
+
+  /// No description provided for @loadWeightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight (Tons)'**
+  String get loadWeightLabel;
+
+  /// No description provided for @truckHeightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Height (Feet)'**
+  String get truckHeightLabel;
+
+  /// No description provided for @offeredRateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Offered Rate (PKR)'**
+  String get offeredRateLabel;
+
+  /// No description provided for @goodsTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Type of Goods'**
+  String get goodsTypeLabel;
+
+  /// No description provided for @goodsGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General Cargo'**
+  String get goodsGeneral;
+
+  /// No description provided for @goodsTextile.
+  ///
+  /// In en, this message translates to:
+  /// **'Textile & Yarn'**
+  String get goodsTextile;
+
+  /// No description provided for @goodsAgri.
+  ///
+  /// In en, this message translates to:
+  /// **'Agricultural Produce'**
+  String get goodsAgri;
+
+  /// No description provided for @goodsChemical.
+  ///
+  /// In en, this message translates to:
+  /// **'Industrial & Chemical'**
+  String get goodsChemical;
+
+  /// No description provided for @submitLoadButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Publish Load Broadcast'**
+  String get submitLoadButton;
+
+  /// No description provided for @statusOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get statusOpen;
+
+  /// No description provided for @statusAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned'**
+  String get statusAssigned;
+
+  /// No description provided for @statusInTransit.
+  ///
+  /// In en, this message translates to:
+  /// **'In Transit'**
+  String get statusInTransit;
+
+  /// No description provided for @statusDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get statusDelivered;
+
+  /// No description provided for @statusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get statusCancelled;
+
+  /// No description provided for @routePlannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Route Intelligence'**
+  String get routePlannerTitle;
+
+  /// No description provided for @hereTruckProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'HERE Truck Profile'**
+  String get hereTruckProfile;
+
+  /// No description provided for @activeConfiguration.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Configuration'**
+  String get activeConfiguration;
+
+  /// No description provided for @avoidLowBridges.
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid Low Clearance Bridges'**
+  String get avoidLowBridges;
+
+  /// No description provided for @avoidLowBridgesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically detects bridges below truck height'**
+  String get avoidLowBridgesDesc;
+
+  /// No description provided for @useMotorwayBypass.
+  ///
+  /// In en, this message translates to:
+  /// **'Prefer Motorway & Bypass'**
+  String get useMotorwayBypass;
+
+  /// No description provided for @useMotorwayBypassDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Bypasses city traffic and congestion'**
+  String get useMotorwayBypassDesc;
+
+  /// No description provided for @startGpsNavigation.
+  ///
+  /// In en, this message translates to:
+  /// **'Start GPS Navigation'**
+  String get startGpsNavigation;
+
+  /// No description provided for @detectedClearanceAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected Clearance Alerts'**
+  String get detectedClearanceAlerts;
+
+  /// No description provided for @recalculatingOptimalRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Recalculating optimal truck route...'**
+  String get recalculatingOptimalRoute;
 
   /// No description provided for @cityTimingTitle.
   ///
@@ -164,29 +596,65 @@ abstract class AppLocalizations {
   /// **'City Entry Timing Windows'**
   String get cityTimingTitle;
 
-  /// No description provided for @roadReportsTitle.
+  /// No description provided for @heavyCurfewHeader.
   ///
   /// In en, this message translates to:
-  /// **'Road Hazard Reports'**
-  String get roadReportsTitle;
+  /// **'Heavy Vehicle Curfew Windows'**
+  String get heavyCurfewHeader;
 
-  /// No description provided for @nearbyDrivers.
+  /// No description provided for @curfewExplanation.
   ///
   /// In en, this message translates to:
-  /// **'Nearby Drivers'**
-  String get nearbyDrivers;
+  /// **'Timings are actively verified via traffic police bulletins and driver reports to avoid costly fines or impounds.'**
+  String get curfewExplanation;
 
-  /// No description provided for @postLoadTitle.
+  /// No description provided for @allowedEntryWindow.
   ///
   /// In en, this message translates to:
-  /// **'Post a Load'**
-  String get postLoadTitle;
+  /// **'Allowed Entry Window: {from} - {to}'**
+  String allowedEntryWindow(String from, String to);
 
-  /// No description provided for @activeTrips.
+  /// No description provided for @verifiedConfidence.
   ///
   /// In en, this message translates to:
-  /// **'Active Trips'**
-  String get activeTrips;
+  /// **'{percent}% Verified Confidence'**
+  String verifiedConfidence(String percent);
+
+  /// No description provided for @selectHazardCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Hazard Category'**
+  String get selectHazardCategory;
+
+  /// No description provided for @exactLocationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact Road Location'**
+  String get exactLocationLabel;
+
+  /// No description provided for @descriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional Details & Landmark'**
+  String get descriptionLabel;
+
+  /// No description provided for @descriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Deep crater on left lane, heavy waterlogging...'**
+  String get descriptionHint;
+
+  /// No description provided for @submitHazardButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Broadcast Hazard Alert'**
+  String get submitHazardButton;
+
+  /// No description provided for @hazardBroadcastSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Road report submitted & broadcast to nearby drivers within 20km!'**
+  String get hazardBroadcastSuccess;
 }
 
 class _AppLocalizationsDelegate

@@ -26,6 +26,7 @@ dependencies:
   supabase_flutter: ^2.6.0
 
   # Data & Serialization
+  shared_preferences: ^2.3.0
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
   intl: ^0.20.3

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/widgets/language_toggle_button.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/route_models.dart';
 
 class CityTimingScreen extends StatelessWidget {
@@ -46,9 +48,15 @@ class CityTimingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('City Entry Timing / شہروں کے اوقات'),
+        title: Text(l10n.cityTimingTitle),
+        actions: const [
+          Center(child: LanguageToggleButton(compact: true)),
+          SizedBox(width: 8),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
@@ -67,15 +75,15 @@ class CityTimingScreen extends StatelessWidget {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
-                        'Heavy Vehicle Curfew Windows',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        l10n.heavyCurfewHeader,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
-                        'Timings are actively verified via traffic police bulletins and driver reports to avoid costly fines or impounds.',
-                        style: TextStyle(fontSize: 12, color: Colors.black87),
+                        l10n.curfewExplanation,
+                        style: const TextStyle(fontSize: 12, color: Colors.black87),
                       ),
                     ],
                   ),
@@ -85,10 +93,9 @@ class CityTimingScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           ..._rules.map((rule) {
-            final isAllowed = rule.isEntryAllowedNow();
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -97,68 +104,42 @@ class CityTimingScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.location_city, color: AppColors.primary, size: 22),
-                            const SizedBox(width: 8),
-                            Text(
-                              rule.cityName,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                            ),
-                          ],
+                        Text(
+                          rule.cityName,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: isAllowed ? AppColors.success : AppColors.danger,
+                            color: AppColors.success.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            isAllowed ? '🟢 ENTRY OPEN' : '🔴 CLOSED NOW',
+                            l10n.allowedEntryWindow(rule.entryFrom, rule.entryUntil),
                             style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
+                              color: AppColors.success,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        const Icon(Icons.schedule, size: 16, color: Colors.grey),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Allowed Entry Window: ${rule.entryFrom} - ${rule.entryUntil}',
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Text(
                       rule.notes,
-                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondaryLight),
+                      style: TextStyle(fontSize: 13, color: Colors.grey.shade700, height: 1.4),
                     ),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.local_parking, size: 16, color: AppColors.primary),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              'Suggested Parking: Near ${rule.cityName} Toll Plaza / Ring Road Layover',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ),
+                    const Divider(height: 20),
+                    Row(
+                      children: [
+                        const Icon(Icons.verified, size: 14, color: AppColors.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          l10n.verifiedConfidence((rule.confidence * 100).toInt().toString()),
+                          style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600),
+                        ),
+                      ],
                     ),
                   ],
                 ),

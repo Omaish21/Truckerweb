@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../core/widgets/truck_icon.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/load_model.dart';
 
 class LoadsFeedScreen extends StatelessWidget {
@@ -60,22 +62,29 @@ class LoadsFeedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Available Loads / لوڈ مارکیٹ'),
+        title: Text(l10n.availableLoadsTitle),
         actions: [
+          const Center(
+            child: LanguageToggleButton(compact: true),
+          ),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.add_circle_outline),
-            tooltip: 'Post New Load',
+            tooltip: l10n.postNewLoad,
             onPressed: () => context.push('/post-load'),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.accent,
         foregroundColor: Colors.black,
         icon: const Icon(Icons.add),
-        label: const Text('Post Load / مال بک کریں', style: TextStyle(fontWeight: FontWeight.bold)),
+        label: Text(l10n.postNewLoad, style: const TextStyle(fontWeight: FontWeight.bold)),
         onPressed: () => context.push('/post-load'),
       ),
       body: ListView.builder(
@@ -110,36 +119,29 @@ class LoadsFeedScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Goods: ${load.goodsType ?? "General"} • ${AppFormatters.formatWeight(load.weightTons)}',
-                              style: const TextStyle(fontSize: 13, color: AppColors.textSecondaryLight),
+                              '${load.goodsType ?? l10n.goodsGeneral} • ${l10n.tonsUnit(load.weightTons.toInt().toString())}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondaryLight,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            AppFormatters.formatPkr(load.offeredRatePkr),
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.success,
-                            ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          l10n.statusOpen,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.success,
                           ),
-                          const SizedBox(height: 2),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.accent.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: const Text(
-                              'Fixed Rate',
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
@@ -147,35 +149,33 @@ class LoadsFeedScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      if (load.heightFt != null)
-                        Text(
-                          'Height: ${load.heightFt} ft (Checked for Low Bridges)',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600),
-                        ),
-                      Row(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          OutlinedButton.icon(
-                            onPressed: () => context.push('/route-planner'),
-                            icon: const Icon(Icons.route, size: 16),
-                            label: const Text('Check Bridges', style: TextStyle(fontSize: 12)),
+                          Text(
+                            l10n.offeredRateLabel,
+                            style: const TextStyle(fontSize: 11, color: AppColors.textSecondaryLight),
                           ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  backgroundColor: AppColors.success,
-                                  content: Text('Application sent to load owner! Direct call enabled.'),
-                                ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                              minimumSize: Size.zero,
+                          const SizedBox(height: 2),
+                          Text(
+                            AppFormatters.formatPkr(load.offeredRatePkr),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
                             ),
-                            child: const Text('Apply / رابطہ', style: TextStyle(fontSize: 12)),
                           ),
                         ],
+                      ),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        ),
+                        onPressed: () => context.push('/route-planner'),
+                        icon: const Icon(Icons.alt_route, size: 16),
+                        label: Text(l10n.inspectRoute),
                       ),
                     ],
                   ),

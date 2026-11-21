@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../theme/colors.dart';
 
 class VerifiedBadge extends StatelessWidget {
   final bool isVerified;
-  final String label;
+  final String? customLabel;
 
   const VerifiedBadge({
     super.key,
     this.isVerified = true,
-    this.label = 'NADRA Verified',
+    this.customLabel,
   });
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final defaultVerified = l10n?.verifiedBadgeText ?? 'NADRA Verified';
+    final defaultUnverified = l10n?.unverifiedBadgeText ?? 'Unverified';
+
     if (!isVerified) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -26,7 +31,7 @@ class VerifiedBadge extends StatelessWidget {
             Icon(Icons.pending_outlined, size: 14, color: Colors.grey.shade700),
             const SizedBox(width: 4),
             Text(
-              'Unverified',
+              customLabel ?? defaultUnverified,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -57,10 +62,10 @@ class VerifiedBadge extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            label,
+            customLabel ?? defaultVerified,
             style: const TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.bold,
               color: AppColors.success,
             ),
           ),

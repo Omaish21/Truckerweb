@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/widgets/language_toggle_button.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 
 class RoleSelectionScreen extends ConsumerWidget {
@@ -9,11 +11,21 @@ class RoleSelectionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Select Role / کردار کا انتخاب'),
+        title: Text(l10n.selectRoleTitle),
         centerTitle: true,
+        actions: const [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: Center(
+              child: LanguageToggleButton(),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -22,34 +34,23 @@ class RoleSelectionScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 16),
-              const Text(
-                'How do you want to use TruckLink PK?',
-                style: TextStyle(
+              Text(
+                l10n.selectRoleHeader,
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimaryLight,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'آپ ٹرک لنک کس حیثیت سے استعمال کرنا چاہتے ہیں؟',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textSecondaryLight,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-                textDirection: TextDirection.rtl,
-              ),
               const SizedBox(height: 36),
 
               // Driver Card
               _RoleCard(
                 icon: Icons.drive_eta_rounded,
-                title: 'Driver (Job Seeker)',
-                subtitle: 'ڈرائیور (ملازمت / لوڈ تلاش کنندہ)',
-                description: 'Find high-paying loads, live bridge clearance alerts, city curfews, and verified profile.',
+                title: l10n.driverRole,
+                subtitle: l10n.driverRoleSubtitle,
+                description: l10n.driverRoleDescription,
                 badgeColor: AppColors.accent,
                 onTap: () {
                   ref.read(authProvider.notifier).switchRole('driver');
@@ -62,9 +63,9 @@ class RoleSelectionScreen extends ConsumerWidget {
               // Owner / Shipper Card
               _RoleCard(
                 icon: Icons.business_center_rounded,
-                title: 'Fleet Owner / Shipper',
-                subtitle: 'گاڑی کا مالک / ٹرانسپورٹر / بکنگ ایجنٹ',
-                description: 'Post loads, find nearby PostGIS verified drivers, track active GPS trips and routes.',
+                title: l10n.ownerRole,
+                subtitle: l10n.ownerRoleSubtitle,
+                description: l10n.ownerRoleDescription,
                 badgeColor: AppColors.primary,
                 onTap: () {
                   ref.read(authProvider.notifier).switchRole('owner');
@@ -98,70 +99,61 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade300, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: badgeColor.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: badgeColor.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: badgeColor, size: 32),
               ),
-              child: Icon(icon, color: badgeColor, size: 32),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimaryLight,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimaryLight,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: badgeColor,
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    textDirection: TextDirection.rtl,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    description,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondaryLight,
+                    const SizedBox(height: 8),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondaryLight,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-          ],
+              const Icon(Icons.chevron_right, color: Colors.grey),
+            ],
+          ),
         ),
       ),
     );

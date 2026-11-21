@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../core/widgets/verified_badge.dart';
 import '../../../../core/widgets/rating_stars.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../route_intelligence/domain/route_models.dart';
 import '../../../route_intelligence/presentation/widgets/bridge_alert_banner.dart';
@@ -33,19 +35,24 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final user = authState.userProfile;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Driver Dashboard / ڈرائیور پینل'),
+        title: Text(l10n.driverDashboardTitle),
         actions: [
+          const Center(
+            child: LanguageToggleButton(compact: true),
+          ),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.swap_horiz),
-            tooltip: 'Switch to Transporter Mode',
+            tooltip: l10n.switchToTransporter,
             onPressed: () => context.go('/role-selection'),
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
+            tooltip: l10n.logout,
             onPressed: () {
               ref.read(authProvider.notifier).logout();
               context.go('/login');
@@ -101,9 +108,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                                     color: Colors.white12,
                                     borderRadius: BorderRadius.circular(4),
                                   ),
-                                  child: const Text(
-                                    'HTV+ License',
-                                    style: TextStyle(color: Colors.white70, fontSize: 11),
+                                  child: Text(
+                                    l10n.htvPlusLicense,
+                                    style: const TextStyle(color: Colors.white70, fontSize: 11),
                                   ),
                                 ),
                               ],
@@ -135,7 +142,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _isOnline ? 'Online: Receiving Load Requests' : 'Offline: Hidden from search',
+                              _isOnline ? l10n.onlineStatus : l10n.offlineStatus,
                               style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
                             ),
                           ],
@@ -172,8 +179,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   Expanded(
                     child: _QuickActionCard(
                       icon: Icons.alt_route,
-                      title: 'Route Intelligence',
-                      subtitle: 'راستے کی تفصیل و الرٹس',
+                      title: l10n.routeIntelligence,
+                      subtitle: l10n.routeIntelligenceSubtitle,
                       color: AppColors.primaryLight,
                       onTap: () => context.push('/route-planner'),
                     ),
@@ -182,8 +189,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   Expanded(
                     child: _QuickActionCard(
                       icon: Icons.access_time_filled,
-                      title: 'City Curfew Timings',
-                      subtitle: 'شہر میں داخلے کا وقت',
+                      title: l10n.cityCurfewTimings,
+                      subtitle: l10n.cityCurfewSubtitle,
                       color: AppColors.accentOrange,
                       onTap: () => context.push('/city-timing'),
                     ),
@@ -199,8 +206,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   Expanded(
                     child: _QuickActionCard(
                       icon: Icons.report_problem,
-                      title: 'Report Road Hazard',
-                      subtitle: 'سڑک کی خرابی درج کریں',
+                      title: l10n.reportRoadHazard,
+                      subtitle: l10n.reportHazardSubtitle,
                       color: AppColors.danger,
                       onTap: () => context.push('/report-condition'),
                     ),
@@ -209,8 +216,8 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   Expanded(
                     child: _QuickActionCard(
                       icon: Icons.local_shipping,
-                      title: 'All Available Loads',
-                      subtitle: 'دستیاب لوڈز دیکھیں',
+                      title: l10n.allAvailableLoads,
+                      subtitle: l10n.allLoadsSubtitle,
                       color: AppColors.success,
                       onTap: () => context.push('/loads-feed'),
                     ),
@@ -227,9 +234,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Matched Loads Near You',
-                    style: TextStyle(
+                  Text(
+                    l10n.matchedLoadsNearYou,
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimaryLight,
@@ -237,7 +244,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   ),
                   TextButton(
                     onPressed: () => context.push('/loads-feed'),
-                    child: const Text('View All / سب دیکھیں'),
+                    child: Text(l10n.viewAll),
                   ),
                 ],
               ),
@@ -247,9 +254,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               origin: 'Lahore (Badami Bagh)',
               destination: 'Karachi (Port Qasim)',
               vehicleType: '22-Wheeler (Trolley)',
-              weight: '35 Tons',
+              weight: l10n.tonsUnit('35'),
               rate: AppFormatters.formatPkr(245000),
-              status: 'Open',
+              inspectLabel: l10n.inspectRoute,
               onTap: () => context.push('/route-planner'),
             ),
 
@@ -257,9 +264,9 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               origin: 'Faisalabad (Textile City)',
               destination: 'Rawalpindi (I-9)',
               vehicleType: '10-Wheeler',
-              weight: '16 Tons',
+              weight: l10n.tonsUnit('16'),
               rate: AppFormatters.formatPkr(85000),
-              status: 'Open',
+              inspectLabel: l10n.inspectRoute,
               onTap: () => context.push('/route-planner'),
             ),
 
@@ -318,7 +325,6 @@ class _QuickActionCard extends StatelessWidget {
             Text(
               subtitle,
               style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
-              textDirection: TextDirection.rtl,
             ),
           ],
         ),
@@ -333,7 +339,7 @@ class _MatchedLoadItem extends StatelessWidget {
   final String vehicleType;
   final String weight;
   final String rate;
-  final String status;
+  final String inspectLabel;
   final VoidCallback onTap;
 
   const _MatchedLoadItem({
@@ -342,7 +348,7 @@ class _MatchedLoadItem extends StatelessWidget {
     required this.vehicleType,
     required this.weight,
     required this.rate,
-    required this.status,
+    required this.inspectLabel,
     required this.onTap,
   });
 
@@ -381,9 +387,9 @@ class _MatchedLoadItem extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 2),
-            const Text(
-              'Inspect Route',
-              style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600),
+            Text(
+              inspectLabel,
+              style: const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600),
             ),
           ],
         ),
