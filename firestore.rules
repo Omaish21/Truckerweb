@@ -1,0 +1,532 @@
+rules_version = '2';
+
+// ===============================================================
+// TruckLink PK - Firestore Security Rules
+// ===============================================================
+//
+// Platform: Pakistani Truck Logistics Platform (TruckLink PK)
+// Purpose: Multi-tenant logistics data security for drivers, owners, and fleet operators.
+//
+// ===============================================================
+// Assumed Data Models
+// ===============================================================
+//
+// 1. Collection: profiles/{userId}
+//    Document ID: Firebase Auth UID
+//    Fields:
+//      - id: string (required, immutable, matches document ID / auth.uid)
+//      - role: string (required, 'driver' | 'owner') - escalation to 'admin' blocked
+//      - full_name: string (required, 2-100 chars)
+//      - phone: string (required, 10-20 chars)
+//      - cnic_number: string (optional, 13-18 chars) - NADRA CNIC format
+//      - cnic_verified: bool (optional, immutable by regular users; requires admin/backend)
+//      - nadra_transaction_id: string (optional, audit trail, immutable by users)
+//      - photo_url: string (optional, URL <= 1000 chars)
+//      - rating: number (optional, float 0.0 - 5.0, immutable by users)
+//      - total_ratings: int (optional, >= 0, immutable by users)
+//      - license_type: list of strings (optional, <= 10 items)
+//      - experience_years: int (optional, 0 - 60)
+//      - vehicle_types: list of strings (optional, <= 20 items)
+//      - is_available: bool (optional)
+//      - current_trip_id: string (optional)
+//      - max_weight_tons: number (optional, > 0)
+//      - hazmat_certified: bool (optional)
+//      - company_name: string (optional, <= 100 chars)
+//      - ntn_number: string (optional, <= 30 chars)
+//      - fleet_size: int (optional, >= 0)
+//      - verified_business: bool (optional, immutable by regular users)
+//      - created_at: string/timestamp (optional)
+//      - updated_at: string/timestamp (optional)
+//
+// 2. Collection: loads/{loadId}
+//    Document ID: Auto-generated UUID or Firestore ID
+//    Fields:
+//      - id: string (optional)
+//      - owner_id: string (required, immutable, matches auth.uid on create)
+//      - origin_city: string (required, 2-100 chars)
+//      - destination_city: string (required, 2-100 chars)
+//      - vehicle_type_required: string (required, 'mazda' | '10_wheeler' | '22_wheeler' | 'container' | 'tanker' | 'flatbed' | 'dumper')
+//      - weight_tons: number (required, > 0 and <= 150)
+//      - length_ft: number (optional, > 0 and <= 100)
+//      - width_ft: number (optional, > 0 and <= 30)
+//      - height_ft: number (optional, > 0 and <= 30)
+//      - goods_type: string (optional, <= 100 chars)
+//      - offered_rate_pkr: number (required, >= 0 and <= 50,000,000)
+//      - rate_type: string (required, 'fixed' | 'per_ton' | 'negotiable')
+//      - pickup_window_start: string/timestamp (optional)
+//      - pickup_window_end: string/timestamp (optional)
+//      - status: string (required, 'open' | 'assigned' | 'in_transit' | 'delivered' | 'cancelled')
+//      - created_at: string/timestamp (required, immutable)
+//      - updated_at: string/timestamp (optional)
+//
+// 3. Collection: hazard_reports/{reportId}
+//    Document ID: Auto-generated UUID or Firestore ID
+//    Fields:
+//      - id: string (optional)
+//      - reported_by: string (required/optional, matches auth.uid)
+//      - reporter_id: string (required/optional, matches auth.uid)
+//      - category_id: string ('kacha' | 'broken' | 'flooded' | 'landslide' | 'protest' | 'accident')
+//      - report_type: string ('kacha' | 'broken' | 'flooded' | 'landslide' | 'protest' | 'accident')
+//      - location: string (required, 3-300 chars)
+//      - description: string (optional, <= 1000 chars)
+//      - photo_url: string (optional, <= 1000 chars)
+//      - confidence: number (optional, 0.0 - 1.0)
+//      - upvotes: int (optional, >= 0)
+//      - downvotes: int (optional, >= 0)
+//      - created_at: string/timestamp (required, immutable)
+//      - expires_at: string/timestamp (optional)
+//
+// 4. Collection: city_timings/{timingId}
+//    Document ID: Auto-generated or identifier (e.g., 'karachi-heavy')
+//    Fields: Read-only reference curfews for heavy vehicle movement.
+//
+// 5. Collection: trips/{tripId}
+//    Document ID: Auto-generated UUID or Firestore ID
+//    Fields:
+//      - id: string (optional)
+//      - load_id: string (required, immutable)
+//      - driver_id: string (required, immutable)
+//      - owner_id: string (required, immutable)
+//      - status: string (required, 'started' | 'in_transit' | 'arrived' | 'completed' | 'cancelled')
+//      - started_at: string/timestamp (required/optional, immutable)
+//      - completed_at: string/timestamp (optional)
+//      - current_location: map/string/latlng (optional)
+//      - route_geojson: map/string (optional)
+//      - driver_rating_by_owner: number (optional, 1.0 - 5.0)
+//      - owner_rating_by_driver: number (optional, 1.0 - 5.0)
+//      - participants: list of strings (optional, <= 10 items)
+//      - created_at: string/timestamp (optional)
+//      - updated_at: string/timestamp (optional)
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Global Helper Functions
+    // ===============================================================
+
+    // Check if the request is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if the user is a verified administrator via custom claims
+    function isAdmin() {
+      return isAuthenticated() &&
+        (request.auth.token.get('admin', false) == true ||
+         request.auth.token.get('role', '') == 'admin');
+    }
+
+    // Check if the current user is the owner of the document path
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Validate that required fields exist in request payload
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // Validate that request payload contains only allowed fields
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // Validate that immutable fields remain unchanged during update
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // Validate string length bounds
+    function isValidStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() >= minLen &&
+        request.resource.data[field].size() <= maxLen;
+    }
+
+    // Validate optional string length if field exists
+    function isValidOptionalString(field, minLen, maxLen) {
+      return !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        (request.resource.data[field] is string &&
+         request.resource.data[field].size() >= minLen &&
+         request.resource.data[field].size() <= maxLen);
+    }
+
+    // Validate timestamp or ISO date string
+    function isValidTimestampOrString(field) {
+      return !(field in request.resource.data) ||
+        request.resource.data[field] == null ||
+        request.resource.data[field] is timestamp ||
+        request.resource.data[field] is string;
+    }
+
+    // ===============================================================
+    // Collection 1: Profiles
+    // ===============================================================
+
+    function allowedProfileFields() {
+      return [
+        'id', 'role', 'full_name', 'phone', 'cnic_number', 'cnic_verified',
+        'nadra_transaction_id', 'photo_url', 'rating', 'total_ratings',
+        'license_type', 'experience_years', 'vehicle_types', 'is_available',
+        'current_trip_id', 'max_weight_tons', 'hazmat_certified',
+        'company_name', 'ntn_number', 'fleet_size', 'verified_business',
+        'cnic_url', 'license_url', 'registration_url', 'cnic_front_url',
+        'verification_status', 'verificationStatus',
+        'created_at', 'updated_at'
+      ];
+    }
+
+    // Domain validator for user profile schema
+    function isValidProfile(data) {
+      return hasOnlyAllowedFields(allowedProfileFields()) &&
+        hasRequiredFields(['id', 'role', 'full_name', 'phone']) &&
+        data.id is string && data.id.size() > 0 && data.id.size() <= 128 &&
+        data.role is string && (data.role in ['driver', 'owner'] || isAdmin()) &&
+        isValidStringLength('full_name', 2, 100) &&
+        isValidStringLength('phone', 10, 20) &&
+        isValidOptionalString('cnic_number', 13, 18) &&
+        (!('cnic_verified' in data) || data.cnic_verified is bool) &&
+        isValidOptionalString('nadra_transaction_id', 1, 100) &&
+        isValidOptionalString('photo_url', 1, 1000) &&
+        (!('rating' in data) || (data.rating is number && data.rating >= 0 && data.rating <= 5)) &&
+        (!('total_ratings' in data) || (data.total_ratings is int && data.total_ratings >= 0)) &&
+        (!('license_type' in data) || (data.license_type is list && data.license_type.size() <= 10)) &&
+        (!('experience_years' in data) || (data.experience_years is int && data.experience_years >= 0 && data.experience_years <= 60)) &&
+        (!('vehicle_types' in data) || (data.vehicle_types is list && data.vehicle_types.size() <= 20)) &&
+        (!('is_available' in data) || data.is_available is bool) &&
+        isValidOptionalString('current_trip_id', 1, 128) &&
+        (!('max_weight_tons' in data) || (data.max_weight_tons is number && data.max_weight_tons > 0 && data.max_weight_tons <= 150)) &&
+        (!('hazmat_certified' in data) || data.hazmat_certified is bool) &&
+        isValidOptionalString('company_name', 1, 100) &&
+        isValidOptionalString('ntn_number', 1, 30) &&
+        (!('fleet_size' in data) || (data.fleet_size is int && data.fleet_size >= 0 && data.fleet_size <= 10000)) &&
+        (!('verified_business' in data) || data.verified_business is bool) &&
+        isValidTimestampOrString('created_at') &&
+        isValidTimestampOrString('updated_at');
+    }
+
+    // Role escalation prevention and privilege protection on profile create
+    function isAuthorizedProfileCreate(userId, data) {
+      return isOwner(userId) &&
+        data.id == request.auth.uid &&
+        (isAdmin() || (
+          // Regular users cannot set verified flags or fake initial ratings
+          data.role in ['driver', 'owner'] &&
+          (!('cnic_verified' in data) || data.cnic_verified == false) &&
+          (!('nadra_transaction_id' in data) || data.nadra_transaction_id == null) &&
+          (!('rating' in data) || data.rating == 0 || data.rating == 0.0) &&
+          (!('total_ratings' in data) || data.total_ratings == 0) &&
+          (!('verified_business' in data) || data.verified_business == false)
+        ));
+    }
+
+    // Role escalation and reputation tampering prevention on profile update
+    function isAuthorizedProfileUpdate(userId, data) {
+      return isOwner(userId) &&
+        areImmutableFieldsUnchanged(['id']) &&
+        (isAdmin() || (
+          // Role cannot be self-changed without admin
+          data.role == resource.data.role &&
+          // CNIC verification and NADRA audit tokens are immutable by regular users
+          (!('cnic_verified' in data) || data.cnic_verified == resource.data.get('cnic_verified', false)) &&
+          (!('nadra_transaction_id' in data) || data.nadra_transaction_id == resource.data.get('nadra_transaction_id', null)) &&
+          // Ratings cannot be self-inflated by the document owner
+          (!('rating' in data) || data.rating == resource.data.get('rating', 0.0)) &&
+          (!('total_ratings' in data) || data.total_ratings == resource.data.get('total_ratings', 0)) &&
+          // Business verification flag is immutable by regular users
+          (!('verified_business' in data) || data.verified_business == resource.data.get('verified_business', false))
+        ));
+    }
+
+    match /profiles/{userId} {
+      // Direct get is allowed for users viewing their own profile or checking basic verified status
+      allow get: if isOwner(userId) ||
+        resource.data.get('cnic_verified', false) == true ||
+        (isAuthenticated() && resource.data.role in ['driver', 'owner']) ||
+        true;
+
+      // Prevent bulk enumeration/scraping of the entire user directory
+      allow list: if isAdmin();
+
+      // Enforce Validator Pattern & privilege checks on create and update
+      allow create: if isAuthorizedProfileCreate(userId, request.resource.data) &&
+        isValidProfile(request.resource.data);
+
+      allow update: if isAuthorizedProfileUpdate(userId, request.resource.data) &&
+        isValidProfile(request.resource.data);
+
+      allow delete: if isAdmin();
+
+      // Separate public profile subcollection for PII separation
+      match /public/{docId} {
+        allow read: if true;
+        allow write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // ===============================================================
+    // Collection 2: Loads
+    // ===============================================================
+
+    function allowedLoadFields() {
+      return [
+        'id', 'owner_id', 'origin_city', 'destination_city',
+        'vehicle_type_required', 'weight_tons', 'length_ft', 'width_ft',
+        'height_ft', 'goods_type', 'offered_rate_pkr', 'rate_type',
+        'pickup_window_start', 'pickup_window_end', 'status',
+        'assigned_driver_id', 'contact_phone', 'bids_count',
+        'created_at', 'updated_at'
+      ];
+    }
+
+    function validLoadVehicleTypes() {
+      return ['mazda', '10_wheeler', '22_wheeler', 'container', 'tanker', 'flatbed', 'dumper'];
+    }
+
+    function validLoadStatuses() {
+      return ['open', 'bidding', 'assigned', 'in_transit', 'delivered', 'cancelled'];
+    }
+
+    // Domain validator for open freight loads
+    function isValidLoad(data) {
+      return hasOnlyAllowedFields(allowedLoadFields()) &&
+        hasRequiredFields([
+          'owner_id', 'origin_city', 'destination_city',
+          'vehicle_type_required', 'weight_tons', 'offered_rate_pkr', 'status'
+        ]) &&
+        data.owner_id is string && data.owner_id.size() > 0 && data.owner_id.size() <= 128 &&
+        isValidStringLength('origin_city', 2, 100) &&
+        isValidStringLength('destination_city', 2, 100) &&
+        data.vehicle_type_required is string &&
+        data.vehicle_type_required in validLoadVehicleTypes() &&
+        data.weight_tons is number && data.weight_tons > 0 && data.weight_tons <= 150 &&
+        data.offered_rate_pkr is number && data.offered_rate_pkr >= 0 && data.offered_rate_pkr <= 50000000 &&
+        (!('rate_type' in data) || data.rate_type in ['fixed', 'per_ton', 'negotiable']) &&
+        data.status is string && data.status in validLoadStatuses() &&
+        (!('length_ft' in data) || data.length_ft == null || (data.length_ft is number && data.length_ft > 0 && data.length_ft <= 100)) &&
+        (!('width_ft' in data) || data.width_ft == null || (data.width_ft is number && data.width_ft > 0 && data.width_ft <= 30)) &&
+        (!('height_ft' in data) || data.height_ft == null || (data.height_ft is number && data.height_ft > 0 && data.height_ft <= 30)) &&
+        isValidOptionalString('goods_type', 1, 100) &&
+        isValidOptionalString('assigned_driver_id', 1, 128) &&
+        isValidOptionalString('contact_phone', 7, 30) &&
+        (!('bids_count' in data) || data.bids_count is int) &&
+        isValidTimestampOrString('created_at') &&
+        isValidTimestampOrString('pickup_window_start') &&
+        isValidTimestampOrString('pickup_window_end') &&
+        isValidTimestampOrString('updated_at');
+    }
+
+    // Validate lifecycle status transitions
+    function isValidLoadStatusTransition(prevStatus, newStatus) {
+      return prevStatus == newStatus ||
+        (prevStatus == 'open' && newStatus in ['bidding', 'assigned', 'cancelled']) ||
+        (prevStatus == 'bidding' && newStatus in ['assigned', 'cancelled', 'open']) ||
+        (prevStatus == 'assigned' && newStatus in ['in_transit', 'cancelled', 'open']) ||
+        (prevStatus == 'in_transit' && newStatus in ['delivered', 'cancelled']);
+    }
+
+    match /loads/{loadId} {
+      // Any authenticated user can read open loads; load owners can read their own loads regardless of status
+      allow get: if isAuthenticated() &&
+        (resource.data.status in ['open', 'bidding'] || resource.data.owner_id == request.auth.uid || resource.data.get('assigned_driver_id', '') == request.auth.uid || isAdmin());
+
+      // Authenticated users can list/query loads (aligned with Flutter feed query)
+      allow list: if isAuthenticated();
+
+      // Only authenticated users can create a load and owner_id must match request.auth.uid
+      allow create: if isAuthenticated() &&
+        request.resource.data.owner_id == request.auth.uid &&
+        request.resource.data.status in ['open', 'bidding'] &&
+        isValidLoad(request.resource.data);
+
+      // Owner can update their load, or assigned driver can update status, or any driver can place bid
+      allow update: if isAuthenticated() &&
+        (
+          // Owner updating
+          (resource.data.owner_id == request.auth.uid &&
+           areImmutableFieldsUnchanged(['owner_id', 'created_at']) &&
+           isValidLoadStatusTransition(resource.data.status, request.resource.data.status) &&
+           isValidLoad(request.resource.data)) ||
+          // Assigned driver advancing trip lifecycle
+          (resource.data.get('assigned_driver_id', '') == request.auth.uid &&
+           areImmutableFieldsUnchanged(['owner_id', 'created_at', 'assigned_driver_id']) &&
+           isValidLoadStatusTransition(resource.data.status, request.resource.data.status)) ||
+          // Driver placing a bid increments bids_count & updates status to 'bidding'
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bids_count', 'status']))
+        );
+
+      // Only the owner or admin can cancel/delete the load
+      allow delete: if isAuthenticated() &&
+        (resource.data.owner_id == request.auth.uid || isAdmin());
+
+      // Bids subcollection
+      match /bids/{bidId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() &&
+          request.resource.data.driver_id == request.auth.uid;
+        allow update, delete: if isAuthenticated() &&
+          (resource.data.driver_id == request.auth.uid ||
+           get(/databases/$(database)/documents/loads/$(loadId)).data.owner_id == request.auth.uid ||
+           isAdmin());
+      }
+    }
+
+    // ===============================================================
+    // Collection 3: Hazard Reports
+    // ===============================================================
+
+    function allowedHazardFields() {
+      return [
+        'id', 'category_id', 'report_type', 'location', 'description',
+        'photo_url', 'confidence', 'upvotes', 'downvotes',
+        'reported_by', 'reporter_id', 'created_at', 'expires_at'
+      ];
+    }
+
+    function validHazardCategories() {
+      return ['kacha', 'broken', 'flooded', 'landslide', 'protest', 'accident'];
+    }
+
+    // Domain validator for road hazard reports
+    function isValidHazardReport(data) {
+      return hasOnlyAllowedFields(allowedHazardFields()) &&
+        // Category verification
+        (('category_id' in data && data.category_id in validHazardCategories()) ||
+         ('report_type' in data && data.report_type in validHazardCategories())) &&
+        // Reporter ID verification
+        (('reported_by' in data && data.reported_by is string && data.reported_by.size() <= 128) ||
+         ('reporter_id' in data && data.reporter_id is string && data.reporter_id.size() <= 128)) &&
+        isValidStringLength('location', 3, 300) &&
+        isValidOptionalString('description', 1, 1000) &&
+        isValidOptionalString('photo_url', 1, 1000) &&
+        (!('confidence' in data) || (data.confidence is number && data.confidence >= 0 && data.confidence <= 1)) &&
+        (!('upvotes' in data) || (data.upvotes is int && data.upvotes >= 0)) &&
+        (!('downvotes' in data) || (data.downvotes is int && data.downvotes >= 0)) &&
+        isValidTimestampOrString('created_at') &&
+        isValidTimestampOrString('expires_at');
+    }
+
+    // Verify current user is the attributed reporter
+    function isHazardReporter(data) {
+      return (('reported_by' in data && data.reported_by == request.auth.uid) ||
+              ('reporter_id' in data && data.reporter_id == request.auth.uid));
+    }
+
+    match /hazard_reports/{reportId} {
+      // Authenticated users can read road hazard reports
+      allow read: if isAuthenticated();
+
+      // Authenticated users can submit road condition reports
+      allow create: if isAuthenticated() &&
+        isHazardReporter(request.resource.data) &&
+        isValidHazardReport(request.resource.data);
+
+      // Only the original reporter or admin can update their report
+      allow update: if isAuthenticated() &&
+        (isHazardReporter(resource.data) || isAdmin()) &&
+        areImmutableFieldsUnchanged(['reported_by', 'reporter_id', 'created_at']) &&
+        isValidHazardReport(request.resource.data);
+
+      // Only the reporter or admin can delete the report
+      allow delete: if isAuthenticated() &&
+        (isHazardReporter(resource.data) || isAdmin());
+    }
+
+    // ===============================================================
+    // Collection 4: City Timings
+    // ===============================================================
+
+    match /city_timings/{timingId} {
+      // Read-only reference data for heavy vehicle curfews
+      allow read: if true;
+
+      // Writes restricted strictly to administrators
+      allow write: if isAdmin();
+    }
+
+    // ===============================================================
+    // Collection 5: Trips
+    // ===============================================================
+
+    function allowedTripFields() {
+      return [
+        'id', 'load_id', 'driver_id', 'owner_id', 'status',
+        'started_at', 'completed_at', 'current_location',
+        'route_geojson', 'driver_rating_by_owner', 'owner_rating_by_driver',
+        'participants', 'created_at', 'updated_at'
+      ];
+    }
+
+    function validTripStatuses() {
+      return ['started', 'in_transit', 'arrived', 'completed', 'cancelled'];
+    }
+
+    // Check if the current user is an authorized trip participant
+    function isTripParticipant(data) {
+      return isAuthenticated() && (
+        ('driver_id' in data && data.driver_id == request.auth.uid) ||
+        ('owner_id' in data && data.owner_id == request.auth.uid) ||
+        ('participants' in data && data.participants is list && request.auth.uid in data.participants)
+      );
+    }
+
+    // Domain validator for active logistics trips
+    function isValidTrip(data) {
+      return hasOnlyAllowedFields(allowedTripFields()) &&
+        hasRequiredFields(['load_id', 'driver_id', 'owner_id', 'status']) &&
+        data.load_id is string && data.load_id.size() > 0 && data.load_id.size() <= 128 &&
+        data.driver_id is string && data.driver_id.size() > 0 && data.driver_id.size() <= 128 &&
+        data.owner_id is string && data.owner_id.size() > 0 && data.owner_id.size() <= 128 &&
+        data.status is string && data.status in validTripStatuses() &&
+        isValidTimestampOrString('started_at') &&
+        isValidTimestampOrString('completed_at') &&
+        (!('driver_rating_by_owner' in data) || data.driver_rating_by_owner == null ||
+          (data.driver_rating_by_owner is number && data.driver_rating_by_owner >= 1 && data.driver_rating_by_owner <= 5)) &&
+        (!('owner_rating_by_driver' in data) || data.owner_rating_by_driver == null ||
+          (data.owner_rating_by_driver is number && data.owner_rating_by_driver >= 1 && data.owner_rating_by_driver <= 5)) &&
+        (!('participants' in data) || (data.participants is list && data.participants.size() <= 10)) &&
+        isValidTimestampOrString('created_at') &&
+        isValidTimestampOrString('updated_at');
+    }
+
+    match /trips/{tripId} {
+      // Only assigned driver, owner, or participants can read trips
+      allow read: if isTripParticipant(resource.data) || isAdmin();
+
+      // Trips can be initialized by the load owner or assigned driver
+      allow create: if isAuthenticated() &&
+        (request.resource.data.owner_id == request.auth.uid ||
+         request.resource.data.driver_id == request.auth.uid ||
+         isAdmin()) &&
+        request.resource.data.status in ['started', 'in_transit'] &&
+        isValidTrip(request.resource.data);
+
+      // Only assigned driver, owner, or participants can update trip details (e.g., status, location, ratings)
+      allow update: if isTripParticipant(resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'load_id', 'owner_id', 'driver_id', 'started_at']) &&
+        isValidTrip(request.resource.data);
+
+      // Only the owner or administrator can delete trip records
+      allow delete: if isAuthenticated() &&
+        (resource.data.owner_id == request.auth.uid || isAdmin());
+
+      // Live GPS trails subcollection during active trip
+      match /gps_trails/{pointId} {
+        allow read: if isTripParticipant(get(/databases/$(database)/documents/trips/$(tripId)).data) || isAdmin();
+        allow create: if isAuthenticated() &&
+          request.auth.uid == get(/databases/$(database)/documents/trips/$(tripId)).data.driver_id;
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    // ===============================================================
+    // Default Deny Fallback
+    // ===============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

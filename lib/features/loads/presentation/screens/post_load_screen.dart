@@ -1,23 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/vehicle_types.dart';
+import '../../../../core/services/firebase_service.dart';
+import '../../../../core/services/translation_service.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
+import '../../../../core/widgets/voice_input_button.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../domain/load_model.dart';
 
-class PostLoadScreen extends StatefulWidget {
+class PostLoadScreen extends ConsumerStatefulWidget {
   const PostLoadScreen({super.key});
 
   @override
-  State<PostLoadScreen> createState() => _PostLoadScreenState();
+  ConsumerState<PostLoadScreen> createState() => _PostLoadScreenState();
 }
 
-class _PostLoadScreenState extends State<PostLoadScreen> {
+class _PostLoadScreenState extends ConsumerState<PostLoadScreen> {
   final _formKey = GlobalKey<FormState>();
   final _originController = TextEditingController(text: 'Lahore (Badami Bagh)');
   final _destController = TextEditingController(text: 'Karachi (Port Qasim)');
   final _weightController = TextEditingController(text: '35');
   final _heightController = TextEditingController(text: '15.2');
   final _rateController = TextEditingController(text: '245000');
+  final _notesController = TextEditingController();
   String _selectedVehicleId = '22_wheeler';
   String _goodsType = 'general';
   bool _isSubmitting = false;
@@ -29,6 +35,7 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
     _weightController.dispose();
     _heightController.dispose();
     _rateController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -36,16 +43,44 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
     final l10n = AppLocalizations.of(context)!;
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isSubmitting = true);
-      await Future.delayed(const Duration(milliseconds: 700));
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: AppColors.success,
-            content: Text(l10n.postLoadSuccess),
-          ),
+      try {
+        final service = ref.read(firebaseServiceProvider);
+        final currentUid = service.auth?.currentUser?.uid ?? 'guest-owner';
+        final newLoad = LoadModel(
+          id: '',
+          ownerId: currentUid,
+          originCity: _originController.text.trim(),
+          destinationCity: _destController.text.trim(),
+          vehicleTypeRequired: _selectedVehicleId,
+          weightTons: double.tryParse(_weightController.text.trim()) ?? 10.0,
+          heightFt: double.tryParse(_heightController.text.trim()),
+          goodsType: _goodsType,
+          offeredRatePkr: double.tryParse(_rateController.text.trim()) ?? 50000.0,
+          createdAt: DateTime.now(),
         );
-        Navigator.pop(context);
+
+        await service.postLoad(newLoad);
+
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: AppColors.success,
+              content: Text(l10n.postLoadSuccess),
+            ),
+          );
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: AppColors.danger,
+              content: Text('Error: $e'),
+            ),
+          );
+        }
       }
     }
   }
@@ -171,6 +206,41 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
                   prefixIcon: const Icon(Icons.payments_outlined, color: AppColors.success),
                 ),
                 validator: (val) => val == null || val.isEmpty ? l10n.requiredField : null,
+              ),
+
+              const SizedBox(height: 16),
+
+              // Dictated Cargo Notes / Special Instructions
+              TextFormField(
+                controller: _notesController,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  labelText: isUrdu ? 'کارگو نوٹس اور ہدایات (آواز سے لکھیں)' : 'Cargo Notes (Voice dictation supported)',
+                  hintText: isUrdu ? 'مائیکروفون دبا کر بولیں...' : 'Tap mic to dictate notes...',
+                  prefixIcon: const Icon(Icons.note_alt_outlined, color: AppColors.primary),
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      VoiceInputButton(
+                        controller: _notesController,
+                        languageCode: isUrdu ? 'ur' : 'en',
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.translate, size: 20, color: AppColors.accent),
+                        tooltip: isUrdu ? 'ترجمہ کریں' : 'Translate Note',
+                        onPressed: () {
+                          if (_notesController.text.isNotEmpty) {
+                            final translated = TranslationService().translate(
+                              text: _notesController.text,
+                              targetLanguageCode: isUrdu ? 'ur' : 'en',
+                            );
+                            setState(() => _notesController.text = translated);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
               ),
 
               const SizedBox(height: 28),

@@ -1,1 +1,34 @@
-{"flutter":{"platforms":{"dart":{"lib/firebase_options.dart":{"projectId":"trucker-s-website","configurations":{"web":"1:626967020032:web:f354683bcd369b8c660ee5"}}}}}}
+{
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "trucker-s-website",
+          "configurations": {
+            "web": "1:626967020032:web:f354683bcd369b8c660ee5"
+          }
+        }
+      }
+    }
+  }
+}

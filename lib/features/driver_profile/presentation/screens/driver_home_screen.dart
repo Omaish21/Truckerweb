@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../../core/services/firebase_service.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
@@ -21,6 +23,7 @@ class DriverHomeScreen extends ConsumerStatefulWidget {
 class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   bool _isOnline = true;
   final bool _showSimulatedBridgeAlert = true;
+  bool _isUploadingDoc = false;
 
   final _mockBridgeAlert = const BridgeClearanceAlert(
     bridgeName: 'Railway Overhead Bridge #12',
@@ -31,11 +34,58 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     isCritical: true,
   );
 
+  Future<void> _pickAndUploadDocument(String docType) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
+    if (pickedFile == null) return;
+
+    setState(() => _isUploadingDoc = true);
+    try {
+      final bytes = await pickedFile.readAsBytes();
+      final user = ref.read(authProvider).userProfile;
+      final uid = user?.id ?? 'usr-current';
+      final fileName = pickedFile.name.replaceAll(' ', '_');
+
+      await ref.read(firebaseServiceProvider).uploadDriverDocument(
+            uid: uid,
+            docType: docType,
+            fileBytes: bytes,
+            fileName: fileName,
+          );
+
+      if (user != null) {
+        final updated = user.copyWith(verificationStatus: 'pending');
+        ref.read(authProvider.notifier).updateUserProfile(updated);
+      }
+
+      if (mounted) {
+        setState(() => _isUploadingDoc = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: AppColors.success,
+            content: Text('Document uploaded successfully! Verification pending.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploadingDoc = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.danger,
+            content: Text('Upload error: $e'),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final user = authState.userProfile;
     final l10n = AppLocalizations.of(context)!;
+    final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
 
     return Scaffold(
       appBar: AppBar(
@@ -154,6 +204,97 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                             setState(() => _isOnline = val);
                           },
                         ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Document Verification Card (Firebase Storage)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.shield_outlined, color: AppColors.accent, size: 20),
+                                const SizedBox(width: 6),
+                                Text(
+                                  isUrdu ? 'نادرا اور لائسنس تصدیق' : 'Driver Document Verification',
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                              ],
+                            ),
+                            VerifiedBadge(status: user?.verificationStatus ?? 'verified'),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          isUrdu
+                              ? 'ہائی ویلیو لوڈز حاصل کرنے کے لیے شناختی کارڈ اور ڈرائیونگ لائسنس اپ لوڈ کریں۔'
+                              : 'Upload CNIC, HTV/LTV license and vehicle book to get verified.',
+                          style: const TextStyle(color: Colors.white70, fontSize: 11),
+                        ),
+                        const SizedBox(height: 10),
+                        if (_isUploadingDoc)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: CircularProgressIndicator(color: AppColors.accent, strokeWidth: 2),
+                            ),
+                          )
+                        else
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    side: const BorderSide(color: Colors.white38),
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                  ),
+                                  icon: const Icon(Icons.badge_outlined, size: 14),
+                                  label: Text(isUrdu ? 'شناختی کارڈ' : 'CNIC', style: const TextStyle(fontSize: 11)),
+                                  onPressed: () => _pickAndUploadDocument('cnic'),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    side: const BorderSide(color: Colors.white38),
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                  ),
+                                  icon: const Icon(Icons.drive_eta, size: 14),
+                                  label: Text(isUrdu ? 'لائسنس' : 'License', style: const TextStyle(fontSize: 11)),
+                                  onPressed: () => _pickAndUploadDocument('license'),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    side: const BorderSide(color: Colors.white38),
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                  ),
+                                  icon: const Icon(Icons.description_outlined, size: 14),
+                                  label: Text(isUrdu ? 'گاڑی بک' : 'Registration', style: const TextStyle(fontSize: 11)),
+                                  onPressed: () => _pickAndUploadDocument('registration'),
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ),

@@ -20,3 +20,4 @@ macos/Flutter/ephemeral/
 
 # Local configuration
 **/local.properties
+.firebase/

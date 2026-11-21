@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/services/audio_alert_service.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/route_models.dart';
@@ -12,6 +13,18 @@ class BridgeAlertBanner extends StatelessWidget {
     required this.alert,
     this.onRerouteTap,
   });
+
+  void _speakAlert(BuildContext context) {
+    final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
+    final alertSpeech = isUrdu
+        ? 'خبردار! آگے کم اونچائی والا پل ہے: ${alert.bridgeName}، اونچائی ${alert.clearanceHeightFt} فٹ، آپ کے ٹرک کی اونچائی ${alert.truckHeightFt} فٹ ہے۔ براہ کرم متبادل راستہ اختیار کریں۔'
+        : 'Warning! Critical low bridge clearance ahead: ${alert.bridgeName}, clearance ${alert.clearanceHeightFt} feet, your truck is ${alert.truckHeightFt} feet. Please reroute immediately.';
+    
+    AudioAlertService().speakWarning(
+      text: alertSpeech,
+      languageCode: isUrdu ? 'ur' : 'en',
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +78,11 @@ class BridgeAlertBanner extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.volume_up, color: AppColors.accent, size: 28),
+                tooltip: 'Listen Alert (سنیں)',
+                onPressed: () => _speakAlert(context),
               ),
             ],
           ),

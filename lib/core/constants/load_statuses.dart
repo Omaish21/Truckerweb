@@ -1,5 +1,6 @@
 class LoadStatus {
   static const String open = 'open';
+  static const String bidding = 'bidding';
   static const String assigned = 'assigned';
   static const String inTransit = 'in_transit';
   static const String delivered = 'delivered';
@@ -9,6 +10,8 @@ class LoadStatus {
     switch (status) {
       case open:
         return 'Open / دستیاب';
+      case bidding:
+        return 'Bidding / بولیاں جاری';
       case assigned:
         return 'Assigned / تفویض شدہ';
       case inTransit:

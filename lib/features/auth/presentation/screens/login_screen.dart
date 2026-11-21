@@ -17,12 +17,17 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _phoneController = TextEditingController(text: '0300 1234567');
   final _otpController = TextEditingController();
+  final _emailController = TextEditingController(text: 'driver@trucklink.pk');
+  final _passwordController = TextEditingController(text: '123456');
   final _formKey = GlobalKey<FormState>();
+  int _selectedTab = 0; // 0: Phone OTP, 1: Email/Password
 
   @override
   void dispose() {
     _phoneController.dispose();
     _otpController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -40,10 +45,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  void _handleEmailLogin() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      final success = await ref.read(authProvider.notifier).signInWithEmailPassword(
+            _emailController.text.trim(),
+            _passwordController.text.trim(),
+          );
+      if (success && mounted) {
+        context.go('/role-selection');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final l10n = AppLocalizations.of(context)!;
+    final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
 
     return Scaffold(
       backgroundColor: AppColors.primary,
@@ -112,7 +130,110 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          if (!authState.isOtpSent) ...[
+                          // Tab selector: Phone OTP vs Email
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 20),
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _selectedTab = 0),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: _selectedTab == 0 ? AppColors.primary : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        isUrdu ? 'فون نمبر (OTP)' : 'Phone OTP',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: _selectedTab == 0 ? Colors.white : Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () => setState(() => _selectedTab = 1),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: _selectedTab == 1 ? AppColors.primary : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        isUrdu ? 'ای میل / پاس ورڈ' : 'Email / Pass',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: _selectedTab == 1 ? Colors.white : Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          if (_selectedTab == 1) ...[
+                            Text(
+                              isUrdu ? 'ای میل سے لاگ ان کریں' : 'Email Sign In',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimaryLight,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              decoration: InputDecoration(
+                                prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary),
+                                labelText: isUrdu ? 'ای میل ایڈریس' : 'Email Address',
+                              ),
+                              validator: (val) => val == null || !val.contains('@') ? 'Valid email required' : null,
+                            ),
+                            const SizedBox(height: 14),
+                            TextFormField(
+                              controller: _passwordController,
+                              obscureText: true,
+                              decoration: InputDecoration(
+                                prefixIcon: const Icon(Icons.lock_outline, color: AppColors.primary),
+                                labelText: isUrdu ? 'پاس ورڈ' : 'Password',
+                              ),
+                              validator: (val) => val == null || val.length < 6 ? 'Min 6 characters' : null,
+                            ),
+                            if (authState.errorMessage != null) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                authState.errorMessage!,
+                                style: const TextStyle(color: AppColors.danger, fontSize: 13),
+                              ),
+                            ],
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: authState.isLoading ? null : _handleEmailLogin,
+                              child: authState.isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : Text(isUrdu ? 'لاگ ان کریں' : 'Sign In'),
+                            ),
+                          ] else if (!authState.isOtpSent) ...[
                             Text(
                               l10n.loginTitle,
                               style: const TextStyle(

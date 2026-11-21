@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/report_categories.dart';
+import '../../../../core/services/audio_alert_service.dart';
+import '../../../../core/services/firebase_service.dart';
+import '../../../../core/services/translation_service.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
+import '../../../../core/widgets/voice_input_button.dart';
 import '../../../../l10n/app_localizations.dart';
 
-class ReportConditionScreen extends StatefulWidget {
+class ReportConditionScreen extends ConsumerStatefulWidget {
   const ReportConditionScreen({super.key});
 
   @override
-  State<ReportConditionScreen> createState() => _ReportConditionScreenState();
+  ConsumerState<ReportConditionScreen> createState() => _ReportConditionScreenState();
 }
 
-class _ReportConditionScreenState extends State<ReportConditionScreen> {
+class _ReportConditionScreenState extends ConsumerState<ReportConditionScreen> {
   String _selectedCategoryId = 'broken';
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController(text: 'N-5 Highway, Near Okara Bypass (30.8138° N, 73.4534° E)');
@@ -27,16 +32,33 @@ class _ReportConditionScreenState extends State<ReportConditionScreen> {
   void _handleSubmit() async {
     final l10n = AppLocalizations.of(context)!;
     setState(() => _isSubmitting = true);
-    await Future.delayed(const Duration(milliseconds: 700));
-    if (mounted) {
-      setState(() => _isSubmitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.success,
-          content: Text(l10n.hazardBroadcastSuccess),
-        ),
+    try {
+      final service = ref.read(firebaseServiceProvider);
+      await service.reportHazard(
+        categoryId: _selectedCategoryId,
+        location: _locationController.text.trim(),
+        description: _descriptionController.text.trim(),
       );
-      Navigator.pop(context);
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.success,
+            content: Text(l10n.hazardBroadcastSuccess),
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.danger,
+            content: Text('Error: $e'),
+          ),
+        );
+      }
     }
   }
 
@@ -101,8 +123,42 @@ class _ReportConditionScreenState extends State<ReportConditionScreen> {
               maxLines: 4,
               decoration: InputDecoration(
                 labelText: l10n.descriptionLabel,
-                hintText: l10n.descriptionHint,
+                hintText: isUrdu ? 'مائیکروفون دبا کر خطرہ یا سڑک کی صورتحال بولیں...' : l10n.descriptionHint,
                 alignLabelWithHint: true,
+                suffixIcon: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    VoiceInputButton(
+                      controller: _descriptionController,
+                      languageCode: isUrdu ? 'ur' : 'en',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.translate, size: 20, color: AppColors.primary),
+                      tooltip: isUrdu ? 'ترجمہ کریں' : 'Translate Note',
+                      onPressed: () {
+                        if (_descriptionController.text.isNotEmpty) {
+                          final trans = TranslationService().translate(
+                            text: _descriptionController.text,
+                            targetLanguageCode: isUrdu ? 'ur' : 'en',
+                          );
+                          setState(() => _descriptionController.text = trans);
+                        }
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.volume_up, size: 20, color: AppColors.accent),
+                      tooltip: isUrdu ? 'سنیں' : 'Listen',
+                      onPressed: () {
+                        if (_descriptionController.text.isNotEmpty) {
+                          AudioAlertService().speakWarning(
+                            text: _descriptionController.text,
+                            languageCode: isUrdu ? 'ur' : 'en',
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
 

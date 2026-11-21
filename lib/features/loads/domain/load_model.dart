@@ -13,8 +13,11 @@ class LoadModel {
   final String rateType; // 'fixed', 'per_ton', 'negotiable'
   final DateTime? pickupWindowStart;
   final DateTime? pickupWindowEnd;
-  final String status; // 'open', 'assigned', 'in_transit', 'delivered', 'cancelled'
+  final String status; // 'open', 'bidding', 'assigned', 'in_transit', 'delivered', 'cancelled'
   final DateTime createdAt;
+  final String? assignedDriverId;
+  final String? contactPhone;
+  final int bidsCount;
 
   const LoadModel({
     required this.id,
@@ -33,21 +36,24 @@ class LoadModel {
     this.pickupWindowEnd,
     this.status = 'open',
     required this.createdAt,
+    this.assignedDriverId,
+    this.contactPhone,
+    this.bidsCount = 0,
   });
 
   factory LoadModel.fromJson(Map<String, dynamic> json) {
     return LoadModel(
-      id: json['id'] as String,
-      ownerId: json['owner_id'] as String,
-      originCity: json['origin_city'] as String,
-      destinationCity: json['destination_city'] as String,
-      vehicleTypeRequired: json['vehicle_type_required'] as String,
-      weightTons: (json['weight_tons'] as num).toDouble(),
+      id: json['id'] as String? ?? '',
+      ownerId: json['owner_id'] as String? ?? '',
+      originCity: json['origin_city'] as String? ?? '',
+      destinationCity: json['destination_city'] as String? ?? '',
+      vehicleTypeRequired: json['vehicle_type_required'] as String? ?? '22_wheeler',
+      weightTons: (json['weight_tons'] as num?)?.toDouble() ?? 10.0,
       lengthFt: (json['length_ft'] as num?)?.toDouble(),
       widthFt: (json['width_ft'] as num?)?.toDouble(),
       heightFt: (json['height_ft'] as num?)?.toDouble(),
       goodsType: json['goods_type'] as String?,
-      offeredRatePkr: (json['offered_rate_pkr'] as num).toDouble(),
+      offeredRatePkr: (json['offered_rate_pkr'] as num?)?.toDouble() ?? 50000.0,
       rateType: json['rate_type'] as String? ?? 'fixed',
       pickupWindowStart: json['pickup_window_start'] != null
           ? DateTime.tryParse(json['pickup_window_start'] as String)
@@ -59,6 +65,9 @@ class LoadModel {
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
+      assignedDriverId: json['assigned_driver_id'] as String?,
+      contactPhone: json['contact_phone'] as String? ?? '+923001234567',
+      bidsCount: (json['bids_count'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -80,6 +89,53 @@ class LoadModel {
       'pickup_window_end': pickupWindowEnd?.toIso8601String(),
       'status': status,
       'created_at': createdAt.toIso8601String(),
+      'assigned_driver_id': assignedDriverId,
+      'contact_phone': contactPhone,
+      'bids_count': bidsCount,
     };
+  }
+
+  LoadModel copyWith({
+    String? id,
+    String? ownerId,
+    String? originCity,
+    String? destinationCity,
+    String? vehicleTypeRequired,
+    double? weightTons,
+    double? lengthFt,
+    double? widthFt,
+    double? heightFt,
+    String? goodsType,
+    double? offeredRatePkr,
+    String? rateType,
+    DateTime? pickupWindowStart,
+    DateTime? pickupWindowEnd,
+    String? status,
+    DateTime? createdAt,
+    String? assignedDriverId,
+    String? contactPhone,
+    int? bidsCount,
+  }) {
+    return LoadModel(
+      id: id ?? this.id,
+      ownerId: ownerId ?? this.ownerId,
+      originCity: originCity ?? this.originCity,
+      destinationCity: destinationCity ?? this.destinationCity,
+      vehicleTypeRequired: vehicleTypeRequired ?? this.vehicleTypeRequired,
+      weightTons: weightTons ?? this.weightTons,
+      lengthFt: lengthFt ?? this.lengthFt,
+      widthFt: widthFt ?? this.widthFt,
+      heightFt: heightFt ?? this.heightFt,
+      goodsType: goodsType ?? this.goodsType,
+      offeredRatePkr: offeredRatePkr ?? this.offeredRatePkr,
+      rateType: rateType ?? this.rateType,
+      pickupWindowStart: pickupWindowStart ?? this.pickupWindowStart,
+      pickupWindowEnd: pickupWindowEnd ?? this.pickupWindowEnd,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      assignedDriverId: assignedDriverId ?? this.assignedDriverId,
+      contactPhone: contactPhone ?? this.contactPhone,
+      bidsCount: bidsCount ?? this.bidsCount,
+    );
   }
 }
