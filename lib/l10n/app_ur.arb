@@ -1,0 +1,18 @@
+{
+  "@@locale": "ur",
+  "appTitle": "ٹرک لنک پاکستان",
+  "driverRole": "ڈرائیور (ملازمت تلاش کنندہ)",
+  "ownerRole": "گاڑی کا مالک / ٹرانسپورٹر",
+  "loginTitle": "فون نمبر سے لاگ ان کریں",
+  "phoneNumberHint": "۰۳۰۰ ۱۲۳۴۵۶۷",
+  "sendOtp": "تصدیقی کوڈ بھیجیں",
+  "verifyOtp": "کوڈ کی تصدیق کریں",
+  "enterOtp": "۶ ہندسوں کا کوڈ درج کریں",
+  "routeIntelligence": "راستے کی معلومات و الرٹس",
+  "bridgeHeightWarning": "پل کی اونچائی کا انتباہ",
+  "cityTimingTitle": "شہروں میں داخلے کے اوقات",
+  "roadReportsTitle": "سڑک کی خرابی و خطرات کی اطلاعات",
+  "nearbyDrivers": "قریبی دستیاب ڈرائیورز",
+  "postLoadTitle": "نیا مال / لوڈ بک کریں",
+  "activeTrips": "جاری سفر"
+}

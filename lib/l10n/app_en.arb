@@ -1,0 +1,18 @@
+{
+  "@@locale": "en",
+  "appTitle": "TruckLink PK",
+  "driverRole": "Driver (Job Seeker)",
+  "ownerRole": "Fleet Owner / Shipper",
+  "loginTitle": "Login with Phone",
+  "phoneNumberHint": "03XX XXXXXXX",
+  "sendOtp": "Send Verification Code",
+  "verifyOtp": "Verify Code",
+  "enterOtp": "Enter 6-digit OTP",
+  "routeIntelligence": "Route Intelligence",
+  "bridgeHeightWarning": "Bridge Clearance Alert",
+  "cityTimingTitle": "City Entry Timing Windows",
+  "roadReportsTitle": "Road Hazard Reports",
+  "nearbyDrivers": "Nearby Drivers",
+  "postLoadTitle": "Post a Load",
+  "activeTrips": "Active Trips"
+}
