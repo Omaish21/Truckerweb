@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
-import '../../../../core/widgets/verified_badge.dart';
+import '../../../../core/widgets/logistics_video_dialog.dart';
+import '../../../../core/widgets/radar_pulse.dart';
 import '../../../../core/widgets/rating_stars.dart';
+import '../../../../core/widgets/verified_badge.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../route_intelligence/domain/route_models.dart';
@@ -173,7 +176,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Availability Switch
+                  // Availability Switch with Animated Radar GPS
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     decoration: BoxDecoration(
@@ -185,12 +188,12 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(
-                              _isOnline ? Icons.circle : Icons.circle_outlined,
-                              size: 14,
-                              color: _isOnline ? AppColors.success : Colors.grey,
+                            RadarPulse(
+                              size: 20,
+                              color: AppColors.success,
+                              isLive: _isOnline,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Text(
                               _isOnline ? l10n.onlineStatus : l10n.offlineStatus,
                               style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
@@ -202,6 +205,60 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                           activeThumbColor: AppColors.success,
                           onChanged: (val) {
                             setState(() => _isOnline = val);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // Motorway Police 130 & Video Showcase Quick Banner
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.white12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        InkWell(
+                          onTap: () => launchUrl(Uri.parse('tel:130')),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.danger,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.emergency, color: Colors.white, size: 14),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isUrdu ? 'ہائی وے ہیلپ لائن: 130' : 'NHMP Helpline: 130',
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                        TextButton.icon(
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.accent,
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          ),
+                          icon: const Icon(Icons.play_circle_filled, size: 16),
+                          label: Text(
+                            isUrdu ? 'ویڈیو گائیڈ' : 'Platform Video',
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (_) => const LogisticsVideoDialog(),
+                            );
                           },
                         ),
                       ],

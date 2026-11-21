@@ -81,7 +81,8 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // Check for presence of Dashboard title or brand text
       expect(find.textContaining('Driver Dashboard'), findsOneWidget);
