@@ -313,4 +313,43 @@ class AppLocalizationsUr extends AppLocalizations {
   @override
   String get hazardBroadcastSuccess =>
       'اطلاع کامیابی سے جمع ہو گئی اور ۲۰ کلومیٹر کے دائرے میں تمام ڈرائیورز کو الرٹ بھیج دیا گیا!';
+
+  @override
+  String get enableAlerts => 'الرٹس آن کریں';
+
+  @override
+  String get alertsActive => 'الرٹس فعال ہیں';
+
+  @override
+  String get pushNotificationsTitle => 'پش نوٹیفکیشنز';
+
+  @override
+  String get notificationsPermissionPrompt =>
+      'نئی بولیوں، منظور شدہ آفرز اور سڑک کے خطرات کے فوری براؤزر نوٹیفکیشن آن کریں۔';
+
+  @override
+  String get allowNotificationsButton => 'نوٹیفکیشن کی اجازت دیں';
+
+  @override
+  String get notificationsEnabledSuccess =>
+      'پش نوٹیفکیشن کامیابی سے آن کر دیے گئے!';
+
+  @override
+  String get notificationsDenied =>
+      'نوٹیفکیشن بلاک ہیں۔ براؤزر کی سیٹنگز سے اجازت دیں۔';
+
+  @override
+  String get newBidNotification => 'نئی بولی موصول ہوئی';
+
+  @override
+  String get bidAcceptedNotification => 'بولی منظور ہو گئی!';
+
+  @override
+  String get roadHazardAlert => 'سڑک پر خطرے کا الرٹ';
+
+  @override
+  String get markAsRead => 'پڑھا ہوا نشان زد کریں';
+
+  @override
+  String get noNewNotifications => 'کوئی نیا نوٹیفکیشن نہیں';
 }

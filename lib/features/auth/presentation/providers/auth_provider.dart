@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../domain/user_profile.dart';
 
 class AuthState {
@@ -50,10 +51,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return null;
     }
   }
+  final Ref? _ref;
   ConfirmationResult? _webConfirmationResult;
 
-  AuthNotifier() : super(const AuthState()) {
+  AuthNotifier([this._ref]) : super(const AuthState()) {
     _initCurrentUser();
+  }
+
+  void _syncFcmToken(String uid) {
+    try {
+      _ref?.read(notificationServiceProvider).requestPermissionAndToken(uid: uid);
+    } catch (_) {}
   }
 
   void _initCurrentUser() {
@@ -72,6 +80,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
             totalRatings: 34,
           ),
         );
+        _syncFcmToken(user.uid);
       }
     } catch (_) {}
   }
@@ -152,6 +161,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           totalRatings: 34,
         );
         state = state.copyWith(isLoading: false, userProfile: profile);
+        _syncFcmToken(profile.id);
         return true;
       }
 
@@ -169,6 +179,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           totalRatings: 34,
         );
         state = state.copyWith(isLoading: false, userProfile: profile);
+        _syncFcmToken(profile.id);
         return true;
       } else {
         state = state.copyWith(
@@ -220,6 +231,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           totalRatings: 18,
         );
         state = state.copyWith(isLoading: false, userProfile: profile);
+        _syncFcmToken(profile.id);
         return true;
       }
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
@@ -260,6 +272,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           totalRatings: 1,
         );
         state = state.copyWith(isLoading: false, userProfile: profile);
+        _syncFcmToken(profile.id);
         return true;
       }
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
@@ -287,5 +300,5 @@ class AuthNotifier extends StateNotifier<AuthState> {
 }
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier();
+  return AuthNotifier(ref);
 });

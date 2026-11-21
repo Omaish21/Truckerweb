@@ -655,6 +655,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Road report submitted & broadcast to nearby drivers within 20km!'**
   String get hazardBroadcastSuccess;
+
+  /// No description provided for @enableAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Alerts'**
+  String get enableAlerts;
+
+  /// No description provided for @alertsActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts Active'**
+  String get alertsActive;
+
+  /// No description provided for @pushNotificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Push Notifications'**
+  String get pushNotificationsTitle;
+
+  /// No description provided for @notificationsPermissionPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable instant browser notifications for new bids, accepted offers, and critical road hazards.'**
+  String get notificationsPermissionPrompt;
+
+  /// No description provided for @allowNotificationsButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Notifications'**
+  String get allowNotificationsButton;
+
+  /// No description provided for @notificationsEnabledSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Push notifications successfully enabled!'**
+  String get notificationsEnabledSuccess;
+
+  /// No description provided for @notificationsDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications blocked. Please enable them in your browser settings.'**
+  String get notificationsDenied;
+
+  /// No description provided for @newBidNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'New Bid Received'**
+  String get newBidNotification;
+
+  /// No description provided for @bidAcceptedNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'Bid Accepted!'**
+  String get bidAcceptedNotification;
+
+  /// No description provided for @roadHazardAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'Road Hazard Alert'**
+  String get roadHazardAlert;
+
+  /// No description provided for @markAsRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as Read'**
+  String get markAsRead;
+
+  /// No description provided for @noNewNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'No new notifications'**
+  String get noNewNotifications;
 }
 
 class _AppLocalizationsDelegate

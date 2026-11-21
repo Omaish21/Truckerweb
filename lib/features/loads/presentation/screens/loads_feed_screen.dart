@@ -9,6 +9,7 @@ import '../../../../core/services/translation_service.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
+import '../../../../core/widgets/notification_bell_button.dart';
 import '../../../../core/widgets/truck_icon.dart';
 import '../../../../core/widgets/verified_badge.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -350,6 +351,7 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
       appBar: AppBar(
         title: Text(l10n.availableLoadsTitle),
         actions: [
+          const NotificationBellButton(),
           const Center(
             child: LanguageToggleButton(compact: true),
           ),

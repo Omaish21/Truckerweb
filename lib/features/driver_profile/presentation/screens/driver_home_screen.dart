@@ -8,6 +8,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../core/widgets/logistics_video_dialog.dart';
+import '../../../../core/widgets/notification_bell_button.dart';
 import '../../../../core/widgets/radar_pulse.dart';
 import '../../../../core/widgets/rating_stars.dart';
 import '../../../../core/widgets/verified_badge.dart';
@@ -94,6 +95,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
       appBar: AppBar(
         title: Text(l10n.driverDashboardTitle),
         actions: [
+          const NotificationBellButton(),
           const Center(
             child: LanguageToggleButton(compact: true),
           ),

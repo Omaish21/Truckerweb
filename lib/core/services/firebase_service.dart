@@ -189,6 +189,19 @@ class FirebaseService {
           'status': 'bidding',
         });
         debugPrint('Bid submitted successfully with ID: ${docRef.id}');
+
+        // Dispatch notification to load owner
+        try {
+          final loadDoc = await fs.collection('loads').doc(loadId).get();
+          final ownerId = loadDoc.data()?['owner_id'] ?? loadDoc.data()?['ownerId'] ?? 'owner-all';
+          await createNotification(
+            recipientId: ownerId,
+            title: 'New Bid: PKR ${bid.proposedRatePkr}',
+            body: '${bid.driverName} submitted a counter-offer for load',
+            type: 'new_bid',
+            loadId: loadId,
+          );
+        } catch (_) {}
       }
     } catch (e) {
       debugPrint('Firestore submitBid failed: $e');
@@ -215,6 +228,15 @@ class FirebaseService {
           'status': 'assigned',
           'assigned_driver_id': driverId,
         });
+
+        // Dispatch notification to assigned driver
+        await createNotification(
+          recipientId: driverId,
+          title: 'Bid Accepted / بولی منظور ہو گئی!',
+          body: 'Your bid on load #$loadId was accepted! Prepare for pickup.',
+          type: 'bid_accepted',
+          loadId: loadId,
+        );
       }
     } catch (e) {
       debugPrint('Firestore acceptBid failed: $e');
@@ -308,6 +330,94 @@ class FirebaseService {
     }
   }
 
+  Future<void> saveUserFcmToken(String uid, String token) async {
+    try {
+      final fs = firestore;
+      if (fs != null) {
+        // Save in users/{uid}
+        await fs.collection('users').doc(uid).set({
+          'fcmTokens': FieldValue.arrayUnion([token]),
+          'notificationsEnabled': true,
+          'updated_at': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        // Save in profiles/{uid}
+        await fs.collection('profiles').doc(uid).set({
+          'fcm_tokens': FieldValue.arrayUnion([token]),
+          'notifications_enabled': true,
+          'updated_at': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
+        debugPrint('[FCM] Token synced to Firestore for user $uid');
+      }
+    } catch (e) {
+      debugPrint('Firestore saveUserFcmToken failed: $e');
+    }
+  }
+
+  Future<void> createNotification({
+    required String recipientId,
+    required String title,
+    required String body,
+    required String type, // 'new_bid', 'bid_accepted', 'hazard_alert', 'bridge_alert'
+    String? loadId,
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      final fs = firestore;
+      if (fs != null) {
+        await fs.collection('notifications').add({
+          'recipientId': recipientId,
+          'title': title,
+          'body': body,
+          'type': type,
+          'loadId': loadId,
+          'metadata': metadata,
+          'read': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        debugPrint('[Notification Queue] Dispatched notification to $recipientId: $title');
+      }
+    } catch (e) {
+      debugPrint('Firestore createNotification failed: $e');
+    }
+  }
+
+  Stream<List<Map<String, dynamic>>> watchUserNotifications(String uid) {
+    try {
+      final fs = firestore;
+      if (fs == null) return Stream.value(<Map<String, dynamic>>[]);
+
+      return fs
+          .collection('notifications')
+          .where('recipientId', isEqualTo: uid)
+          .orderBy('createdAt', descending: true)
+          .snapshots()
+          .map((snapshot) => snapshot.docs.map((doc) {
+                final data = doc.data();
+                data['id'] = doc.id;
+                return data;
+              }).toList())
+          .handleError((e) {
+            debugPrint('Firestore watchUserNotifications error: $e');
+            return <Map<String, dynamic>>[];
+          });
+    } catch (e) {
+      return Stream.value(<Map<String, dynamic>>[]);
+    }
+  }
+
+  Future<void> markNotificationAsRead(String notifId) async {
+    try {
+      final fs = firestore;
+      if (fs != null) {
+        await fs.collection('notifications').doc(notifId).update({'read': true});
+      }
+    } catch (e) {
+      debugPrint('Firestore markNotificationAsRead failed: $e');
+    }
+  }
+
   Future<void> reportHazard({
     required String categoryId,
     required String location,
@@ -324,6 +434,14 @@ class FirebaseService {
           'created_at': DateTime.now().toIso8601String(),
           'reported_by': auth?.currentUser?.uid ?? 'anonymous',
         });
+
+        // Broadcast to notifications queue
+        await createNotification(
+          recipientId: 'broadcast',
+          title: 'Road Alert: $location',
+          body: '$categoryId hazard reported: $description',
+          type: 'hazard_alert',
+        );
       }
     } catch (e) {
       debugPrint('Firestore reportHazard failed: $e');

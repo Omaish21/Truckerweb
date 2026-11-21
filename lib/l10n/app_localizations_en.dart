@@ -312,4 +312,43 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get hazardBroadcastSuccess =>
       'Road report submitted & broadcast to nearby drivers within 20km!';
+
+  @override
+  String get enableAlerts => 'Enable Alerts';
+
+  @override
+  String get alertsActive => 'Alerts Active';
+
+  @override
+  String get pushNotificationsTitle => 'Push Notifications';
+
+  @override
+  String get notificationsPermissionPrompt =>
+      'Enable instant browser notifications for new bids, accepted offers, and critical road hazards.';
+
+  @override
+  String get allowNotificationsButton => 'Allow Notifications';
+
+  @override
+  String get notificationsEnabledSuccess =>
+      'Push notifications successfully enabled!';
+
+  @override
+  String get notificationsDenied =>
+      'Notifications blocked. Please enable them in your browser settings.';
+
+  @override
+  String get newBidNotification => 'New Bid Received';
+
+  @override
+  String get bidAcceptedNotification => 'Bid Accepted!';
+
+  @override
+  String get roadHazardAlert => 'Road Hazard Alert';
+
+  @override
+  String get markAsRead => 'Mark as Read';
+
+  @override
+  String get noNewNotifications => 'No new notifications';
 }

@@ -35,10 +35,34 @@ rules_version = '2';
 //      - ntn_number: string (optional, <= 30 chars)
 //      - fleet_size: int (optional, >= 0)
 //      - verified_business: bool (optional, immutable by regular users)
+//      - fcm_tokens / fcmTokens: list/string (optional, FCM device registration tokens)
+//      - notifications_enabled / notificationsEnabled: bool (optional)
 //      - created_at: string/timestamp (optional)
 //      - updated_at: string/timestamp (optional)
 //
-// 2. Collection: loads/{loadId}
+// 2. Collection: users/{userId}
+//    Document ID: Firebase Auth UID
+//    Fields:
+//      - id / uid: string (optional, matches auth.uid)
+//      - fcmTokens / fcm_tokens: list/string (optional)
+//      - notificationsEnabled / notifications_enabled: bool (optional)
+//      - verificationStatus / verification_status: string (optional)
+//      - cnic_url, license_url, registration_url: string (optional)
+//      - updated_at / updatedAt: string/timestamp (optional)
+//
+// 3. Collection: notifications/{notifId}
+//    Document ID: Auto-generated UUID or Firestore ID
+//    Fields:
+//      - recipientId: string (required, user ID of recipient)
+//      - title: string (required, 1-200 chars)
+//      - body: string (required, 1-1000 chars)
+//      - type: string (required, notification category)
+//      - read: bool (optional, read status flag)
+//      - data: map (optional, custom payload)
+//      - senderId: string (optional)
+//      - created_at: string/timestamp (optional)
+//
+// 4. Collection: loads/{loadId}
 //    Document ID: Auto-generated UUID or Firestore ID
 //    Fields:
 //      - id: string (optional)
@@ -59,7 +83,7 @@ rules_version = '2';
 //      - created_at: string/timestamp (required, immutable)
 //      - updated_at: string/timestamp (optional)
 //
-// 3. Collection: hazard_reports/{reportId}
+// 5. Collection: hazard_reports/{reportId}
 //    Document ID: Auto-generated UUID or Firestore ID
 //    Fields:
 //      - id: string (optional)
@@ -76,11 +100,11 @@ rules_version = '2';
 //      - created_at: string/timestamp (required, immutable)
 //      - expires_at: string/timestamp (optional)
 //
-// 4. Collection: city_timings/{timingId}
+// 6. Collection: city_timings/{timingId}
 //    Document ID: Auto-generated or identifier (e.g., 'karachi-heavy')
 //    Fields: Read-only reference curfews for heavy vehicle movement.
 //
-// 5. Collection: trips/{tripId}
+// 7. Collection: trips/{tripId}
 //    Document ID: Auto-generated UUID or Firestore ID
 //    Fields:
 //      - id: string (optional)
@@ -175,8 +199,18 @@ service cloud.firestore {
         'company_name', 'ntn_number', 'fleet_size', 'verified_business',
         'cnic_url', 'license_url', 'registration_url', 'cnic_front_url',
         'verification_status', 'verificationStatus',
+        'fcm_tokens', 'fcmTokens', 'notifications_enabled', 'notificationsEnabled',
         'created_at', 'updated_at'
       ];
+    }
+
+    // Helper validator for FCM tokens and notification preferences
+    function isValidNotificationPrefs(data) {
+      return (!('fcm_tokens' in data) || (data.fcm_tokens is list && data.fcm_tokens.size() <= 20) || (data.fcm_tokens is string && data.fcm_tokens.size() <= 1000)) &&
+        (!('fcmTokens' in data) || (data.fcmTokens is list && data.fcmTokens.size() <= 20) || (data.fcmTokens is string && data.fcmTokens.size() <= 1000)) &&
+        (!('notifications_enabled' in data) || data.notifications_enabled is bool) &&
+        (!('notificationsEnabled' in data) || data.notificationsEnabled is bool) &&
+        isValidTimestampOrString('updated_at');
     }
 
     // Domain validator for user profile schema
@@ -204,6 +238,10 @@ service cloud.firestore {
         isValidOptionalString('ntn_number', 1, 30) &&
         (!('fleet_size' in data) || (data.fleet_size is int && data.fleet_size >= 0 && data.fleet_size <= 10000)) &&
         (!('verified_business' in data) || data.verified_business is bool) &&
+        (!('fcm_tokens' in data) || (data.fcm_tokens is list && data.fcm_tokens.size() <= 20) || (data.fcm_tokens is string && data.fcm_tokens.size() <= 1000)) &&
+        (!('fcmTokens' in data) || (data.fcmTokens is list && data.fcmTokens.size() <= 20) || (data.fcmTokens is string && data.fcmTokens.size() <= 1000)) &&
+        (!('notifications_enabled' in data) || data.notifications_enabled is bool) &&
+        (!('notificationsEnabled' in data) || data.notificationsEnabled is bool) &&
         isValidTimestampOrString('created_at') &&
         isValidTimestampOrString('updated_at');
     }
@@ -255,8 +293,16 @@ service cloud.firestore {
       allow create: if isAuthorizedProfileCreate(userId, request.resource.data) &&
         isValidProfile(request.resource.data);
 
-      allow update: if isAuthorizedProfileUpdate(userId, request.resource.data) &&
-        isValidProfile(request.resource.data);
+      // Allow owners to update their own profile or update their notification/FCM tokens
+      allow update: if isOwner(userId) && (
+        // Dedicated FCM token or notification settings update
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+           'fcm_tokens', 'fcmTokens', 'notifications_enabled', 'notificationsEnabled', 'updated_at'
+         ]) && isValidNotificationPrefs(request.resource.data)) ||
+        // General profile update
+        (isAuthorizedProfileUpdate(userId, request.resource.data) &&
+         isValidProfile(request.resource.data))
+      );
 
       allow delete: if isAdmin();
 
@@ -268,7 +314,137 @@ service cloud.firestore {
     }
 
     // ===============================================================
-    // Collection 2: Loads
+    // Collection 2: Users (User Account and Device Registrations)
+    // ===============================================================
+
+    function allowedUserFields() {
+      return [
+        'id', 'uid', 'email', 'phone', 'role', 'full_name', 'fullName',
+        'fcmTokens', 'fcm_tokens', 'notificationsEnabled', 'notifications_enabled',
+        'verificationStatus', 'verification_status',
+        'cnic_url', 'license_url', 'registration_url', 'cnic_front_url',
+        'photo_url', 'photoUrl',
+        'created_at', 'createdAt', 'updated_at', 'updatedAt'
+      ];
+    }
+
+    function isValidUserData(data) {
+      return hasOnlyAllowedFields(allowedUserFields()) &&
+        isValidOptionalString('id', 1, 128) &&
+        isValidOptionalString('uid', 1, 128) &&
+        isValidOptionalString('email', 3, 254) &&
+        isValidOptionalString('phone', 7, 30) &&
+        (!('role' in data) || (data.role is string && (data.role in ['driver', 'owner', 'admin']))) &&
+        isValidOptionalString('full_name', 1, 100) &&
+        isValidOptionalString('fullName', 1, 100) &&
+        (!('fcmTokens' in data) || (data.fcmTokens is list && data.fcmTokens.size() <= 20) || (data.fcmTokens is string && data.fcmTokens.size() <= 1000)) &&
+        (!('fcm_tokens' in data) || (data.fcm_tokens is list && data.fcm_tokens.size() <= 20) || (data.fcm_tokens is string && data.fcm_tokens.size() <= 1000)) &&
+        (!('notificationsEnabled' in data) || data.notificationsEnabled is bool) &&
+        (!('notifications_enabled' in data) || data.notifications_enabled is bool) &&
+        (!('verificationStatus' in data) || (data.verificationStatus is string && data.verificationStatus in ['unverified', 'pending', 'verified', 'rejected'])) &&
+        (!('verification_status' in data) || (data.verification_status is string && data.verification_status in ['unverified', 'pending', 'verified', 'rejected'])) &&
+        isValidOptionalString('cnic_url', 1, 1000) &&
+        isValidOptionalString('license_url', 1, 1000) &&
+        isValidOptionalString('registration_url', 1, 1000) &&
+        isValidOptionalString('cnic_front_url', 1, 1000) &&
+        isValidOptionalString('photo_url', 1, 1000) &&
+        isValidOptionalString('photoUrl', 1, 1000) &&
+        isValidTimestampOrString('created_at') &&
+        isValidTimestampOrString('createdAt') &&
+        isValidTimestampOrString('updated_at') &&
+        isValidTimestampOrString('updatedAt');
+    }
+
+    function isAuthorizedUserWrite(userId, data) {
+      return isOwner(userId) &&
+        (isAdmin() || (
+          (!('role' in data) || data.role in ['driver', 'owner']) &&
+          (!('verificationStatus' in data) || data.verificationStatus != 'verified' || (resource != null && resource.data.get('verificationStatus', '') == 'verified')) &&
+          (!('verification_status' in data) || data.verification_status != 'verified' || (resource != null && resource.data.get('verification_status', '') == 'verified'))
+        ));
+    }
+
+    match /users/{userId} {
+      // Authenticated user can read their own account record or admin
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Authenticated user can create or merge their own account document
+      allow create: if isAuthorizedUserWrite(userId, request.resource.data) &&
+        isValidUserData(request.resource.data);
+
+      // Authenticated user can update their own account document
+      allow update: if isAuthorizedUserWrite(userId, request.resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'uid']) &&
+        isValidUserData(request.resource.data);
+
+      // Deletions restricted strictly to administrators
+      allow delete: if isAdmin();
+    }
+
+    // ===============================================================
+    // Collection 3: Notifications (Push & In-App Alerts Queue)
+    // ===============================================================
+
+    function allowedNotificationFields() {
+      return [
+        'id', 'recipientId', 'recipient_id', 'title', 'body', 'type',
+        'read', 'is_read', 'data', 'payload', 'senderId', 'sender_id',
+        'created_at', 'updated_at'
+      ];
+    }
+
+    function isValidNotification(data) {
+      return hasOnlyAllowedFields(allowedNotificationFields()) &&
+        hasRequiredFields(['recipientId', 'title', 'body', 'type']) &&
+        data.recipientId is string && data.recipientId.size() > 0 && data.recipientId.size() <= 128 &&
+        data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+        data.body is string && data.body.size() > 0 && data.body.size() <= 1000 &&
+        data.type is string && data.type.size() > 0 && data.type.size() <= 50 &&
+        (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
+        (!('read' in data) || data.read is bool) &&
+        (!('is_read' in data) || data.is_read is bool) &&
+        (!('data' in data) || data.data is map) &&
+        (!('payload' in data) || data.payload is map) &&
+        isValidOptionalString('senderId', 1, 128) &&
+        isValidOptionalString('sender_id', 1, 128) &&
+        isValidOptionalString('recipient_id', 1, 128) &&
+        isValidTimestampOrString('created_at') &&
+        isValidTimestampOrString('updated_at');
+    }
+
+    match /notifications/{notifId} {
+      // Allow read if user is the recipient or admin
+      allow read: if isAuthenticated() &&
+        (resource.data.recipientId == request.auth.uid || isAdmin());
+
+      // Allow create if authenticated, recipientId/title/body are strings, and required fields exist
+      allow create: if isAuthenticated() &&
+        hasRequiredFields(['recipientId', 'title', 'body', 'type']) &&
+        request.resource.data.recipientId is string &&
+        request.resource.data.title is string &&
+        request.resource.data.body is string &&
+        isValidNotification(request.resource.data);
+
+      // Allow update if recipient and only modifying read status
+      allow update: if isAuthenticated() &&
+        resource.data.recipientId == request.auth.uid &&
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) ||
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'updated_at']) ||
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_read']) ||
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_read', 'updated_at'])
+        ) &&
+        (!('read' in request.resource.data) || request.resource.data.read is bool) &&
+        (!('is_read' in request.resource.data) || request.resource.data.is_read is bool) &&
+        isValidTimestampOrString('updated_at');
+
+      // Allow delete if recipient or admin
+      allow delete: if isAuthenticated() &&
+        (resource.data.recipientId == request.auth.uid || isAdmin());
+    }
+
+    // ===============================================================
+    // Collection 4: Loads
     // ===============================================================
 
     function allowedLoadFields() {
@@ -375,7 +551,7 @@ service cloud.firestore {
     }
 
     // ===============================================================
-    // Collection 3: Hazard Reports
+    // Collection 5: Hazard Reports
     // ===============================================================
 
     function allowedHazardFields() {
@@ -436,7 +612,7 @@ service cloud.firestore {
     }
 
     // ===============================================================
-    // Collection 4: City Timings
+    // Collection 6: City Timings
     // ===============================================================
 
     match /city_timings/{timingId} {
@@ -448,7 +624,7 @@ service cloud.firestore {
     }
 
     // ===============================================================
-    // Collection 5: Trips
+    // Collection 7: Trips
     // ===============================================================
 
     function allowedTripFields() {

@@ -144,5 +144,17 @@
   "descriptionLabel": "Additional Details & Landmark",
   "descriptionHint": "e.g., Deep crater on left lane, heavy waterlogging...",
   "submitHazardButton": "Broadcast Hazard Alert",
-  "hazardBroadcastSuccess": "Road report submitted & broadcast to nearby drivers within 20km!"
+  "hazardBroadcastSuccess": "Road report submitted & broadcast to nearby drivers within 20km!",
+  "enableAlerts": "Enable Alerts",
+  "alertsActive": "Alerts Active",
+  "pushNotificationsTitle": "Push Notifications",
+  "notificationsPermissionPrompt": "Enable instant browser notifications for new bids, accepted offers, and critical road hazards.",
+  "allowNotificationsButton": "Allow Notifications",
+  "notificationsEnabledSuccess": "Push notifications successfully enabled!",
+  "notificationsDenied": "Notifications blocked. Please enable them in your browser settings.",
+  "newBidNotification": "New Bid Received",
+  "bidAcceptedNotification": "Bid Accepted!",
+  "roadHazardAlert": "Road Hazard Alert",
+  "markAsRead": "Mark as Read",
+  "noNewNotifications": "No new notifications"
 }

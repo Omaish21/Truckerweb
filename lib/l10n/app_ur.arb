@@ -144,5 +144,17 @@
   "descriptionLabel": "مزید تفصیلات یا قریبی نشانی",
   "descriptionHint": "مثلاً بائیں لین میں گہرا گڑھا، سڑک پر پانی جمع ہے...",
   "submitHazardButton": "خطرے کی اطلاع قریبی ڈرائیورز کو بھیجیں",
-  "hazardBroadcastSuccess": "اطلاع کامیابی سے جمع ہو گئی اور ۲۰ کلومیٹر کے دائرے میں تمام ڈرائیورز کو الرٹ بھیج دیا گیا!"
+  "hazardBroadcastSuccess": "اطلاع کامیابی سے جمع ہو گئی اور ۲۰ کلومیٹر کے دائرے میں تمام ڈرائیورز کو الرٹ بھیج دیا گیا!",
+  "enableAlerts": "الرٹس آن کریں",
+  "alertsActive": "الرٹس فعال ہیں",
+  "pushNotificationsTitle": "پش نوٹیفکیشنز",
+  "notificationsPermissionPrompt": "نئی بولیوں، منظور شدہ آفرز اور سڑک کے خطرات کے فوری براؤزر نوٹیفکیشن آن کریں۔",
+  "allowNotificationsButton": "نوٹیفکیشن کی اجازت دیں",
+  "notificationsEnabledSuccess": "پش نوٹیفکیشن کامیابی سے آن کر دیے گئے!",
+  "notificationsDenied": "نوٹیفکیشن بلاک ہیں۔ براؤزر کی سیٹنگز سے اجازت دیں۔",
+  "newBidNotification": "نئی بولی موصول ہوئی",
+  "bidAcceptedNotification": "بولی منظور ہو گئی!",
+  "roadHazardAlert": "سڑک پر خطرے کا الرٹ",
+  "markAsRead": "پڑھا ہوا نشان زد کریں",
+  "noNewNotifications": "کوئی نیا نوٹیفکیشن نہیں"
 }
