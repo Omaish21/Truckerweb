@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
+import 'core/config/supabase_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Supabase initialization (safe try-catch fallback for offline & dev mode)
+  // Supabase initialization (safe fallback for offline & dev mode)
   try {
-    // Supabase.initialize(...) can be loaded here when SUPABASE_URL is provided
-  } catch (_) {
-    // Fallback to offline / mock repository
+    if (SupabaseConfig.url.isNotEmpty &&
+        SupabaseConfig.anonKey.isNotEmpty &&
+        !SupabaseConfig.anonKey.contains('dummy')) {
+      await Supabase.initialize(
+        url: SupabaseConfig.url,
+        // ignore: deprecated_member_use
+        anonKey: SupabaseConfig.anonKey,
+      );
+    }
+  } catch (e) {
+    debugPrint('Supabase initialization skipped / fallback to local mode: $e');
   }
 
   runApp(
