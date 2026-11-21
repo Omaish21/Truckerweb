@@ -6,7 +6,14 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData get lightTheme {
-    final baseTextTheme = GoogleFonts.interTextTheme();
+    final urduFallback = [
+      GoogleFonts.notoNastaliqUrdu().fontFamily ?? 'Noto Nastaliq Urdu',
+      'Noto Nastaliq Urdu',
+      'Urdu Typesetting',
+    ];
+    final baseTextTheme = GoogleFonts.interTextTheme().apply(
+      fontFamilyFallback: urduFallback,
+    );
 
     return ThemeData(
       useMaterial3: true,
@@ -28,25 +35,25 @@ class AppTheme {
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimaryLight,
-        ),
+        ).copyWith(fontFamilyFallback: urduFallback),
         displayMedium: GoogleFonts.outfit(
           fontSize: 26,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimaryLight,
-        ),
+        ).copyWith(fontFamilyFallback: urduFallback),
         titleLarge: GoogleFonts.outfit(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimaryLight,
-        ),
+        ).copyWith(fontFamilyFallback: urduFallback),
         bodyLarge: GoogleFonts.inter(
           fontSize: 16,
           color: AppColors.textPrimaryLight,
-        ),
+        ).copyWith(fontFamilyFallback: urduFallback),
         bodyMedium: GoogleFonts.inter(
           fontSize: 14,
           color: AppColors.textSecondaryLight,
-        ),
+        ).copyWith(fontFamilyFallback: urduFallback),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primary,
@@ -89,6 +96,17 @@ class AppTheme {
   }
 
   static ThemeData get darkTheme {
+    final urduFallback = [
+      GoogleFonts.notoNastaliqUrdu().fontFamily ?? 'Noto Nastaliq Urdu',
+      'Noto Nastaliq Urdu',
+      'Urdu Typesetting',
+    ];
+    final baseTextTheme = GoogleFonts.interTextTheme().apply(
+      fontFamilyFallback: urduFallback,
+      bodyColor: AppColors.textPrimaryDark,
+      displayColor: AppColors.textPrimaryDark,
+    );
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -104,6 +122,7 @@ class AppTheme {
         onSurface: AppColors.textPrimaryDark,
       ),
       fontFamily: GoogleFonts.inter().fontFamily,
+      textTheme: baseTextTheme,
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.surfaceDark,
         foregroundColor: Colors.white,
