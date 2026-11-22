@@ -156,5 +156,18 @@
   "bidAcceptedNotification": "بولی منظور ہو گئی!",
   "roadHazardAlert": "سڑک پر خطرے کا الرٹ",
   "markAsRead": "پڑھا ہوا نشان زد کریں",
-  "noNewNotifications": "کوئی نیا نوٹیفکیشن نہیں"
+  "noNewNotifications": "کوئی نیا نوٹیفکیشن نہیں",
+  "safetyAndAlerts": "حفاظت اور پل الرٹس",
+  "turnByTurnSteps": "راستے کی موڑ بہ موڑ ہدایات",
+  "costAndStops": "خرچ اور سہولیات",
+  "liveTraffic": "لائیو ٹریفک",
+  "satelliteView": "سیٹلائٹ",
+  "normalView": "سادہ نقشہ",
+  "criticalClearanceDanger": "خطرناک کم اونچائی والا پل!",
+  "clearanceSafe": "تمام پلوں کی اونچائی محفوظ ہے",
+  "speakAlert": "آواز میں سنیں",
+  "openGpsNavigation": "گوگل میپس پر نیویگیشن کھولیں",
+  "destinationCurfew": "منزل والے شہر میں داخلے کے اوقات",
+  "noHazardReports": "اس راستے پر کوئی سڑک کی خرابی رپورٹ نہیں ہوئی",
+  "noTurnStepsAvailable": "روٹ کی ہدایات تیار ہیں"
 }

@@ -351,4 +351,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noNewNotifications => 'No new notifications';
+
+  @override
+  String get safetyAndAlerts => 'Safety & Bridge Alerts';
+
+  @override
+  String get turnByTurnSteps => 'Turn-by-Turn Steps';
+
+  @override
+  String get costAndStops => 'Cost & Services';
+
+  @override
+  String get liveTraffic => 'Live Traffic';
+
+  @override
+  String get satelliteView => 'Satellite';
+
+  @override
+  String get normalView => 'Normal';
+
+  @override
+  String get criticalClearanceDanger => 'CRITICAL CLEARANCE DANGER';
+
+  @override
+  String get clearanceSafe => 'Route Clearance Verified Safe';
+
+  @override
+  String get speakAlert => 'Listen Alert';
+
+  @override
+  String get openGpsNavigation => 'Open Live GPS Navigation';
+
+  @override
+  String get destinationCurfew => 'Destination City Entry Curfew';
+
+  @override
+  String get noHazardReports =>
+      'No active road hazard reports along this corridor';
+
+  @override
+  String get noTurnStepsAvailable =>
+      'Navigation instructions ready upon route calculation';
 }

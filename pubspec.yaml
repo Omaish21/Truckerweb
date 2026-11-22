@@ -28,8 +28,8 @@ dependencies:
 
   # Utilities & Media
   http: ^1.2.0
-  flutter_map: ^7.0.2
-  latlong2: ^0.9.1
+  google_maps_flutter: ^2.9.0
+  pointer_interceptor: ^0.10.1+2
 
   # Data & Serialization
   shared_preferences: ^2.3.0

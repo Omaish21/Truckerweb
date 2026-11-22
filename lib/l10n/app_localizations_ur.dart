@@ -352,4 +352,43 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get noNewNotifications => 'کوئی نیا نوٹیفکیشن نہیں';
+
+  @override
+  String get safetyAndAlerts => 'حفاظت اور پل الرٹس';
+
+  @override
+  String get turnByTurnSteps => 'راستے کی موڑ بہ موڑ ہدایات';
+
+  @override
+  String get costAndStops => 'خرچ اور سہولیات';
+
+  @override
+  String get liveTraffic => 'لائیو ٹریفک';
+
+  @override
+  String get satelliteView => 'سیٹلائٹ';
+
+  @override
+  String get normalView => 'سادہ نقشہ';
+
+  @override
+  String get criticalClearanceDanger => 'خطرناک کم اونچائی والا پل!';
+
+  @override
+  String get clearanceSafe => 'تمام پلوں کی اونچائی محفوظ ہے';
+
+  @override
+  String get speakAlert => 'آواز میں سنیں';
+
+  @override
+  String get openGpsNavigation => 'گوگل میپس پر نیویگیشن کھولیں';
+
+  @override
+  String get destinationCurfew => 'منزل والے شہر میں داخلے کے اوقات';
+
+  @override
+  String get noHazardReports => 'اس راستے پر کوئی سڑک کی خرابی رپورٹ نہیں ہوئی';
+
+  @override
+  String get noTurnStepsAvailable => 'روٹ کی ہدایات تیار ہیں';
 }

@@ -727,6 +727,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No new notifications'**
   String get noNewNotifications;
+
+  /// No description provided for @safetyAndAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Safety & Bridge Alerts'**
+  String get safetyAndAlerts;
+
+  /// No description provided for @turnByTurnSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn-by-Turn Steps'**
+  String get turnByTurnSteps;
+
+  /// No description provided for @costAndStops.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost & Services'**
+  String get costAndStops;
+
+  /// No description provided for @liveTraffic.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Traffic'**
+  String get liveTraffic;
+
+  /// No description provided for @satelliteView.
+  ///
+  /// In en, this message translates to:
+  /// **'Satellite'**
+  String get satelliteView;
+
+  /// No description provided for @normalView.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get normalView;
+
+  /// No description provided for @criticalClearanceDanger.
+  ///
+  /// In en, this message translates to:
+  /// **'CRITICAL CLEARANCE DANGER'**
+  String get criticalClearanceDanger;
+
+  /// No description provided for @clearanceSafe.
+  ///
+  /// In en, this message translates to:
+  /// **'Route Clearance Verified Safe'**
+  String get clearanceSafe;
+
+  /// No description provided for @speakAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'Listen Alert'**
+  String get speakAlert;
+
+  /// No description provided for @openGpsNavigation.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Live GPS Navigation'**
+  String get openGpsNavigation;
+
+  /// No description provided for @destinationCurfew.
+  ///
+  /// In en, this message translates to:
+  /// **'Destination City Entry Curfew'**
+  String get destinationCurfew;
+
+  /// No description provided for @noHazardReports.
+  ///
+  /// In en, this message translates to:
+  /// **'No active road hazard reports along this corridor'**
+  String get noHazardReports;
+
+  /// No description provided for @noTurnStepsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation instructions ready upon route calculation'**
+  String get noTurnStepsAvailable;
 }
 
 class _AppLocalizationsDelegate

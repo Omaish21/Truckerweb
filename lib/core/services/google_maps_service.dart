@@ -1,7 +1,40 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'package:latlong2/latlong.dart';
+
+class RouteStep {
+  final String instruction;
+  final String maneuver;
+  final int distanceMeters;
+  final int durationSeconds;
+  final LatLng startLocation;
+  final LatLng endLocation;
+
+  const RouteStep({
+    required this.instruction,
+    required this.maneuver,
+    required this.distanceMeters,
+    required this.durationSeconds,
+    required this.startLocation,
+    required this.endLocation,
+  });
+
+  double get distanceKm => distanceMeters / 1000.0;
+
+  String get distanceText =>
+      distanceKm < 1.0 ? '${distanceMeters}m' : '${distanceKm.toStringAsFixed(1)}km';
+
+  String get durationText {
+    final mins = durationSeconds ~/ 60;
+    if (mins >= 60) {
+      final hrs = mins ~/ 60;
+      final remMins = mins % 60;
+      return '$hrs hr $remMins min';
+    }
+    return '$mins min';
+  }
+}
 
 class GoogleRoutePlan {
   final String origin;
@@ -10,6 +43,7 @@ class GoogleRoutePlan {
   final int durationSeconds;
   final String encodedPolyline;
   final List<LatLng> points;
+  final List<RouteStep> steps;
 
   const GoogleRoutePlan({
     required this.origin,
@@ -18,6 +52,7 @@ class GoogleRoutePlan {
     required this.durationSeconds,
     required this.encodedPolyline,
     required this.points,
+    this.steps = const [],
   });
 
   double get distanceKm => distanceMeters / 1000.0;
@@ -145,7 +180,8 @@ class GoogleMapsService {
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline',
+          'X-Goog-FieldMask':
+              'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.legs.steps.navigationInstruction,routes.legs.steps.distanceMeters,routes.legs.steps.staticDuration,routes.legs.steps.startLocation,routes.legs.steps.endLocation',
         },
         body: jsonEncode(body),
       );
@@ -162,6 +198,47 @@ class GoogleMapsService {
 
           final points = polyline.isNotEmpty ? decodePolyline(polyline) : <LatLng>[];
 
+          // Parse turn-by-turn navigation steps
+          final parsedSteps = <RouteStep>[];
+          final legs = firstRoute['legs'] as List<dynamic>?;
+          if (legs != null && legs.isNotEmpty) {
+            final stepsRaw = legs[0]['steps'] as List<dynamic>?;
+            if (stepsRaw != null) {
+              for (final s in stepsRaw) {
+                final instruction =
+                    s['navigationInstruction']?['instructions'] as String? ?? '';
+                final maneuver =
+                    s['navigationInstruction']?['maneuver'] as String? ?? 'MANEUVER_UNSPECIFIED';
+                final stepDist = (s['distanceMeters'] as num?)?.toInt() ?? 0;
+                final stepDurationStr =
+                    (s['staticDuration'] as String?)?.replaceAll('s', '') ?? '0';
+                final stepDurSecs = int.tryParse(stepDurationStr) ?? 0;
+
+                final startLat =
+                    (s['startLocation']?['latLng']?['latitude'] as num?)?.toDouble() ?? 0.0;
+                final startLng =
+                    (s['startLocation']?['latLng']?['longitude'] as num?)?.toDouble() ?? 0.0;
+                final endLat =
+                    (s['endLocation']?['latLng']?['latitude'] as num?)?.toDouble() ?? 0.0;
+                final endLng =
+                    (s['endLocation']?['latLng']?['longitude'] as num?)?.toDouble() ?? 0.0;
+
+                if (instruction.isNotEmpty) {
+                  parsedSteps.add(
+                    RouteStep(
+                      instruction: instruction,
+                      maneuver: maneuver,
+                      distanceMeters: stepDist,
+                      durationSeconds: stepDurSecs,
+                      startLocation: LatLng(startLat, startLng),
+                      endLocation: LatLng(endLat, endLng),
+                    ),
+                  );
+                }
+              }
+            }
+          }
+
           final plan = GoogleRoutePlan(
             origin: origin,
             destination: destination,
@@ -169,6 +246,7 @@ class GoogleMapsService {
             durationSeconds: durationSecs,
             encodedPolyline: polyline,
             points: points,
+            steps: parsedSteps,
           );
 
           _routeCache[cacheKey] = plan;

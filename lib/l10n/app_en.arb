@@ -156,5 +156,18 @@
   "bidAcceptedNotification": "Bid Accepted!",
   "roadHazardAlert": "Road Hazard Alert",
   "markAsRead": "Mark as Read",
-  "noNewNotifications": "No new notifications"
+  "noNewNotifications": "No new notifications",
+  "safetyAndAlerts": "Safety & Bridge Alerts",
+  "turnByTurnSteps": "Turn-by-Turn Steps",
+  "costAndStops": "Cost & Services",
+  "liveTraffic": "Live Traffic",
+  "satelliteView": "Satellite",
+  "normalView": "Normal",
+  "criticalClearanceDanger": "CRITICAL CLEARANCE DANGER",
+  "clearanceSafe": "Route Clearance Verified Safe",
+  "speakAlert": "Listen Alert",
+  "openGpsNavigation": "Open Live GPS Navigation",
+  "destinationCurfew": "Destination City Entry Curfew",
+  "noHazardReports": "No active road hazard reports along this corridor",
+  "noTurnStepsAvailable": "Navigation instructions ready upon route calculation"
 }
