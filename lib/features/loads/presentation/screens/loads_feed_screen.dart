@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/load_statuses.dart';
 import '../../../../core/constants/vehicle_types.dart';
 import '../../../../core/services/firebase_service.dart';
+import '../../../../core/services/launcher/app_launcher.dart';
 import '../../../../core/services/translation_service.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
@@ -40,29 +40,14 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
   ];
 
   Future<void> _launchPhoneCall(String phone) async {
-    final clean = phone.replaceAll(RegExp(r'[^0-9+]'), '');
-    final uri = Uri.parse('tel:$clean');
-    try {
-      await launchUrl(uri);
-    } catch (e) {
-      debugPrint('Launch phone error: $e');
-    }
+    await AppLauncher.makeCall(phone);
   }
 
   Future<void> _launchWhatsApp(String phone, LoadModel load, bool isUrdu) async {
-    var clean = phone.replaceAll(RegExp(r'[^0-9]'), '');
-    if (clean.startsWith('0')) {
-      clean = '92${clean.substring(1)}';
-    }
     final message = isUrdu
         ? 'السلام علیکم، میں TruckLink PK پر آپ کا لوڈ (${load.originCity} تا ${load.destinationCity} - ${load.weightTons} ٹن) دیکھ رہا ہوں۔ کیا یہ دستیاب ہے؟'
         : 'Salam, I saw your load from ${load.originCity} to ${load.destinationCity} (${load.weightTons} tons) on TruckLink PK. Is it available?';
-    final url = Uri.parse('https://wa.me/$clean?text=${Uri.encodeComponent(message)}');
-    try {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } catch (e) {
-      debugPrint('Launch WhatsApp error: $e');
-    }
+    await AppLauncher.openWhatsApp(phone: phone, message: message);
   }
 
   void _showBidDialog(BuildContext context, LoadModel load) {

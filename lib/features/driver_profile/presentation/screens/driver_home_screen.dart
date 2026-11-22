@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/vehicle_types.dart';
 import '../../../../core/services/firebase_service.dart';
+import '../../../../core/services/launcher/app_launcher.dart';
+import '../../../../core/services/picker/app_document_picker.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
@@ -39,13 +39,12 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   );
 
   Future<void> _pickAndUploadDocument(String docType) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
+    final pickedFile = await AppDocumentPicker.pickImage();
     if (pickedFile == null) return;
 
     setState(() => _isUploadingDoc = true);
     try {
-      final bytes = await pickedFile.readAsBytes();
+      final bytes = pickedFile.bytes;
       final user = ref.read(authProvider).userProfile;
       final uid = user?.id ?? 'usr-current';
       final fileName = pickedFile.name.replaceAll(' ', '_');
@@ -227,7 +226,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         InkWell(
-                          onTap: () => launchUrl(Uri.parse('tel:130')),
+                          onTap: () => AppLauncher.makeCall('130'),
                           child: Row(
                             children: [
                               Container(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
+import '../services/speech/native_speech.dart';
 import '../theme/colors.dart';
 
 class VoiceInputButton extends StatefulWidget {
@@ -19,70 +19,34 @@ class VoiceInputButton extends StatefulWidget {
 }
 
 class _VoiceInputButtonState extends State<VoiceInputButton> {
-  final stt.SpeechToText _speech = stt.SpeechToText();
   bool _isListening = false;
-  bool _isAvailable = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _initSpeech();
-  }
+  void _toggleListening() {
+    if (_isListening) {
+      NativeSpeech.stop();
+      setState(() => _isListening = false);
+    } else {
+      final lang = widget.languageCode == 'ur' ? 'ur-PK' : 'en-US';
+      setState(() => _isListening = true);
 
-  Future<void> _initSpeech() async {
-    try {
-      _isAvailable = await _speech.initialize(
-        onError: (val) {
-          if (mounted) setState(() => _isListening = false);
+      NativeSpeech.startListening(
+        lang: lang,
+        onResult: (text) {
+          if (mounted) {
+            final currentText = widget.controller.text;
+            if (currentText.isEmpty) {
+              widget.controller.text = text;
+            } else {
+              widget.controller.text = '$currentText $text';
+            }
+          }
         },
-        onStatus: (val) {
-          if (val == 'done' || val == 'notListening') {
-            if (mounted) setState(() => _isListening = false);
+        onDone: () {
+          if (mounted) {
+            setState(() => _isListening = false);
           }
         },
       );
-      if (mounted) setState(() {});
-    } catch (_) {
-      _isAvailable = false;
-    }
-  }
-
-  void _toggleListening() async {
-    if (!_isAvailable) {
-      await _initSpeech();
-    }
-
-    if (_isListening) {
-      await _speech.stop();
-      if (mounted) setState(() => _isListening = false);
-    } else {
-      final localeId = widget.languageCode == 'ur' ? 'ur_PK' : 'en_US';
-      try {
-        final started = await _speech.listen(
-          listenOptions: stt.SpeechListenOptions(
-            localeId: localeId,
-            listenMode: stt.ListenMode.confirmation,
-            partialResults: true,
-          ),
-          onResult: (result) {
-            if (result.recognizedWords.isNotEmpty && mounted) {
-              final currentText = widget.controller.text;
-              if (currentText.isEmpty) {
-                widget.controller.text = result.recognizedWords;
-              } else if (!currentText.contains(result.recognizedWords)) {
-                widget.controller.text = '$currentText ${result.recognizedWords}';
-              }
-            }
-          },
-        );
-        if (started && mounted) {
-          setState(() => _isListening = true);
-        }
-      } catch (e) {
-        if (mounted) {
-          setState(() => _isListening = false);
-        }
-      }
     }
   }
 
@@ -101,7 +65,7 @@ class _VoiceInputButtonState extends State<VoiceInputButton> {
           color: _isListening ? AppColors.danger : AppColors.primary,
         ),
       ),
-      tooltip: widget.tooltip ?? (_isListening ? 'Stop Listening' : 'Voice Input (اردو / English)'),
+      tooltip: widget.tooltip ?? (_isListening ? 'Listening...' : 'Voice Input (اردو / English)'),
       onPressed: _toggleListening,
     );
   }
