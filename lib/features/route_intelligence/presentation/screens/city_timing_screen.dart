@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/services/firebase_service.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/route_models.dart';
 
-class CityTimingScreen extends StatelessWidget {
+class CityTimingScreen extends ConsumerWidget {
   const CityTimingScreen({super.key});
 
-  final List<CityTimingRule> _rules = const [
+  static const List<CityTimingRule> _defaultRules = [
     CityTimingRule(
       id: 'karachi-heavy',
       cityName: 'Karachi (کراچی)',
@@ -15,7 +17,7 @@ class CityTimingScreen extends StatelessWidget {
       entryFrom: '23:00',
       entryUntil: '05:00',
       notes: 'Entry prohibited during day. Heavy container and trailer entry strictly allowed between 11 PM and 5 AM via Northern Bypass & Super Highway.',
-      confidence: 0.95,
+      confidence: 0.98,
     ),
     CityTimingRule(
       id: 'lahore-heavy',
@@ -24,7 +26,7 @@ class CityTimingScreen extends StatelessWidget {
       entryFrom: '22:00',
       entryUntil: '06:00',
       notes: 'Lahore Ring Road and interior freight corridors open 10 PM to 6 AM. Day entry requires special traffic police permit.',
-      confidence: 0.90,
+      confidence: 0.95,
     ),
     CityTimingRule(
       id: 'islamabad-heavy',
@@ -33,7 +35,7 @@ class CityTimingScreen extends StatelessWidget {
       entryFrom: '23:00',
       entryUntil: '06:00',
       notes: 'Islamabad Expressway, I-9 Industrial Sector, and Faizabad intersection curfew 6 AM to 11 PM.',
-      confidence: 0.88,
+      confidence: 0.92,
     ),
     CityTimingRule(
       id: 'multan-heavy',
@@ -42,7 +44,7 @@ class CityTimingScreen extends StatelessWidget {
       entryFrom: '21:00',
       entryUntil: '06:00',
       notes: 'Bosan Road & inner Bypass open for heavy trucks from 9 PM.',
-      confidence: 0.85,
+      confidence: 0.90,
     ),
   ];
 
@@ -100,9 +102,13 @@ class CityTimingScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
+    final timingsAsync = ref.watch(firebaseCityTimingsStreamProvider);
+    final rules = (timingsAsync.value != null && timingsAsync.value!.isNotEmpty)
+        ? timingsAsync.value!
+        : _defaultRules;
 
     return Scaffold(
       appBar: AppBar(
@@ -146,7 +152,7 @@ class CityTimingScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          ..._rules.map((rule) {
+          ...rules.map((rule) {
             final info = _computeStatus(rule, isUrdu);
             return Card(
               margin: const EdgeInsets.only(bottom: 12),

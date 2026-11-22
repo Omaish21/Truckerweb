@@ -505,12 +505,8 @@ service cloud.firestore {
     }
 
     match /loads/{loadId} {
-      // Any authenticated user can read open loads; load owners can read their own loads regardless of status
-      allow get: if isAuthenticated() &&
-        (resource.data.status in ['open', 'bidding'] || resource.data.owner_id == request.auth.uid || resource.data.get('assigned_driver_id', '') == request.auth.uid || isAdmin());
-
-      // Authenticated users can list/query loads (aligned with Flutter feed query)
-      allow list: if isAuthenticated();
+      // Public read access so unauthenticated landing visitors can immediately view available freight loads
+      allow get, list: if true;
 
       // Only authenticated users can create a load and owner_id must match request.auth.uid
       allow create: if isAuthenticated() &&
@@ -592,8 +588,8 @@ service cloud.firestore {
     }
 
     match /hazard_reports/{reportId} {
-      // Authenticated users can read road hazard reports
-      allow read: if isAuthenticated();
+      // Public read access so drivers and visitors can view public road safety bulletins
+      allow get, list: if true;
 
       // Authenticated users can submit road condition reports
       allow create: if isAuthenticated() &&

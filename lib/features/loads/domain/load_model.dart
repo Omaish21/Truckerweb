@@ -42,6 +42,31 @@ class LoadModel {
   });
 
   factory LoadModel.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic val) {
+      if (val == null) return DateTime.now();
+      if (val is DateTime) return val;
+      if (val.runtimeType.toString() == 'Timestamp' || val.toString().contains('Timestamp')) {
+        try {
+          // Dynamic invocation for cloud_firestore Timestamp
+          final dynamic ts = val;
+          return ts.toDate() as DateTime;
+        } catch (_) {}
+      }
+      return DateTime.tryParse(val.toString()) ?? DateTime.now();
+    }
+
+    DateTime? parseNullableDate(dynamic val) {
+      if (val == null) return null;
+      if (val is DateTime) return val;
+      if (val.runtimeType.toString() == 'Timestamp' || val.toString().contains('Timestamp')) {
+        try {
+          final dynamic ts = val;
+          return ts.toDate() as DateTime;
+        } catch (_) {}
+      }
+      return DateTime.tryParse(val.toString());
+    }
+
     return LoadModel(
       id: json['id'] as String? ?? '',
       ownerId: json['owner_id'] as String? ?? '',
@@ -55,16 +80,10 @@ class LoadModel {
       goodsType: json['goods_type'] as String?,
       offeredRatePkr: (json['offered_rate_pkr'] as num?)?.toDouble() ?? 50000.0,
       rateType: json['rate_type'] as String? ?? 'fixed',
-      pickupWindowStart: json['pickup_window_start'] != null
-          ? DateTime.tryParse(json['pickup_window_start'] as String)
-          : null,
-      pickupWindowEnd: json['pickup_window_end'] != null
-          ? DateTime.tryParse(json['pickup_window_end'] as String)
-          : null,
+      pickupWindowStart: parseNullableDate(json['pickup_window_start']),
+      pickupWindowEnd: parseNullableDate(json['pickup_window_end']),
       status: json['status'] as String? ?? 'open',
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : DateTime.now(),
+      createdAt: parseDate(json['created_at']),
       assignedDriverId: json['assigned_driver_id'] as String?,
       contactPhone: json['contact_phone'] as String? ?? '+923001234567',
       bidsCount: (json['bids_count'] as num?)?.toInt() ?? 0,

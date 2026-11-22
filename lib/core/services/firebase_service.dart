@@ -21,6 +21,11 @@ final firebaseRoadReportsStreamProvider = StreamProvider<List<RoadReport>>((ref)
   return service.watchRoadReports();
 });
 
+final firebaseCityTimingsStreamProvider = StreamProvider<List<CityTimingRule>>((ref) {
+  final service = ref.watch(firebaseServiceProvider);
+  return service.watchCityTimings();
+});
+
 final firebaseLoadBidsStreamProvider = StreamProvider.family<List<BidModel>, String>((ref, loadId) {
   final service = ref.watch(firebaseServiceProvider);
   return service.watchBids(loadId);
@@ -309,14 +314,21 @@ class FirebaseService {
           .map((snapshot) {
             return snapshot.docs.map((doc) {
               final data = doc.data();
+              final loc = data['location'] as String?;
+              final desc = data['description'] as String?;
+              final combined = (loc != null && loc.isNotEmpty)
+                  ? (desc != null && desc.isNotEmpty ? '$loc — $desc' : loc)
+                  : desc;
               return RoadReport(
                 id: doc.id,
                 reporterId: data['reported_by'] ?? data['reporter_id'] ?? 'unknown',
                 reportType: data['category_id'] ?? data['report_type'] ?? 'broken',
-                description: data['description'] as String?,
-                confidence: 0.9,
+                description: combined,
+                confidence: (data['confidence'] as num?)?.toDouble() ?? 0.9,
                 createdAt: data['created_at'] != null
-                    ? DateTime.tryParse(data['created_at'] as String) ?? DateTime.now()
+                    ? (data['created_at'] is Timestamp
+                        ? (data['created_at'] as Timestamp).toDate()
+                        : (DateTime.tryParse(data['created_at'].toString()) ?? DateTime.now()))
                     : DateTime.now(),
               );
             }).toList();
@@ -327,6 +339,37 @@ class FirebaseService {
           });
     } catch (e) {
       return Stream.value(<RoadReport>[]);
+    }
+  }
+
+  Stream<List<CityTimingRule>> watchCityTimings() {
+    try {
+      final fs = firestore;
+      if (fs == null) return Stream.value(<CityTimingRule>[]);
+
+      return fs
+          .collection('city_timings')
+          .snapshots()
+          .map((snapshot) {
+            return snapshot.docs.map((doc) {
+              final data = doc.data();
+              return CityTimingRule(
+                id: doc.id,
+                cityName: data['city_name'] ?? data['cityName'] ?? doc.id,
+                vehicleCategory: data['vehicle_category'] ?? data['vehicleCategory'] ?? 'heavy',
+                entryFrom: data['entry_from'] ?? data['entryFrom'] ?? '23:00',
+                entryUntil: data['entry_until'] ?? data['entryUntil'] ?? '05:00',
+                notes: data['notes'] ?? '',
+                confidence: (data['confidence'] as num?)?.toDouble() ?? 0.95,
+              );
+            }).toList();
+          })
+          .handleError((e) {
+            debugPrint('Firestore city_timings error: $e');
+            return <CityTimingRule>[];
+          });
+    } catch (e) {
+      return Stream.value(<CityTimingRule>[]);
     }
   }
 

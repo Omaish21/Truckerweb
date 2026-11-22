@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/constants/vehicle_types.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
@@ -26,7 +27,6 @@ class DriverHomeScreen extends ConsumerStatefulWidget {
 
 class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
   bool _isOnline = true;
-  final bool _showSimulatedBridgeAlert = true;
   bool _isUploadingDoc = false;
 
   final _mockBridgeAlert = const BridgeClearanceAlert(
@@ -361,15 +361,32 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               ),
             ),
 
-            // USP 1: Live Bridge Alert Banner
-            if (_showSimulatedBridgeAlert) ...[
-              BridgeAlertBanner(
-                alert: _mockBridgeAlert,
-                onRerouteTap: () {
-                  context.push('/route-planner');
-                },
-              ),
-            ],
+            // USP 1: Live Road Alert or Bridge Alert Banner from Firestore
+            Builder(
+              builder: (context) {
+                final roadReportsAsync = ref.watch(firebaseRoadReportsStreamProvider);
+                final reports = roadReportsAsync.value ?? [];
+                if (reports.isNotEmpty) {
+                  final activeReport = reports.first;
+                  final alert = BridgeClearanceAlert(
+                    bridgeName: activeReport.description ?? 'Highway Safety Alert',
+                    clearanceHeightFt: 14.0,
+                    truckHeightFt: 15.2,
+                    roadSegment: 'Active Corridor Alert',
+                    distanceAheadKm: 5.2,
+                    isCritical: activeReport.reportType == 'broken' || activeReport.reportType == 'accident',
+                  );
+                  return BridgeAlertBanner(
+                    alert: alert,
+                    onRerouteTap: () => context.push('/route-planner'),
+                  );
+                }
+                return BridgeAlertBanner(
+                  alert: _mockBridgeAlert,
+                  onRerouteTap: () => context.push('/route-planner'),
+                );
+              },
+            ),
 
             // Quick Nav Grid
             Padding(
@@ -450,24 +467,39 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               ),
             ),
 
-            _MatchedLoadItem(
-              origin: 'Lahore (Badami Bagh)',
-              destination: 'Karachi (Port Qasim)',
-              vehicleType: '22-Wheeler (Trolley)',
-              weight: l10n.tonsUnit('35'),
-              rate: AppFormatters.formatPkr(245000),
-              inspectLabel: l10n.inspectRoute,
-              onTap: () => context.push('/route-planner'),
-            ),
-
-            _MatchedLoadItem(
-              origin: 'Faisalabad (Textile City)',
-              destination: 'Rawalpindi (I-9)',
-              vehicleType: '10-Wheeler',
-              weight: l10n.tonsUnit('16'),
-              rate: AppFormatters.formatPkr(85000),
-              inspectLabel: l10n.inspectRoute,
-              onTap: () => context.push('/route-planner'),
+            Builder(
+              builder: (context) {
+                final loadsAsync = ref.watch(firebaseLoadsStreamProvider);
+                final loads = loadsAsync.value ?? [];
+                if (loads.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    child: Center(
+                      child: Text(
+                        isUrdu ? 'کوئی لوڈ دستیاب نہیں' : 'No matched loads currently available',
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  );
+                }
+                return Column(
+                  children: loads.take(3).map((load) {
+                    final vType = VehicleType.findById(load.vehicleTypeRequired);
+                    final vName = isUrdu
+                        ? (vType?.nameUr ?? load.vehicleTypeRequired)
+                        : (vType?.nameEn ?? load.vehicleTypeRequired);
+                    return _MatchedLoadItem(
+                      origin: load.originCity,
+                      destination: load.destinationCity,
+                      vehicleType: vName,
+                      weight: l10n.tonsUnit(load.weightTons.toStringAsFixed(0)),
+                      rate: AppFormatters.formatPkr(load.offeredRatePkr),
+                      inspectLabel: l10n.inspectRoute,
+                      onTap: () => context.push('/route-planner'),
+                    );
+                  }).toList(),
+                );
+              },
             ),
 
             const SizedBox(height: 24),

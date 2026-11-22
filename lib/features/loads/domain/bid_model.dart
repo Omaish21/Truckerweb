@@ -28,6 +28,18 @@ class BidModel {
   });
 
   factory BidModel.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic val) {
+      if (val == null) return DateTime.now();
+      if (val is DateTime) return val;
+      if (val.runtimeType.toString() == 'Timestamp' || val.toString().contains('Timestamp')) {
+        try {
+          final dynamic ts = val;
+          return ts.toDate() as DateTime;
+        } catch (_) {}
+      }
+      return DateTime.tryParse(val.toString()) ?? DateTime.now();
+    }
+
     return BidModel(
       id: json['id'] as String? ?? '',
       loadId: json['load_id'] as String? ?? '',
@@ -40,9 +52,7 @@ class BidModel {
       estimatedHours: (json['estimated_hours'] as num?)?.toInt() ?? 24,
       notes: json['notes'] as String?,
       status: json['status'] as String? ?? 'pending',
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : DateTime.now(),
+      createdAt: parseDate(json['created_at']),
     );
   }
 
