@@ -1,10 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trucklink_pk/app.dart';
 import 'package:trucklink_pk/core/constants/vehicle_types.dart';
 import 'package:trucklink_pk/core/localization/locale_provider.dart';
+import 'package:trucklink_pk/core/providers/app_scope.dart';
+import 'package:trucklink_pk/core/services/geocoding_service.dart';
 import 'package:trucklink_pk/core/utils/formatters.dart';
 import 'package:trucklink_pk/core/utils/urdu_text.dart';
 import 'package:trucklink_pk/core/utils/validators.dart';
@@ -66,12 +68,29 @@ void main() {
       expect(model.weightTons, 35.0);
     });
 
-    test('LocaleNotifier switches between en and ur', () {
-      final notifier = LocaleNotifier();
-      expect(notifier.state.languageCode, 'en');
-      notifier.setLocale(const Locale('ur'));
-      expect(notifier.state.languageCode, 'ur');
-      expect(notifier.isUrdu, isTrue);
+    test('LocaleProvider switches between en and ur (pure Flutter ChangeNotifier)', () {
+      final provider = LocaleProvider();
+      expect(provider.locale.languageCode, 'en');
+      provider.setLocale(const Locale('ur'));
+      expect(provider.locale.languageCode, 'ur');
+      expect(provider.isUrdu, isTrue);
+    });
+
+    test('GeocodingService calculates accurate distance and bearing', () {
+      const lahore = LatLng(31.5204, 74.3587);
+      const karachi = LatLng(24.8607, 67.0011);
+
+      final distanceKm = GeocodingService.calculateDistanceKm(lahore, karachi);
+      expect(distanceKm, greaterThan(900));
+      expect(distanceKm, lessThan(1150));
+
+      final bearing = GeocodingService.calculateBearing(lahore, karachi);
+      expect(bearing, greaterThan(200));
+      expect(bearing, lessThan(250));
+
+      final nearest = GeocodingService.instance.findNearestLandmark(lahore);
+      expect(nearest, isNotNull);
+      expect(nearest!.city, 'Lahore');
     });
 
     test('Route planner parameters and deep link query parsing', () {
@@ -92,7 +111,7 @@ void main() {
 
     testWidgets('App initializes and renders Driver Dashboard without errors', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const ProviderScope(
+        const AppScope(
           child: TruckLinkApp(),
         ),
       );

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'app.dart';
+import 'core/providers/app_scope.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -23,7 +23,7 @@ void main() async {
   }
 
   runApp(
-    const ProviderScope(
+    const AppScope(
       child: TruckLinkApp(),
     ),
   );

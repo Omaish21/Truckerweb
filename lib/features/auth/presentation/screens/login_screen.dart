@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/providers/app_scope.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/cinematic_hero_background.dart';
@@ -8,16 +8,15 @@ import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../core/widgets/logistics_video_dialog.dart';
 import '../../../../core/widgets/trust_banner.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../providers/auth_provider.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> {
   final _phoneController = TextEditingController(text: '0300 1234567');
   final _otpController = TextEditingController();
   final _emailController = TextEditingController(text: 'driver@trucklink.pk');
@@ -37,12 +36,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _handleSendOtp() {
     if (_formKey.currentState?.validate() ?? false) {
       final phone = AppValidators.normalizePhone(_phoneController.text);
-      ref.read(authProvider.notifier).sendOtp(phone);
+      context.authActions.sendOtp(phone);
     }
   }
 
   void _handleVerifyOtp() async {
-    final success = await ref.read(authProvider.notifier).verifyOtp(_otpController.text.trim());
+    final success = await context.authActions.verifyOtp(_otpController.text.trim());
     if (success && mounted) {
       context.go('/role-selection');
     }
@@ -50,7 +49,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _handleEmailLogin() async {
     if (_formKey.currentState?.validate() ?? false) {
-      final success = await ref.read(authProvider.notifier).signInWithEmailPassword(
+      final success = await context.authActions.signInWithEmailPassword(
             _emailController.text.trim(),
             _passwordController.text.trim(),
           );
@@ -70,7 +69,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
+    final authState = context.auth.state;
     final l10n = AppLocalizations.of(context)!;
     final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
     final screenSize = MediaQuery.of(context).size;
@@ -609,7 +608,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => ref.read(authProvider.notifier).logout(),
+                        onPressed: () => context.authActions.logout(),
                       ),
                       Text(
                         l10n.verifyOtpTitle,

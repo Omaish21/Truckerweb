@@ -1,6 +1,7 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
@@ -8,6 +9,7 @@ import '../../../../core/constants/report_categories.dart';
 import '../../../../core/constants/vehicle_types.dart';
 import '../../../../core/services/audio_alert_service.dart';
 import '../../../../core/services/firebase_service.dart';
+import '../../../../core/services/geocoding_service.dart';
 import '../../../../core/services/google_maps_service.dart';
 import '../../../../core/services/launcher/app_launcher.dart';
 import '../../../../core/theme/colors.dart';
@@ -17,7 +19,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../domain/route_models.dart';
 import '../widgets/bridge_alert_banner.dart';
 
-class RoutePlannerScreen extends ConsumerStatefulWidget {
+class RoutePlannerScreen extends StatefulWidget {
   final String? initialOrigin;
   final String? initialDestination;
   final String? initialVehicle;
@@ -32,13 +34,15 @@ class RoutePlannerScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<RoutePlannerScreen> createState() => _RoutePlannerScreenState();
+  State<RoutePlannerScreen> createState() => _RoutePlannerScreenState();
 }
 
-class _RoutePlannerScreenState extends ConsumerState<RoutePlannerScreen>
+class _RoutePlannerScreenState extends State<RoutePlannerScreen>
     with SingleTickerProviderStateMixin {
   GoogleMapController? _mapController;
   late TabController _tabController;
+  StreamSubscription<List<RoadReport>>? _reportsSub;
+  List<RoadReport> _roadReports = [];
 
   String _origin = 'Lahore';
   String _destination = 'Karachi';
@@ -101,6 +105,9 @@ class _RoutePlannerScreenState extends ConsumerState<RoutePlannerScreen>
       _useMotorwayBypass = widget.initialMotorway!;
     }
     _tabController = TabController(length: 3, vsync: this);
+    _reportsSub = FirebaseService.roadReportsStream.listen((reports) {
+      if (mounted) setState(() => _roadReports = reports);
+    });
     _fetchLiveRoute();
     _fetchNearbyPlaces();
   }
@@ -121,6 +128,7 @@ class _RoutePlannerScreenState extends ConsumerState<RoutePlannerScreen>
 
   @override
   void dispose() {
+    _reportsSub?.cancel();
     _tabController.dispose();
     _mapController?.dispose();
     super.dispose();
@@ -132,9 +140,16 @@ class _RoutePlannerScreenState extends ConsumerState<RoutePlannerScreen>
   Future<void> _fetchLiveRoute() async {
     setState(() => _isLoadingRoute = true);
 
+    // Resolve robust geocoded coordinates for corridor validation
+    final originGeo = await GeocodingService.instance.forwardGeocode(_origin);
+    final destGeo = await GeocodingService.instance.forwardGeocode(_destination);
+    if (kDebugMode) {
+      debugPrint('[Geocoding] Origin: ${originGeo?.formattedAddress} -> Dest: ${destGeo?.formattedAddress}');
+    }
+
     final plan = await GoogleMapsService.computeRoute(
-      origin: _origin,
-      destination: _destination,
+      origin: originGeo?.formattedAddress ?? _origin,
+      destination: destGeo?.formattedAddress ?? _destination,
       avoidTolls: !_useMotorwayBypass,
     );
 
@@ -240,8 +255,7 @@ class _RoutePlannerScreenState extends ConsumerState<RoutePlannerScreen>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
-    final roadReportsAsync = ref.watch(firebaseRoadReportsStreamProvider);
-    final reportsList = roadReportsAsync.value ?? [];
+    final reportsList = _roadReports;
 
     final kmPerLiter = (_selectedVehicle.typicalCapacityTons > 25)
         ? 2.6

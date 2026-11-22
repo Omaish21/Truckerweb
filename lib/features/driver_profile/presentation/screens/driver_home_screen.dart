@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/vehicle_types.dart';
+import '../../../../core/providers/app_scope.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/launcher/app_launcher.dart';
 import '../../../../core/services/picker/app_document_picker.dart';
@@ -14,18 +14,18 @@ import '../../../../core/widgets/radar_pulse.dart';
 import '../../../../core/widgets/rating_stars.dart';
 import '../../../../core/widgets/verified_badge.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../loads/domain/load_model.dart';
 import '../../../route_intelligence/domain/route_models.dart';
 import '../../../route_intelligence/presentation/widgets/bridge_alert_banner.dart';
 
-class DriverHomeScreen extends ConsumerStatefulWidget {
+class DriverHomeScreen extends StatefulWidget {
   const DriverHomeScreen({super.key});
 
   @override
-  ConsumerState<DriverHomeScreen> createState() => _DriverHomeScreenState();
+  State<DriverHomeScreen> createState() => _DriverHomeScreenState();
 }
 
-class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
+class _DriverHomeScreenState extends State<DriverHomeScreen> {
   bool _isOnline = true;
   bool _isUploadingDoc = false;
 
@@ -40,30 +40,33 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
   Future<void> _pickAndUploadDocument(String docType) async {
     final pickedFile = await AppDocumentPicker.pickImage();
-    if (pickedFile == null) return;
+    if (pickedFile == null || !mounted) return;
+
+    final user = context.auth.userProfile;
+    final authActions = context.authActions;
+    final messenger = ScaffoldMessenger.of(context);
 
     setState(() => _isUploadingDoc = true);
     try {
       final bytes = pickedFile.bytes;
-      final user = ref.read(authProvider).userProfile;
       final uid = user?.id ?? 'usr-current';
       final fileName = pickedFile.name.replaceAll(' ', '_');
 
-      await ref.read(firebaseServiceProvider).uploadDriverDocument(
-            uid: uid,
-            docType: docType,
-            fileBytes: bytes,
-            fileName: fileName,
-          );
+      await FirebaseService.instance.uploadDriverDocument(
+        uid: uid,
+        docType: docType,
+        fileBytes: bytes,
+        fileName: fileName,
+      );
 
       if (user != null) {
         final updated = user.copyWith(verificationStatus: 'pending');
-        ref.read(authProvider.notifier).updateUserProfile(updated);
+        authActions.updateUserProfile(updated);
       }
 
       if (mounted) {
         setState(() => _isUploadingDoc = false);
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(
             backgroundColor: AppColors.success,
             content: Text('Document uploaded successfully! Verification pending.'),
@@ -73,7 +76,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isUploadingDoc = false);
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             backgroundColor: AppColors.danger,
             content: Text('Upload error: $e'),
@@ -85,7 +88,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
+    final authState = context.auth.state;
     final user = authState.userProfile;
     final l10n = AppLocalizations.of(context)!;
     final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
@@ -108,7 +111,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             icon: const Icon(Icons.logout),
             tooltip: l10n.logout,
             onPressed: () {
-              ref.read(authProvider.notifier).logout();
+              context.authActions.logout();
               context.go('/login');
             },
           ),
@@ -362,10 +365,10 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
             ),
 
             // USP 1: Live Road Alert or Bridge Alert Banner from Firestore
-            Builder(
-              builder: (context) {
-                final roadReportsAsync = ref.watch(firebaseRoadReportsStreamProvider);
-                final reports = roadReportsAsync.value ?? [];
+            StreamBuilder<List<RoadReport>>(
+              stream: FirebaseService.roadReportsStream,
+              builder: (context, snapshot) {
+                final reports = snapshot.data ?? [];
                 if (reports.isNotEmpty) {
                   final activeReport = reports.first;
                   final alert = BridgeClearanceAlert(
@@ -467,10 +470,10 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
               ),
             ),
 
-            Builder(
-              builder: (context) {
-                final loadsAsync = ref.watch(firebaseLoadsStreamProvider);
-                final loads = loadsAsync.value ?? [];
+            StreamBuilder<List<LoadModel>>(
+              stream: FirebaseService.loadsStream,
+              builder: (context, snapshot) {
+                final loads = snapshot.data ?? FirebaseService.defaultSampleLoads;
                 if (loads.isEmpty) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),

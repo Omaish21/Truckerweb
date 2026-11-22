@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Utilities and widgets for handling authentic iOS-style Nastaliq Urdu typography in TruckLink PK
 class UrduTextUtils {
@@ -13,7 +12,9 @@ class UrduTextUtils {
     Color? color,
     double height = 2.0,
   }) {
-    return GoogleFonts.notoNastaliqUrdu(
+    return TextStyle(
+      fontFamily: 'Noto Nastaliq Urdu',
+      fontFamilyFallback: const ['Urdu Typesetting', 'Tahoma', 'Arial', 'sans-serif'],
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
@@ -58,16 +59,23 @@ class UrduText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final defaultStyle = UrduTextUtils.nastaliqStyle();
-    final effectiveStyle = defaultStyle.merge(style);
+    final baseStyle = style ?? const TextStyle();
+    final urduStyle = UrduTextUtils.nastaliqStyle(
+      fontSize: baseStyle.fontSize ?? 16,
+      fontWeight: baseStyle.fontWeight ?? FontWeight.normal,
+      color: baseStyle.color,
+      height: baseStyle.height ?? 2.0,
+    );
 
-    return Text(
-      text,
-      textAlign: textAlign,
-      overflow: overflow,
-      maxLines: maxLines,
+    return Directionality(
       textDirection: TextDirection.rtl,
-      style: effectiveStyle,
+      child: Text(
+        text,
+        style: urduStyle,
+        textAlign: textAlign ?? TextAlign.right,
+        overflow: overflow,
+        maxLines: maxLines,
+      ),
     );
   }
 }

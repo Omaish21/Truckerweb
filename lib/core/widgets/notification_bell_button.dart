@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../l10n/app_localizations.dart';
+import '../providers/app_scope.dart';
 import '../services/firebase_service.dart';
-import '../services/notification_service.dart';
 import '../theme/colors.dart';
 
-class NotificationBellButton extends ConsumerWidget {
+class NotificationBellButton extends StatelessWidget {
   final bool compact;
 
   const NotificationBellButton({super.key, this.compact = false});
 
-  void _showNotificationPanel(BuildContext context, WidgetRef ref) {
-    final notifState = ref.read(notificationStateProvider);
-    final user = ref.read(authProvider).userProfile;
+  void _showNotificationPanel(BuildContext context) {
+    final notifState = context.notifications.state;
+    final user = context.auth.userProfile;
     final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
     final l10n = AppLocalizations.of(context)!;
 
@@ -69,7 +67,6 @@ class NotificationBellButton extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: notifState.isPermissionGranted ? AppColors.success : AppColors.accentOrange,
-                  width: 1.2,
                 ),
               ),
               child: Row(
@@ -77,7 +74,7 @@ class NotificationBellButton extends ConsumerWidget {
                   Icon(
                     notifState.isPermissionGranted ? Icons.check_circle : Icons.warning_amber_rounded,
                     color: notifState.isPermissionGranted ? AppColors.success : AppColors.accentOrange,
-                    size: 20,
+                    size: 24,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -85,21 +82,19 @@ class NotificationBellButton extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          notifState.isPermissionGranted ? l10n.alertsActive : l10n.enableAlerts,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: notifState.isPermissionGranted ? AppColors.success : AppColors.accentOrange,
-                            fontSize: 14,
-                          ),
+                          notifState.isPermissionGranted
+                              ? l10n.alertsActive
+                              : (isUrdu ? 'الرٹس بند ہیں' : 'Alerts Disabled'),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                         ),
-                        const SizedBox(height: 2),
                         Text(
                           notifState.isPermissionGranted
-                              ? (isUrdu
-                                  ? 'براؤزر اور ڈیوائس پر تمام الرٹس فعال ہیں'
-                                  : 'Real-time FCM push alerts active for this browser')
-                              : l10n.notificationsPermissionPrompt,
-                          style: const TextStyle(fontSize: 12, color: Colors.black87),
+                              ? (isUrdu ? 'آپ کو اہم روٹ اور بولی الرٹس ملیں گے' : 'You will receive route and bid alerts')
+                              : (isUrdu ? 'براؤزر میں الرٹس آن کرنے کے لیے نیچے بٹن دبائیں' : 'Enable browser alerts to receive instant updates'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade700,
+                          ),
                         ),
                       ],
                     ),
@@ -109,12 +104,13 @@ class NotificationBellButton extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
 
+            // Enable Push Notification Button
             if (!notifState.isPermissionGranted) ...[
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.accent,
                   foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 icon: notifState.isLoading
@@ -131,8 +127,8 @@ class NotificationBellButton extends ConsumerWidget {
                 onPressed: notifState.isLoading
                     ? null
                     : () async {
-                        final success = await ref
-                            .read(notificationStateProvider.notifier)
+                        final success = await context
+                            .notificationActions
                             .enableAlerts(user?.id);
                         if (context.mounted) {
                           Navigator.pop(ctx);
@@ -160,17 +156,15 @@ class NotificationBellButton extends ConsumerWidget {
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 220),
               child: StreamBuilder<List<Map<String, dynamic>>>(
-                stream: ref
-                    .read(firebaseServiceProvider)
-                    .watchUserNotifications(user?.id ?? 'usr-101'),
+                stream: FirebaseService.instance.watchUserNotifications(user?.id ?? ''),
                 builder: (context, snapshot) {
                   final list = snapshot.data ?? [];
                   if (list.isEmpty) {
                     return Center(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        padding: const EdgeInsets.all(24.0),
                         child: Text(
-                          l10n.noNewNotifications,
+                          isUrdu ? 'کوئی نیا نوٹیفکیشن موجود نہیں ہے' : l10n.noNewNotifications,
                           style: const TextStyle(color: Colors.grey, fontSize: 13),
                         ),
                       ),
@@ -183,44 +177,13 @@ class NotificationBellButton extends ConsumerWidget {
                     separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (context, index) {
                       final item = list[index];
-                      final isRead = item['read'] == true;
+                      final title = item['title'] as String? ?? '';
+                      final body = item['body'] as String? ?? '';
                       return ListTile(
                         dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        leading: CircleAvatar(
-                          radius: 16,
-                          backgroundColor: isRead ? Colors.grey.shade200 : AppColors.accent.withValues(alpha: 0.3),
-                          child: Icon(
-                            item['type'] == 'new_bid'
-                                ? Icons.monetization_on
-                                : item['type'] == 'bid_accepted'
-                                    ? Icons.check_circle
-                                    : Icons.warning,
-                            size: 16,
-                            color: isRead ? Colors.grey : AppColors.primary,
-                          ),
-                        ),
-                        title: Text(
-                          item['title'] ?? 'Alert',
-                          style: TextStyle(
-                            fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                        subtitle: Text(
-                          item['body'] ?? '',
-                          style: const TextStyle(fontSize: 11, color: Colors.black54),
-                        ),
-                        trailing: !isRead
-                            ? TextButton(
-                                child: Text(l10n.markAsRead, style: const TextStyle(fontSize: 11)),
-                                onPressed: () {
-                                  ref
-                                      .read(firebaseServiceProvider)
-                                      .markNotificationAsRead(item['id'] as String);
-                                },
-                              )
-                            : null,
+                        leading: const Icon(Icons.info_outline, color: AppColors.primary, size: 20),
+                        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        subtitle: Text(body, style: const TextStyle(fontSize: 12)),
                       );
                     },
                   );
@@ -234,8 +197,8 @@ class NotificationBellButton extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final notifState = ref.watch(notificationStateProvider);
+  Widget build(BuildContext context) {
+    final notifState = context.notifications.state;
     final l10n = AppLocalizations.of(context)!;
 
     return Stack(
@@ -249,7 +212,7 @@ class NotificationBellButton extends ConsumerWidget {
             color: notifState.isPermissionGranted ? AppColors.accent : Colors.white,
           ),
           tooltip: notifState.isPermissionGranted ? l10n.alertsActive : l10n.enableAlerts,
-          onPressed: () => _showNotificationPanel(context, ref),
+          onPressed: () => _showNotificationPanel(context),
         ),
         Positioned(
           top: 10,

@@ -1,7 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/services/notification_service.dart';
 import '../../domain/user_profile.dart';
 
 class AuthState {
@@ -43,7 +41,25 @@ class AuthState {
   }
 }
 
-class AuthNotifier extends StateNotifier<AuthState> {
+/// Pure Flutter ChangeNotifier for Authentication.
+/// Zero third-party state management dependency.
+class AuthProvider extends ChangeNotifier {
+  AuthState _state = const AuthState();
+  ConfirmationResult? _webConfirmationResult;
+
+  AuthProvider() {
+    _initCurrentUser();
+  }
+
+  AuthState get state => _state;
+  bool get isAuthenticated => _state.isAuthenticated;
+  bool get needsRoleSelection => _state.needsRoleSelection;
+  UserProfile? get userProfile => _state.userProfile;
+  bool get isLoading => _state.isLoading;
+  bool get isOtpSent => _state.isOtpSent;
+  String? get errorMessage => _state.errorMessage;
+  String? get phoneNumber => _state.phoneNumber;
+
   FirebaseAuth? get _firebaseAuth {
     try {
       return FirebaseAuth.instance;
@@ -51,24 +67,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return null;
     }
   }
-  final Ref? _ref;
-  ConfirmationResult? _webConfirmationResult;
-
-  AuthNotifier([this._ref]) : super(const AuthState()) {
-    _initCurrentUser();
-  }
-
-  void _syncFcmToken(String uid) {
-    try {
-      _ref?.read(notificationServiceProvider).requestPermissionAndToken(uid: uid);
-    } catch (_) {}
-  }
 
   void _initCurrentUser() {
     try {
       final user = _firebaseAuth?.currentUser;
       if (user != null) {
-        state = state.copyWith(
+        _state = _state.copyWith(
           userProfile: UserProfile(
             id: user.uid,
             role: 'driver',
@@ -80,13 +84,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
             totalRatings: 34,
           ),
         );
-        _syncFcmToken(user.uid);
+        notifyListeners();
       }
     } catch (_) {}
   }
 
   Future<void> sendOtp(String phone) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    _state = _state.copyWith(isLoading: true, errorMessage: null);
+    notifyListeners();
 
     // Format phone number to E.164 (+92)
     String formattedPhone = phone.replaceAll(RegExp(r'\s+'), '');
@@ -101,7 +106,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         try {
           _webConfirmationResult = await _firebaseAuth?.signInWithPhoneNumber(formattedPhone);
         } catch (e) {
-          debugPrint('Web phone sign in fallback / offline test mode: $e');
+          debugPrint('Web phone sign in fallback / test mode: $e');
         }
       } else {
         await _firebaseAuth?.verifyPhoneNumber(
@@ -110,32 +115,37 @@ class AuthNotifier extends StateNotifier<AuthState> {
             await _firebaseAuth?.signInWithCredential(credential);
           },
           verificationFailed: (FirebaseAuthException e) {
-            state = state.copyWith(isLoading: false, errorMessage: e.message);
+            _state = _state.copyWith(isLoading: false, errorMessage: e.message);
+            notifyListeners();
           },
           codeSent: (String verificationId, int? resendToken) {
-            state = state.copyWith(verificationId: verificationId);
+            _state = _state.copyWith(verificationId: verificationId);
+            notifyListeners();
           },
           codeAutoRetrievalTimeout: (String verificationId) {},
         );
       }
 
-      state = state.copyWith(
+      _state = _state.copyWith(
         isLoading: false,
         isOtpSent: true,
         phoneNumber: formattedPhone,
       );
+      notifyListeners();
     } catch (e) {
-      state = state.copyWith(
+      _state = _state.copyWith(
         isLoading: false,
-        isOtpSent: true, // Still allow OTP entry with mock fallback
+        isOtpSent: true,
         phoneNumber: formattedPhone,
         errorMessage: null,
       );
+      notifyListeners();
     }
   }
 
   Future<bool> verifyOtp(String otp) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    _state = _state.copyWith(isLoading: true, errorMessage: null);
+    notifyListeners();
 
     try {
       User? user;
@@ -153,15 +163,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
           id: user.uid,
           role: 'driver',
           fullName: user.displayName ?? 'Muhammad Asif',
-          phone: user.phoneNumber ?? state.phoneNumber ?? '+923001234567',
+          phone: user.phoneNumber ?? _state.phoneNumber ?? '+923001234567',
           cnicNumber: '35202-1234567-1',
           cnicVerified: true,
           verificationStatus: 'verified',
           rating: 4.8,
           totalRatings: 34,
         );
-        state = state.copyWith(isLoading: false, userProfile: profile);
-        _syncFcmToken(profile.id);
+        _state = _state.copyWith(isLoading: false, userProfile: profile);
+        notifyListeners();
         return true;
       }
 
@@ -171,34 +181,38 @@ class AuthNotifier extends StateNotifier<AuthState> {
           id: 'usr-101',
           role: 'driver',
           fullName: 'Muhammad Asif',
-          phone: state.phoneNumber ?? '+923001234567',
+          phone: _state.phoneNumber ?? '+923001234567',
           cnicNumber: '35202-1234567-1',
           cnicVerified: true,
           verificationStatus: 'verified',
           rating: 4.8,
           totalRatings: 34,
         );
-        state = state.copyWith(isLoading: false, userProfile: profile);
-        _syncFcmToken(profile.id);
+        _state = _state.copyWith(isLoading: false, userProfile: profile);
+        notifyListeners();
         return true;
       } else {
-        state = state.copyWith(
+        _state = _state.copyWith(
           isLoading: false,
           errorMessage: 'Invalid OTP code / غلط تصدیقی کوڈ',
         );
+        notifyListeners();
         return false;
       }
     } catch (e) {
-      state = state.copyWith(
+      _state = _state.copyWith(
         isLoading: false,
         errorMessage: 'Verification failed: $e',
       );
+      notifyListeners();
       return false;
     }
   }
 
   Future<bool> signInWithEmailPassword(String email, String password) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    _state = _state.copyWith(isLoading: true, errorMessage: null);
+    notifyListeners();
+
     try {
       final cred = await _firebaseAuth?.signInWithEmailAndPassword(
         email: email.trim(),
@@ -215,10 +229,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         rating: 4.9,
         totalRatings: 18,
       );
-      state = state.copyWith(isLoading: false, userProfile: profile);
+      _state = _state.copyWith(isLoading: false, userProfile: profile);
+      notifyListeners();
       return true;
     } catch (e) {
-      // Fallback test sign-in
       if (email.contains('@') && password.length >= 6) {
         final profile = UserProfile(
           id: 'usr-test-email',
@@ -230,17 +244,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
           rating: 4.9,
           totalRatings: 18,
         );
-        state = state.copyWith(isLoading: false, userProfile: profile);
-        _syncFcmToken(profile.id);
+        _state = _state.copyWith(isLoading: false, userProfile: profile);
+        notifyListeners();
         return true;
       }
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      _state = _state.copyWith(isLoading: false, errorMessage: e.toString());
+      notifyListeners();
       return false;
     }
   }
 
   Future<bool> registerWithEmailPassword(String email, String password, String fullName) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    _state = _state.copyWith(isLoading: true, errorMessage: null);
+    notifyListeners();
+
     try {
       final cred = await _firebaseAuth?.createUserWithEmailAndPassword(
         email: email.trim(),
@@ -257,7 +274,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         rating: 5.0,
         totalRatings: 1,
       );
-      state = state.copyWith(isLoading: false, userProfile: profile);
+      _state = _state.copyWith(isLoading: false, userProfile: profile);
+      notifyListeners();
       return true;
     } catch (e) {
       if (email.contains('@') && password.length >= 6) {
@@ -271,34 +289,39 @@ class AuthNotifier extends StateNotifier<AuthState> {
           rating: 5.0,
           totalRatings: 1,
         );
-        state = state.copyWith(isLoading: false, userProfile: profile);
-        _syncFcmToken(profile.id);
+        _state = _state.copyWith(isLoading: false, userProfile: profile);
+        notifyListeners();
         return true;
       }
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      _state = _state.copyWith(isLoading: false, errorMessage: e.toString());
+      notifyListeners();
       return false;
     }
   }
 
   void switchRole(String newRole) {
-    if (state.userProfile != null) {
-      final updated = state.userProfile!.copyWith(role: newRole);
-      state = state.copyWith(userProfile: updated);
+    if (_state.userProfile != null) {
+      final updated = _state.userProfile!.copyWith(role: newRole);
+      _state = _state.copyWith(userProfile: updated);
+      notifyListeners();
     }
   }
 
   void updateUserProfile(UserProfile profile) {
-    state = state.copyWith(userProfile: profile);
+    _state = _state.copyWith(userProfile: profile);
+    notifyListeners();
   }
 
   void logout() async {
     try {
       await _firebaseAuth?.signOut();
     } catch (_) {}
-    state = const AuthState();
+    _state = const AuthState();
+    notifyListeners();
+  }
+
+  void clearError() {
+    _state = _state.copyWith(errorMessage: null);
+    notifyListeners();
   }
 }
-
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier(ref);
-});

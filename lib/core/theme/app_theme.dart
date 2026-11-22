@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'colors.dart';
 
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get lightTheme {
-    final urduFallback = [
-      GoogleFonts.notoNastaliqUrdu().fontFamily ?? 'Noto Nastaliq Urdu',
-      'Noto Nastaliq Urdu',
-      'Urdu Typesetting',
-    ];
-    final baseTextTheme = GoogleFonts.interTextTheme().apply(
-      fontFamilyFallback: urduFallback,
-    );
+  static const List<String> urduFallback = [
+    'Noto Nastaliq Urdu',
+    'Urdu Typesetting',
+    'Segoe UI',
+    'Roboto',
+    'sans-serif',
+  ];
 
+  static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
@@ -29,31 +27,42 @@ class AppTheme {
         onSecondary: Colors.black,
         onSurface: AppColors.textPrimaryLight,
       ),
-      fontFamily: GoogleFonts.inter().fontFamily,
-      textTheme: baseTextTheme.copyWith(
-        displayLarge: GoogleFonts.outfit(
+      fontFamily: 'Inter',
+      fontFamilyFallback: urduFallback,
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimaryLight,
-        ).copyWith(fontFamilyFallback: urduFallback),
-        displayMedium: GoogleFonts.outfit(
+          fontFamily: 'Outfit',
+          fontFamilyFallback: urduFallback,
+        ),
+        displayMedium: TextStyle(
           fontSize: 26,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimaryLight,
-        ).copyWith(fontFamilyFallback: urduFallback),
-        titleLarge: GoogleFonts.outfit(
+          fontFamily: 'Outfit',
+          fontFamilyFallback: urduFallback,
+        ),
+        titleLarge: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimaryLight,
-        ).copyWith(fontFamilyFallback: urduFallback),
-        bodyLarge: GoogleFonts.inter(
+          fontFamily: 'Outfit',
+          fontFamilyFallback: urduFallback,
+        ),
+        bodyLarge: TextStyle(
           fontSize: 16,
           color: AppColors.textPrimaryLight,
-        ).copyWith(fontFamilyFallback: urduFallback),
-        bodyMedium: GoogleFonts.inter(
+          fontFamily: 'Inter',
+          fontFamilyFallback: urduFallback,
+        ),
+        bodyMedium: TextStyle(
           fontSize: 14,
           color: AppColors.textSecondaryLight,
-        ).copyWith(fontFamilyFallback: urduFallback),
+          fontFamily: 'Inter',
+          fontFamilyFallback: urduFallback,
+        ),
       ),
       textSelectionTheme: const TextSelectionThemeData(
         cursorColor: AppColors.primary,
@@ -65,19 +74,35 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
+        titleTextStyle: TextStyle(
+          fontFamily: 'Outfit',
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+          fontFamilyFallback: urduFallback,
+        ),
       ),
       cardTheme: CardThemeData(
         color: AppColors.surfaceLight,
-        elevation: 1,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 1.5,
+        shadowColor: Colors.black.withValues(alpha: 0.08),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.accent,
-          foregroundColor: Colors.black,
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            fontFamilyFallback: urduFallback,
+          ),
         ).copyWith(
           mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
         ),
@@ -85,7 +110,11 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          side: const BorderSide(color: AppColors.primary),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
         ).copyWith(
           mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
         ),
@@ -101,12 +130,6 @@ class AppTheme {
         style: ButtonStyle(
           mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
         ),
-      ),
-      listTileTheme: const ListTileThemeData(
-        mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
-      ),
-      switchTheme: const SwitchThemeData(
-        mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -129,17 +152,6 @@ class AppTheme {
   }
 
   static ThemeData get darkTheme {
-    final urduFallback = [
-      GoogleFonts.notoNastaliqUrdu().fontFamily ?? 'Noto Nastaliq Urdu',
-      'Noto Nastaliq Urdu',
-      'Urdu Typesetting',
-    ];
-    final baseTextTheme = GoogleFonts.interTextTheme().apply(
-      fontFamilyFallback: urduFallback,
-      bodyColor: AppColors.textPrimaryDark,
-      displayColor: AppColors.textPrimaryDark,
-    );
-
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -154,8 +166,8 @@ class AppTheme {
         onSecondary: Colors.white,
         onSurface: AppColors.textPrimaryDark,
       ),
-      fontFamily: GoogleFonts.inter().fontFamily,
-      textTheme: baseTextTheme,
+      fontFamily: 'Inter',
+      fontFamilyFallback: urduFallback,
       textSelectionTheme: const TextSelectionThemeData(
         cursorColor: AppColors.accent,
         selectionColor: Color(0x40F59E0B),
@@ -165,19 +177,36 @@ class AppTheme {
         backgroundColor: AppColors.surfaceDark,
         foregroundColor: Colors.white,
         elevation: 0,
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          fontFamily: 'Outfit',
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+          fontFamilyFallback: urduFallback,
+        ),
       ),
       cardTheme: CardThemeData(
         color: AppColors.surfaceDark,
         elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shadowColor: Colors.black.withValues(alpha: 0.3),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.accent,
           foregroundColor: Colors.black,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            fontFamilyFallback: urduFallback,
+          ),
         ).copyWith(
           mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
         ),
@@ -185,7 +214,11 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.accent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          side: const BorderSide(color: AppColors.accent),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
         ).copyWith(
           mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
         ),
@@ -202,11 +235,22 @@ class AppTheme {
           mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
         ),
       ),
-      listTileTheme: const ListTileThemeData(
-        mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
-      ),
-      switchTheme: const SwitchThemeData(
-        mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF1E293B),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFF334155)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFF334155)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.accent, width: 2),
+        ),
       ),
     );
   }

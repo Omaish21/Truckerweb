@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../localization/locale_provider.dart';
+import '../providers/app_scope.dart';
 import '../utils/urdu_text.dart';
 
-class LanguageToggleButton extends ConsumerWidget {
+class LanguageToggleButton extends StatelessWidget {
   final bool compact;
   final Color? color;
   final Color? textColor;
@@ -16,8 +15,8 @@ class LanguageToggleButton extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentLocale = ref.watch(localeProvider);
+  Widget build(BuildContext context) {
+    final currentLocale = context.localeProvider.locale;
     final isUrdu = currentLocale.languageCode == 'ur';
 
     // Target label: what clicking will change to
@@ -25,7 +24,7 @@ class LanguageToggleButton extends ConsumerWidget {
     final targetFont = isUrdu ? null : UrduTextUtils.nastaliqStyle(fontSize: 14, height: 1.4);
 
     return InkWell(
-      onTap: () => ref.read(localeProvider.notifier).toggleLocale(),
+      onTap: () => context.localeActions.toggleLocale(),
       mouseCursor: SystemMouseCursors.click,
       borderRadius: BorderRadius.circular(20),
       child: Container(

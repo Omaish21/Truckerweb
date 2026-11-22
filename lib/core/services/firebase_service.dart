@@ -2,36 +2,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/loads/domain/bid_model.dart';
 import '../../features/loads/domain/load_model.dart';
 import '../../features/route_intelligence/domain/route_models.dart';
 
-final firebaseServiceProvider = Provider<FirebaseService>((ref) {
-  return FirebaseService();
-});
-
-final firebaseLoadsStreamProvider = StreamProvider<List<LoadModel>>((ref) {
-  final service = ref.watch(firebaseServiceProvider);
-  return service.watchLoads();
-});
-
-final firebaseRoadReportsStreamProvider = StreamProvider<List<RoadReport>>((ref) {
-  final service = ref.watch(firebaseServiceProvider);
-  return service.watchRoadReports();
-});
-
-final firebaseCityTimingsStreamProvider = StreamProvider<List<CityTimingRule>>((ref) {
-  final service = ref.watch(firebaseServiceProvider);
-  return service.watchCityTimings();
-});
-
-final firebaseLoadBidsStreamProvider = StreamProvider.family<List<BidModel>, String>((ref, loadId) {
-  final service = ref.watch(firebaseServiceProvider);
-  return service.watchBids(loadId);
-});
-
 class FirebaseService {
+  static final FirebaseService instance = FirebaseService._internal();
+  factory FirebaseService() => instance;
+  FirebaseService._internal();
+
+  /// Reactive live streams without Riverpod
+  static Stream<List<LoadModel>> get loadsStream => instance.watchLoads();
+  static Stream<List<RoadReport>> get roadReportsStream => instance.watchRoadReports();
+  static Stream<List<CityTimingRule>> get cityTimingsStream => instance.watchCityTimings();
+  static Stream<List<BidModel>> bidsStream(String loadId) => instance.watchBids(loadId);
   FirebaseFirestore? get firestore {
     try {
       return FirebaseFirestore.instance;

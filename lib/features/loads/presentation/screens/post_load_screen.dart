@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/vehicle_types.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/translation_service.dart';
@@ -9,14 +8,14 @@ import '../../../../core/widgets/voice_input_button.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/load_model.dart';
 
-class PostLoadScreen extends ConsumerStatefulWidget {
+class PostLoadScreen extends StatefulWidget {
   const PostLoadScreen({super.key});
 
   @override
-  ConsumerState<PostLoadScreen> createState() => _PostLoadScreenState();
+  State<PostLoadScreen> createState() => _PostLoadScreenState();
 }
 
-class _PostLoadScreenState extends ConsumerState<PostLoadScreen> {
+class _PostLoadScreenState extends State<PostLoadScreen> {
   final _formKey = GlobalKey<FormState>();
   final _originController = TextEditingController(text: 'Lahore (Badami Bagh)');
   final _destController = TextEditingController(text: 'Karachi (Port Qasim)');
@@ -44,7 +43,7 @@ class _PostLoadScreenState extends ConsumerState<PostLoadScreen> {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isSubmitting = true);
       try {
-        final service = ref.read(firebaseServiceProvider);
+        final service = FirebaseService.instance;
         final currentUid = service.auth?.currentUser?.uid ?? 'guest-owner';
         final newLoad = LoadModel(
           id: '',

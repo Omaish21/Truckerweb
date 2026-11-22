@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/route_models.dart';
 
-class CityTimingScreen extends ConsumerWidget {
+class CityTimingScreen extends StatelessWidget {
   final String? initialCity;
   const CityTimingScreen({super.key, this.initialCity});
 
@@ -104,30 +103,34 @@ class CityTimingScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
-    final timingsAsync = ref.watch(firebaseCityTimingsStreamProvider);
-    final rawRules = (timingsAsync.value != null && timingsAsync.value!.isNotEmpty)
-        ? timingsAsync.value!
-        : _defaultRules;
 
-    // If initialCity is provided in URL, prioritize matching rules to the top
-    final rules = List<CityTimingRule>.from(rawRules);
-    if (initialCity != null && initialCity!.isNotEmpty) {
-      rules.sort((a, b) {
-        final aMatch = a.cityName.toLowerCase().contains(initialCity!.toLowerCase());
-        final bMatch = b.cityName.toLowerCase().contains(initialCity!.toLowerCase());
-        if (aMatch && !bMatch) return -1;
-        if (!aMatch && bMatch) return 1;
-        return 0;
-      });
-    }
+    return StreamBuilder<List<CityTimingRule>>(
+      stream: FirebaseService.cityTimingsStream,
+      initialData: _defaultRules,
+      builder: (context, snapshot) {
+        final rawRules = (snapshot.data != null && snapshot.data!.isNotEmpty)
+            ? snapshot.data!
+            : _defaultRules;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.cityTimingTitle),
-        actions: [
+        // If initialCity is provided in URL, prioritize matching rules to the top
+        final rules = List<CityTimingRule>.from(rawRules);
+        if (initialCity != null && initialCity!.isNotEmpty) {
+          rules.sort((a, b) {
+            final aMatch = a.cityName.toLowerCase().contains(initialCity!.toLowerCase());
+            final bMatch = b.cityName.toLowerCase().contains(initialCity!.toLowerCase());
+            if (aMatch && !bMatch) return -1;
+            if (!aMatch && bMatch) return 1;
+            return 0;
+          });
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(l10n.cityTimingTitle),
+            actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
             tooltip: isUrdu ? 'اوقات کا لنک شیئر کریں' : 'Share City Timings Link',
@@ -309,6 +312,8 @@ class CityTimingScreen extends ConsumerWidget {
           }),
         ],
       ),
+    );
+      },
     );
   }
 }

@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'firebase_service.dart';
 
 const String kFcmVapidKey =
@@ -40,90 +38,25 @@ class NotificationState {
   }
 }
 
-final notificationServiceProvider = Provider<NotificationService>((ref) {
-  final firebaseService = ref.watch(firebaseServiceProvider);
-  return NotificationService(firebaseService: firebaseService, ref: ref);
-});
-
-final notificationStateProvider =
-    StateNotifierProvider<NotificationNotifier, NotificationState>((ref) {
-  return NotificationNotifier(ref);
-});
-
-class NotificationNotifier extends StateNotifier<NotificationState> {
-  final Ref _ref;
-
-  NotificationNotifier(this._ref) : super(const NotificationState()) {
-    _checkInitialStatus();
-  }
-
-  Future<void> _checkInitialStatus() async {
-    try {
-      final messaging = FirebaseMessaging.instance;
-      final settings = await messaging.getNotificationSettings();
-      final isGranted = settings.authorizationStatus == AuthorizationStatus.authorized ||
-          settings.authorizationStatus == AuthorizationStatus.provisional;
-      state = state.copyWith(isPermissionGranted: isGranted);
-    } catch (_) {}
-  }
-
-  void updateState({
-    bool? isPermissionGranted,
-    bool? isLoading,
-    String? token,
-    String? errorMessage,
-    RemoteMessage? lastForegroundMessage,
-  }) {
-    state = state.copyWith(
-      isPermissionGranted: isPermissionGranted,
-      isLoading: isLoading,
-      token: token,
-      errorMessage: errorMessage,
-      lastForegroundMessage: lastForegroundMessage,
-    );
-  }
-
-  Future<bool> enableAlerts(String? uid) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final service = _ref.read(notificationServiceProvider);
-      final token = await service.requestPermissionAndToken(uid: uid);
-      if (token != null) {
-        state = state.copyWith(
-          isPermissionGranted: true,
-          isLoading: false,
-          token: token,
-        );
-        return true;
-      } else {
-        state = state.copyWith(
-          isPermissionGranted: false,
-          isLoading: false,
-          errorMessage: 'Permission not granted or token unavailable.',
-        );
-        return false;
-      }
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: e.toString(),
-      );
-      return false;
-    }
-  }
-}
-
-class NotificationService {
-  final FirebaseService firebaseService;
-  final Ref ref;
+/// Pure Flutter ChangeNotifier for FCM push notifications
+class NotificationProvider extends ChangeNotifier {
+  final FirebaseService _firebaseService;
+  NotificationState _state = const NotificationState();
   StreamSubscription<RemoteMessage>? _messageSubscription;
   StreamSubscription<String>? _tokenRefreshSubscription;
   bool _initialized = false;
 
-  NotificationService({
-    required this.firebaseService,
-    required this.ref,
-  });
+  NotificationProvider({FirebaseService? firebaseService})
+      : _firebaseService = firebaseService ?? FirebaseService.instance {
+    _checkInitialStatus();
+  }
+
+  NotificationState get state => _state;
+  bool get isPermissionGranted => _state.isPermissionGranted;
+  bool get isLoading => _state.isLoading;
+  String? get token => _state.token;
+  String? get errorMessage => _state.errorMessage;
+  RemoteMessage? get lastForegroundMessage => _state.lastForegroundMessage;
 
   FirebaseMessaging? get _messaging {
     try {
@@ -131,6 +64,18 @@ class NotificationService {
     } catch (_) {
       return null;
     }
+  }
+
+  Future<void> _checkInitialStatus() async {
+    try {
+      final messaging = _messaging;
+      if (messaging == null) return;
+      final settings = await messaging.getNotificationSettings();
+      final isGranted = settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional;
+      _state = _state.copyWith(isPermissionGranted: isGranted);
+      notifyListeners();
+    } catch (_) {}
   }
 
   Future<void> init() async {
@@ -142,24 +87,57 @@ class NotificationService {
       // Foreground message listener
       _messageSubscription = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         debugPrint('[FCM Foreground] Received: ${message.notification?.title} - ${message.notification?.body}');
-        ref.read(notificationStateProvider.notifier).updateState(
-              lastForegroundMessage: message,
-            );
+        _state = _state.copyWith(lastForegroundMessage: message);
+        notifyListeners();
       });
 
       // Token refresh listener
       _tokenRefreshSubscription = messaging.onTokenRefresh.listen((String newToken) {
         debugPrint('[FCM] Token refreshed: $newToken');
-        ref.read(notificationStateProvider.notifier).updateState(token: newToken);
-        final currentUid = firebaseService.auth?.currentUser?.uid;
+        _state = _state.copyWith(token: newToken);
+        notifyListeners();
+        final currentUid = _firebaseService.auth?.currentUser?.uid;
         if (currentUid != null) {
-          firebaseService.saveUserFcmToken(currentUid, newToken);
+          _firebaseService.saveUserFcmToken(currentUid, newToken);
         }
       });
 
       _initialized = true;
     } catch (e) {
-      debugPrint('[FCM init error]: $e');
+      debugPrint('[FCM] Init error: $e');
+    }
+  }
+
+  Future<bool> enableAlerts(String? uid) async {
+    _state = _state.copyWith(isLoading: true, errorMessage: null);
+    notifyListeners();
+
+    try {
+      final token = await requestPermissionAndToken(uid: uid);
+      if (token != null) {
+        _state = _state.copyWith(
+          isPermissionGranted: true,
+          isLoading: false,
+          token: token,
+        );
+        notifyListeners();
+        return true;
+      } else {
+        _state = _state.copyWith(
+          isPermissionGranted: false,
+          isLoading: false,
+          errorMessage: 'Permission not granted or token unavailable.',
+        );
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _state = _state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+      notifyListeners();
+      return false;
     }
   }
 
@@ -173,36 +151,40 @@ class NotificationService {
         announcement: false,
         badge: true,
         carPlay: false,
-        criticalAlert: false,
+        criticalAlert: true,
         provisional: false,
         sound: true,
       );
 
-      final isGranted = settings.authorizationStatus == AuthorizationStatus.authorized ||
+      final granted = settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional;
 
-      if (!isGranted) {
-        debugPrint('[FCM] User declined or has not accepted permission');
-        return null;
+      if (!granted) return null;
+
+      final fcmToken = await messaging.getToken(vapidKey: kFcmVapidKey);
+      if (fcmToken != null) {
+        _state = _state.copyWith(
+          isPermissionGranted: true,
+          token: fcmToken,
+        );
+        notifyListeners();
+
+        final targetUid = uid ?? _firebaseService.auth?.currentUser?.uid;
+        if (targetUid != null) {
+          await _firebaseService.saveUserFcmToken(targetUid, fcmToken);
+        }
       }
-
-      final token = await messaging.getToken(vapidKey: kFcmVapidKey);
-      debugPrint('[FCM] Token retrieved successfully: $token');
-
-      final effectiveUid = uid ?? firebaseService.auth?.currentUser?.uid;
-      if (effectiveUid != null && token != null) {
-        await firebaseService.saveUserFcmToken(effectiveUid, token);
-      }
-
-      return token;
+      return fcmToken;
     } catch (e) {
-      debugPrint('[FCM requestPermissionAndToken error]: $e');
+      debugPrint('[FCM] Token acquisition error: $e');
       return null;
     }
   }
 
+  @override
   void dispose() {
     _messageSubscription?.cancel();
     _tokenRefreshSubscription?.cancel();
+    super.dispose();
   }
 }

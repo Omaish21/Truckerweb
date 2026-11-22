@@ -1,42 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'core/localization/locale_provider.dart';
+import 'core/providers/app_scope.dart';
 import 'core/router/app_router.dart';
-import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/colors.dart';
 import 'l10n/app_localizations.dart';
 
-class TruckLinkApp extends ConsumerStatefulWidget {
+class TruckLinkApp extends StatefulWidget {
   const TruckLinkApp({super.key});
 
   @override
-  ConsumerState<TruckLinkApp> createState() => _TruckLinkAppState();
+  State<TruckLinkApp> createState() => _TruckLinkAppState();
 }
 
-class _TruckLinkAppState extends ConsumerState<TruckLinkApp> {
+class _TruckLinkAppState extends State<TruckLinkApp> {
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
-
-  @override
-  void initState() {
-    super.initState();
-    // Initialize FCM notification listener
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(notificationServiceProvider).init();
-    });
-  }
+  String? _lastShownMessageId;
 
   @override
   Widget build(BuildContext context) {
-    // Listen for foreground push notifications and surface an in-app banner
-    ref.listen<NotificationState>(notificationStateProvider, (previous, next) {
-      if (next.lastForegroundMessage != null &&
-          next.lastForegroundMessage != previous?.lastForegroundMessage) {
-        final message = next.lastForegroundMessage!;
-        final title =
-            message.notification?.title ?? message.data['title'] ?? 'TruckLink Alert';
-        final body = message.notification?.body ?? message.data['body'] ?? '';
+    final activeLocale = context.localeProvider.locale;
+    final notif = context.notifications;
+    final lastMessage = notif.lastForegroundMessage;
+
+    if (lastMessage != null && lastMessage.messageId != _lastShownMessageId) {
+      _lastShownMessageId = lastMessage.messageId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final title = lastMessage.notification?.title ??
+            lastMessage.data['title'] ??
+            'TruckLink Alert';
+        final body =
+            lastMessage.notification?.body ?? lastMessage.data['body'] ?? '';
 
         _scaffoldMessengerKey.currentState?.showSnackBar(
           SnackBar(
@@ -72,11 +66,8 @@ class _TruckLinkAppState extends ConsumerState<TruckLinkApp> {
             ),
           ),
         );
-      }
-    });
-
-    final router = ref.watch(appRouterProvider);
-    final activeLocale = ref.watch(localeProvider);
+      });
+    }
 
     return MaterialApp.router(
       scaffoldMessengerKey: _scaffoldMessengerKey,
@@ -85,7 +76,7 @@ class _TruckLinkAppState extends ConsumerState<TruckLinkApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
-      routerConfig: router,
+      routerConfig: appRouter,
       locale: activeLocale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

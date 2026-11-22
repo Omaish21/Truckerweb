@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/providers/app_scope.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../providers/auth_provider.dart';
 
-class RoleSelectionScreen extends ConsumerWidget {
+class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
@@ -53,7 +52,7 @@ class RoleSelectionScreen extends ConsumerWidget {
                 description: l10n.driverRoleDescription,
                 badgeColor: AppColors.accent,
                 onTap: () {
-                  ref.read(authProvider.notifier).switchRole('driver');
+                  context.authActions.switchRole('driver');
                   context.go('/driver-home');
                 },
               ),
@@ -68,7 +67,7 @@ class RoleSelectionScreen extends ConsumerWidget {
                 description: l10n.ownerRoleDescription,
                 badgeColor: AppColors.primary,
                 onTap: () {
-                  ref.read(authProvider.notifier).switchRole('owner');
+                  context.authActions.switchRole('owner');
                   context.go('/loads-feed');
                 },
               ),

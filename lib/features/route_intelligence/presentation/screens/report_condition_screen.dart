@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/report_categories.dart';
 import '../../../../core/services/audio_alert_service.dart';
 import '../../../../core/services/firebase_service.dart';
@@ -9,14 +8,14 @@ import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../core/widgets/voice_input_button.dart';
 import '../../../../l10n/app_localizations.dart';
 
-class ReportConditionScreen extends ConsumerStatefulWidget {
+class ReportConditionScreen extends StatefulWidget {
   const ReportConditionScreen({super.key});
 
   @override
-  ConsumerState<ReportConditionScreen> createState() => _ReportConditionScreenState();
+  State<ReportConditionScreen> createState() => _ReportConditionScreenState();
 }
 
-class _ReportConditionScreenState extends ConsumerState<ReportConditionScreen> {
+class _ReportConditionScreenState extends State<ReportConditionScreen> {
   String _selectedCategoryId = 'broken';
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController(text: 'N-5 Highway, Near Okara Bypass (30.8138° N, 73.4534° E)');
@@ -33,7 +32,7 @@ class _ReportConditionScreenState extends ConsumerState<ReportConditionScreen> {
     final l10n = AppLocalizations.of(context)!;
     setState(() => _isSubmitting = true);
     try {
-      final service = ref.read(firebaseServiceProvider);
+      final service = FirebaseService.instance;
       await service.reportHazard(
         categoryId: _selectedCategoryId,
         location: _locationController.text.trim(),

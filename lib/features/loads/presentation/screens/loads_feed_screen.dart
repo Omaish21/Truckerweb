@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/load_statuses.dart';
 import '../../../../core/constants/vehicle_types.dart';
+import '../../../../core/providers/app_scope.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/launcher/app_launcher.dart';
 import '../../../../core/services/translation_service.dart';
@@ -14,11 +14,10 @@ import '../../../../core/widgets/notification_bell_button.dart';
 import '../../../../core/widgets/truck_icon.dart';
 import '../../../../core/widgets/verified_badge.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/bid_model.dart';
 import '../../domain/load_model.dart';
 
-class LoadsFeedScreen extends ConsumerStatefulWidget {
+class LoadsFeedScreen extends StatefulWidget {
   final String? initialCity;
   final String? initialVehicle;
 
@@ -29,10 +28,10 @@ class LoadsFeedScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<LoadsFeedScreen> createState() => _LoadsFeedScreenState();
+  State<LoadsFeedScreen> createState() => _LoadsFeedScreenState();
 }
 
-class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
+class _LoadsFeedScreenState extends State<LoadsFeedScreen> {
   String? _selectedVehicleFilter;
   String? _selectedCityFilter;
   final Map<String, String> _translatedNotes = {};
@@ -193,7 +192,7 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 onPressed: () async {
-                  final authUser = ref.read(authProvider).userProfile;
+                  final authUser = context.auth.userProfile;
                   final newBid = BidModel(
                     id: '',
                     loadId: load.id,
@@ -207,7 +206,7 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
                     notes: notesCtrl.text.trim().isEmpty ? null : notesCtrl.text.trim(),
                     createdAt: DateTime.now(),
                   );
-                  await ref.read(firebaseServiceProvider).submitBid(load.id, newBid);
+                  await FirebaseService.instance.submitBid(load.id, newBid);
                   if (ctx.mounted) {
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -240,10 +239,10 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
-        return Consumer(
-          builder: (context, ref, _) {
-            final bidsAsync = ref.watch(firebaseLoadBidsStreamProvider(load.id));
-            final bids = bidsAsync.value ?? [];
+        return StreamBuilder<List<BidModel>>(
+          stream: FirebaseService.bidsStream(load.id),
+          builder: (context, snapshot) {
+            final bids = snapshot.data ?? [];
 
             return Container(
               padding: const EdgeInsets.all(20),
@@ -344,7 +343,7 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
                                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                       ),
                                       onPressed: () async {
-                                        await ref.read(firebaseServiceProvider).acceptBid(
+                                        await FirebaseService.instance.acceptBid(
                                           loadId: load.id,
                                           bidId: bid.id,
                                           driverId: bid.driverId,
@@ -383,23 +382,27 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
-    final authUser = ref.watch(authProvider).userProfile;
-    final loadsAsync = ref.watch(firebaseLoadsStreamProvider);
-    var loadsList = loadsAsync.value ?? FirebaseService.defaultSampleLoads;
+    final authUser = context.auth.userProfile;
 
-    // Apply vehicle type filtering
-    if (_selectedVehicleFilter != null && _selectedVehicleFilter != 'all') {
-      loadsList = loadsList.where((l) => l.vehicleTypeRequired == _selectedVehicleFilter).toList();
-    }
+    return StreamBuilder<List<LoadModel>>(
+      stream: FirebaseService.loadsStream,
+      initialData: FirebaseService.defaultSampleLoads,
+      builder: (context, snapshot) {
+        var loadsList = snapshot.data ?? FirebaseService.defaultSampleLoads;
 
-    // Apply city hub filtering
-    if (_selectedCityFilter != null && _selectedCityFilter != 'All') {
-      loadsList = loadsList.where((l) =>
-          l.originCity.toLowerCase().contains(_selectedCityFilter!.toLowerCase()) ||
-          l.destinationCity.toLowerCase().contains(_selectedCityFilter!.toLowerCase())).toList();
-    }
+        // Apply vehicle type filtering
+        if (_selectedVehicleFilter != null && _selectedVehicleFilter != 'all') {
+          loadsList = loadsList.where((l) => l.vehicleTypeRequired == _selectedVehicleFilter).toList();
+        }
 
-    return Scaffold(
+        // Apply city hub filtering
+        if (_selectedCityFilter != null && _selectedCityFilter != 'All') {
+          loadsList = loadsList.where((l) =>
+              l.originCity.toLowerCase().contains(_selectedCityFilter!.toLowerCase()) ||
+              l.destinationCity.toLowerCase().contains(_selectedCityFilter!.toLowerCase())).toList();
+        }
+
+        return Scaffold(
       appBar: AppBar(
         title: Text(l10n.availableLoadsTitle),
         actions: [
@@ -739,7 +742,7 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
                                   icon: const Icon(Icons.play_arrow, size: 16),
                                   label: Text(isUrdu ? 'سفر شروع کریں' : 'Start Trip'),
                                   onPressed: () async {
-                                    await ref.read(firebaseServiceProvider).updateLoadStatus(load.id, LoadStatus.inTransit);
+                                    await FirebaseService.instance.updateLoadStatus(load.id, LoadStatus.inTransit);
                                   },
                                 )
                               else if (load.status == LoadStatus.inTransit)
@@ -748,7 +751,7 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
                                   icon: const Icon(Icons.check_circle, size: 16),
                                   label: Text(isUrdu ? 'مال پہنچ گیا' : 'Mark Delivered'),
                                   onPressed: () async {
-                                    await ref.read(firebaseServiceProvider).updateLoadStatus(load.id, LoadStatus.delivered);
+                                    await FirebaseService.instance.updateLoadStatus(load.id, LoadStatus.delivered);
                                   },
                                 ),
                             ],
@@ -763,6 +766,8 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
           ),
         ],
       ),
+    );
+      },
     );
   }
 }
