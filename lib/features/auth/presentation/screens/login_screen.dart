@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/providers/app_scope.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/captcha_verification_widget.dart';
 import '../../../../core/widgets/cinematic_hero_background.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../core/widgets/logistics_video_dialog.dart';
@@ -17,12 +18,14 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _phoneController = TextEditingController(text: '0300 1234567');
+  final _phoneController = TextEditingController();
   final _otpController = TextEditingController();
   final _emailController = TextEditingController(text: 'driver@trucklink.pk');
   final _passwordController = TextEditingController(text: '123456');
   final _formKey = GlobalKey<FormState>();
   int _selectedTab = 0; // 0: Phone OTP, 1: Email/Password
+  bool _isCaptchaVerified = false;
+  bool _captchaError = false;
 
   @override
   void dispose() {
@@ -34,6 +37,21 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleSendOtp() {
+    if (!_isCaptchaVerified) {
+      setState(() => _captchaError = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.danger,
+          content: Text(
+            Localizations.localeOf(context).languageCode == 'ur'
+                ? 'براہ کرم سیکیورٹی چیک (CAPTCHA) مکمل کریں'
+                : 'Please complete the anti-bot verification check (CAPTCHA)',
+          ),
+        ),
+      );
+      return;
+    }
+
     if (_formKey.currentState?.validate() ?? false) {
       final phone = AppValidators.normalizePhone(_phoneController.text);
       context.authActions.sendOtp(phone);
@@ -48,6 +66,21 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleEmailLogin() async {
+    if (!_isCaptchaVerified) {
+      setState(() => _captchaError = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.danger,
+          content: Text(
+            Localizations.localeOf(context).languageCode == 'ur'
+                ? 'براہ کرم سیکیورٹی چیک (CAPTCHA) مکمل کریں'
+                : 'Please complete the anti-bot verification check (CAPTCHA)',
+          ),
+        ),
+      );
+      return;
+    }
+
     if (_formKey.currentState?.validate() ?? false) {
       final success = await context.authActions.signInWithEmailPassword(
             _emailController.text.trim(),
@@ -519,7 +552,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: const TextStyle(color: AppColors.danger, fontSize: 13),
                     ),
                   ],
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 12),
+                  CaptchaVerificationWidget(
+                    isUrdu: isUrdu,
+                    hasError: _captchaError,
+                    onVerified: (verified) {
+                      setState(() {
+                        _isCaptchaVerified = verified;
+                        if (verified) _captchaError = false;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
                   SizedBox(
                     height: 48,
                     child: ElevatedButton(
@@ -562,25 +606,115 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 18),
                   TextFormField(
                     controller: _phoneController,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2,
+                    ),
                     cursorColor: AppColors.accent,
-                    cursorWidth: 2.2,
+                    cursorWidth: 2.5,
+                    cursorHeight: 24,
+                    cursorRadius: const Radius.circular(2),
                     showCursor: true,
+                    mouseCursor: SystemMouseCursors.text,
                     keyboardType: TextInputType.phone,
+                    onChanged: (val) => setState(() {}),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Colors.white.withValues(alpha: 0.08),
-                      prefixIcon: const Icon(Icons.phone_android, color: AppColors.accent),
-                      labelText: l10n.mobileNumberLabel,
-                      hintText: l10n.mobileNumberHint,
-                      labelStyle: const TextStyle(color: Colors.white70),
-                      hintStyle: const TextStyle(color: Colors.white38),
+                      fillColor: Colors.white.withValues(alpha: 0.10),
+                      floatingLabelBehavior: FloatingLabelBehavior.always,
+                      labelText: isUrdu ? 'پاکستانی موبائل نمبر' : 'Pakistani Mobile Number',
+                      hintText: '0300 1234567',
+                      labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                      hintStyle: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.38),
+                        fontSize: 15,
+                        letterSpacing: 1.2,
+                      ),
+                      prefixIcon: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text('🇵🇰', style: TextStyle(fontSize: 18)),
+                            const SizedBox(width: 6),
+                            const Text(
+                              '+92',
+                              style: TextStyle(
+                                color: AppColors.accent,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(height: 22, width: 1.2, color: Colors.white30),
+                          ],
+                        ),
+                      ),
+                      suffixIcon: _phoneController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear, color: Colors.white60, size: 18),
+                              onPressed: () {
+                                _phoneController.clear();
+                                setState(() {});
+                              },
+                            )
+                          : null,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.white24)),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white30, width: 1.2),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.accent, width: 2.0),
+                      ),
                     ),
                     validator: AppValidators.validatePhone,
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        isUrdu ? 'فارمیٹ: 0300 1234567 یا 300 1234567' : 'Format: 0300 1234567 or 300 1234567',
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 11),
+                      ),
+                      InkWell(
+                        mouseCursor: SystemMouseCursors.click,
+                        onTap: () {
+                          setState(() {
+                            _phoneController.text = '0300 1234567';
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white10,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
+                          ),
+                          child: Text(
+                            isUrdu ? 'ڈیمو نمبر درج کریں' : 'Fill Demo Phone',
+                            style: const TextStyle(color: AppColors.accent, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  CaptchaVerificationWidget(
+                    isUrdu: isUrdu,
+                    hasError: _captchaError,
+                    onVerified: (verified) {
+                      setState(() {
+                        _isCaptchaVerified = verified;
+                        if (verified) _captchaError = false;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 14),
                   SizedBox(
                     height: 48,
                     child: ElevatedButton(
@@ -696,6 +830,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         setState(() {
                           _selectedTab = 0;
                           _phoneController.text = '0300 1234567';
+                          _isCaptchaVerified = true;
+                          _captchaError = false;
                         });
                         _handleSendOtp();
                       },
@@ -720,6 +856,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           _selectedTab = 1;
                           _emailController.text = 'owner@trucklink.pk';
                           _passwordController.text = '123456';
+                          _isCaptchaVerified = true;
+                          _captchaError = false;
                         });
                         _handleEmailLogin();
                       },

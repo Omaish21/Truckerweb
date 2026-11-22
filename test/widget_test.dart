@@ -10,6 +10,7 @@ import 'package:trucklink_pk/core/services/geocoding_service.dart';
 import 'package:trucklink_pk/core/utils/formatters.dart';
 import 'package:trucklink_pk/core/utils/urdu_text.dart';
 import 'package:trucklink_pk/core/utils/validators.dart';
+import 'package:trucklink_pk/core/widgets/captcha_verification_widget.dart';
 import 'package:trucklink_pk/features/auth/presentation/providers/auth_provider.dart';
 import 'package:trucklink_pk/core/services/firebase_service.dart';
 import 'package:trucklink_pk/features/loads/domain/load_model.dart';
@@ -31,9 +32,35 @@ void main() {
     test('Pakistani Phone Validator formats and validates mobile numbers', () {
       expect(AppValidators.validatePhone('03001234567'), isNull);
       expect(AppValidators.validatePhone('+923001234567'), isNull);
+      expect(AppValidators.validatePhone('300 1234567'), isNull);
       expect(AppValidators.validatePhone('0211234567'), isNotNull);
 
       expect(AppValidators.normalizePhone('0300 1234567'), '+923001234567');
+      expect(AppValidators.normalizePhone('300 1234567'), '+923001234567');
+      expect(AppValidators.normalizePhone('+923001234567'), '+923001234567');
+    });
+
+    testWidgets('CaptchaVerificationWidget verifies on user tap', (WidgetTester tester) async {
+      bool isVerified = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CaptchaVerificationWidget(
+              onVerified: (v) => isVerified = v,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(CaptchaVerificationWidget), findsOneWidget);
+      expect(find.textContaining("I'm a human"), findsOneWidget);
+
+      await tester.tap(find.textContaining("I'm a human"));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1000));
+
+      expect(isVerified, isTrue);
+      expect(find.textContaining('Human Verification Passed'), findsOneWidget);
     });
 
     test('Currency & Weight formatters produce proper output', () {
