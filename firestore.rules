@@ -5,7 +5,7 @@ rules_version = '2';
 // ===============================================================
 //
 // Platform: Pakistani Truck Logistics Platform (TruckLink PK)
-// Purpose: Multi-tenant logistics data security for drivers, owners, and fleet operators.
+// Purpose: Multi-tenant logistics data security for drivers, owners, fleet operators, and administrators.
 //
 // ===============================================================
 // Assumed Data Models
@@ -15,11 +15,15 @@ rules_version = '2';
 //    Document ID: Firebase Auth UID
 //    Fields:
 //      - id: string (required, immutable, matches document ID / auth.uid)
-//      - role: string (required, 'driver' | 'owner') - escalation to 'admin' blocked
+//      - role: string (required, 'driver' | 'owner' | 'admin') - escalation to 'admin' blocked for regular users
 //      - full_name: string (required, 2-100 chars)
 //      - phone: string (required, 10-20 chars)
 //      - cnic_number: string (optional, 13-18 chars) - NADRA CNIC format
-//      - cnic_verified: bool (optional, immutable by regular users; requires admin/backend)
+//      - cnic_verified / cnicVerified: bool (optional, immutable by regular users; requires admin/backend)
+//      - verification_status / verificationStatus: string ('unverified' | 'pending' | 'verified' | 'rejected')
+//      - verified_at / verifiedAt: string/timestamp (optional, managed by admin)
+//      - rejection_reason / rejectionReason: string (optional, <= 500 chars, managed by admin)
+//      - isAdmin / is_admin: bool (optional, immutable by regular users)
 //      - nadra_transaction_id: string (optional, audit trail, immutable by users)
 //      - photo_url: string (optional, URL <= 1000 chars)
 //      - rating: number (optional, float 0.0 - 5.0, immutable by users)
@@ -44,23 +48,34 @@ rules_version = '2';
 //    Document ID: Firebase Auth UID
 //    Fields:
 //      - id / uid: string (optional, matches auth.uid)
+//      - email: string (optional)
+//      - phone: string (optional)
+//      - role: string (optional, 'driver' | 'owner' | 'admin')
+//      - full_name / fullName: string (optional)
 //      - fcmTokens / fcm_tokens: list/string (optional)
 //      - notificationsEnabled / notifications_enabled: bool (optional)
 //      - verificationStatus / verification_status: string (optional)
-//      - cnic_url, license_url, registration_url: string (optional)
+//      - cnic_verified / cnicVerified: bool (optional)
+//      - verifiedAt / verified_at: string/timestamp (optional)
+//      - rejectionReason / rejection_reason: string (optional)
+//      - isAdmin / is_admin: bool (optional)
+//      - cnic_url, license_url, registration_url, cnic_front_url: string (optional)
+//      - photo_url / photoUrl: string (optional)
+//      - created_at / createdAt: string/timestamp (optional)
 //      - updated_at / updatedAt: string/timestamp (optional)
 //
 // 3. Collection: notifications/{notifId}
 //    Document ID: Auto-generated UUID or Firestore ID
 //    Fields:
-//      - recipientId: string (required, user ID of recipient)
+//      - recipientId / recipient_id: string (required, user ID of recipient)
 //      - title: string (required, 1-200 chars)
 //      - body: string (required, 1-1000 chars)
 //      - type: string (required, notification category)
-//      - read: bool (optional, read status flag)
-//      - data: map (optional, custom payload)
-//      - senderId: string (optional)
+//      - read / is_read: bool (optional, read status flag)
+//      - data / payload: map (optional, custom payload)
+//      - senderId / sender_id: string (optional)
 //      - created_at: string/timestamp (optional)
+//      - updated_at: string/timestamp (optional)
 //
 // 4. Collection: loads/{loadId}
 //    Document ID: Auto-generated UUID or Firestore ID
@@ -135,11 +150,20 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Check if the user is a verified administrator via custom claims
+    // Check if the user is a verified administrator via custom claims or user/profile documents
     function isAdmin() {
-      return isAuthenticated() &&
-        (request.auth.token.get('admin', false) == true ||
-         request.auth.token.get('role', '') == 'admin');
+      return isAuthenticated() && (
+        request.auth.token.get('admin', false) == true ||
+        request.auth.token.get('role', '') == 'admin' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('is_admin', false) == true ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin')) ||
+        (exists(/databases/$(database)/documents/profiles/$(request.auth.uid)) &&
+         (get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('isAdmin', false) == true ||
+          get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('is_admin', false) == true ||
+          get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.get('role', '') == 'admin'))
+      );
     }
 
     // Check if the current user is the owner of the document path
@@ -192,13 +216,15 @@ service cloud.firestore {
 
     function allowedProfileFields() {
       return [
-        'id', 'role', 'full_name', 'phone', 'cnic_number', 'cnic_verified',
+        'id', 'role', 'full_name', 'phone', 'cnic_number', 'cnic_verified', 'cnicVerified',
         'nadra_transaction_id', 'photo_url', 'rating', 'total_ratings',
         'license_type', 'experience_years', 'vehicle_types', 'is_available',
         'current_trip_id', 'max_weight_tons', 'hazmat_certified',
         'company_name', 'ntn_number', 'fleet_size', 'verified_business',
         'cnic_url', 'license_url', 'registration_url', 'cnic_front_url',
         'verification_status', 'verificationStatus',
+        'rejectionReason', 'rejection_reason', 'verifiedAt', 'verified_at',
+        'isAdmin', 'is_admin',
         'fcm_tokens', 'fcmTokens', 'notifications_enabled', 'notificationsEnabled',
         'created_at', 'updated_at'
       ];
@@ -218,13 +244,26 @@ service cloud.firestore {
       return hasOnlyAllowedFields(allowedProfileFields()) &&
         hasRequiredFields(['id', 'role', 'full_name', 'phone']) &&
         data.id is string && data.id.size() > 0 && data.id.size() <= 128 &&
-        data.role is string && (data.role in ['driver', 'owner'] || isAdmin()) &&
+        data.role is string && (data.role in ['driver', 'owner', 'admin']) &&
         isValidStringLength('full_name', 2, 100) &&
         isValidStringLength('phone', 10, 20) &&
         isValidOptionalString('cnic_number', 13, 18) &&
         (!('cnic_verified' in data) || data.cnic_verified is bool) &&
+        (!('cnicVerified' in data) || data.cnicVerified is bool) &&
+        (!('verification_status' in data) || (data.verification_status is string && data.verification_status in ['unverified', 'pending', 'verified', 'rejected'])) &&
+        (!('verificationStatus' in data) || (data.verificationStatus is string && data.verificationStatus in ['unverified', 'pending', 'verified', 'rejected'])) &&
+        (!('isAdmin' in data) || data.isAdmin is bool) &&
+        (!('is_admin' in data) || data.is_admin is bool) &&
+        isValidOptionalString('rejectionReason', 1, 500) &&
+        isValidOptionalString('rejection_reason', 1, 500) &&
+        isValidTimestampOrString('verifiedAt') &&
+        isValidTimestampOrString('verified_at') &&
         isValidOptionalString('nadra_transaction_id', 1, 100) &&
         isValidOptionalString('photo_url', 1, 1000) &&
+        isValidOptionalString('cnic_url', 1, 1000) &&
+        isValidOptionalString('license_url', 1, 1000) &&
+        isValidOptionalString('registration_url', 1, 1000) &&
+        isValidOptionalString('cnic_front_url', 1, 1000) &&
         (!('rating' in data) || (data.rating is number && data.rating >= 0 && data.rating <= 5)) &&
         (!('total_ratings' in data) || (data.total_ratings is int && data.total_ratings >= 0)) &&
         (!('license_type' in data) || (data.license_type is list && data.license_type.size() <= 10)) &&
@@ -251,9 +290,18 @@ service cloud.firestore {
       return isOwner(userId) &&
         data.id == request.auth.uid &&
         (isAdmin() || (
-          // Regular users cannot set verified flags or fake initial ratings
+          // Regular users cannot set verified flags, admin status, or fake initial ratings
           data.role in ['driver', 'owner'] &&
           (!('cnic_verified' in data) || data.cnic_verified == false) &&
+          (!('cnicVerified' in data) || data.cnicVerified == false) &&
+          (!('verification_status' in data) || data.verification_status in ['unverified', 'pending']) &&
+          (!('verificationStatus' in data) || data.verificationStatus in ['unverified', 'pending']) &&
+          (!('isAdmin' in data) || data.isAdmin == false) &&
+          (!('is_admin' in data) || data.is_admin == false) &&
+          (!('verified_at' in data) || data.verified_at == null) &&
+          (!('verifiedAt' in data) || data.verifiedAt == null) &&
+          (!('rejection_reason' in data) || data.rejection_reason == null) &&
+          (!('rejectionReason' in data) || data.rejectionReason == null) &&
           (!('nadra_transaction_id' in data) || data.nadra_transaction_id == null) &&
           (!('rating' in data) || data.rating == 0 || data.rating == 0.0) &&
           (!('total_ratings' in data) || data.total_ratings == 0) &&
@@ -268,8 +316,21 @@ service cloud.firestore {
         (isAdmin() || (
           // Role cannot be self-changed without admin
           data.role == resource.data.role &&
-          // CNIC verification and NADRA audit tokens are immutable by regular users
+          // CNIC verification cannot be self-verified by regular users
           (!('cnic_verified' in data) || data.cnic_verified == resource.data.get('cnic_verified', false)) &&
+          (!('cnicVerified' in data) || data.cnicVerified == resource.data.get('cnicVerified', false)) &&
+          // Verification status cannot be escalated to 'verified' by regular users
+          (!('verification_status' in data) || data.verification_status != 'verified' || resource.data.get('verification_status', '') == 'verified') &&
+          (!('verificationStatus' in data) || data.verificationStatus != 'verified' || resource.data.get('verificationStatus', '') == 'verified') &&
+          // Admin privilege flags cannot be self-assigned
+          (!('isAdmin' in data) || data.isAdmin == resource.data.get('isAdmin', false)) &&
+          (!('is_admin' in data) || data.is_admin == resource.data.get('is_admin', false)) &&
+          // Verification timestamps and rejection reasons are immutable by regular users
+          (!('verified_at' in data) || data.verified_at == resource.data.get('verified_at', null)) &&
+          (!('verifiedAt' in data) || data.verifiedAt == resource.data.get('verifiedAt', null)) &&
+          (!('rejection_reason' in data) || data.rejection_reason == resource.data.get('rejection_reason', null)) &&
+          (!('rejectionReason' in data) || data.rejectionReason == resource.data.get('rejectionReason', null)) &&
+          // NADRA audit tokens are immutable by regular users
           (!('nadra_transaction_id' in data) || data.nadra_transaction_id == resource.data.get('nadra_transaction_id', null)) &&
           // Ratings cannot be self-inflated by the document owner
           (!('rating' in data) || data.rating == resource.data.get('rating', 0.0)) &&
@@ -280,29 +341,30 @@ service cloud.firestore {
     }
 
     match /profiles/{userId} {
-      // Direct get is allowed for users viewing their own profile or checking basic verified status
+      // Direct get is allowed for users viewing their own profile, checking basic verified status, or admin
       allow get: if isOwner(userId) ||
         resource.data.get('cnic_verified', false) == true ||
         (isAuthenticated() && resource.data.role in ['driver', 'owner']) ||
+        isAdmin() ||
         true;
 
-      // Prevent bulk enumeration/scraping of the entire user directory
+      // Bulk enumeration/scraping of profiles is strictly reserved for administrators
       allow list: if isAdmin();
 
-      // Enforce Validator Pattern & privilege checks on create and update
+      // Enforce Validator Pattern & privilege checks on create
       allow create: if isAuthorizedProfileCreate(userId, request.resource.data) &&
         isValidProfile(request.resource.data);
 
-      // Allow owners to update their own profile or update their notification/FCM tokens
-      allow update: if isOwner(userId) && (
+      // Allow owners to update their own profile / notification tokens, or administrator updates
+      allow update: if (isOwner(userId) && (
         // Dedicated FCM token or notification settings update
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly([
            'fcm_tokens', 'fcmTokens', 'notifications_enabled', 'notificationsEnabled', 'updated_at'
          ]) && isValidNotificationPrefs(request.resource.data)) ||
-        // General profile update
+        // General profile update by owner
         (isAuthorizedProfileUpdate(userId, request.resource.data) &&
          isValidProfile(request.resource.data))
-      );
+      )) || isAdmin();
 
       allow delete: if isAdmin();
 
@@ -322,6 +384,9 @@ service cloud.firestore {
         'id', 'uid', 'email', 'phone', 'role', 'full_name', 'fullName',
         'fcmTokens', 'fcm_tokens', 'notificationsEnabled', 'notifications_enabled',
         'verificationStatus', 'verification_status',
+        'cnic_verified', 'cnicVerified',
+        'rejectionReason', 'rejection_reason', 'verifiedAt', 'verified_at',
+        'isAdmin', 'is_admin',
         'cnic_url', 'license_url', 'registration_url', 'cnic_front_url',
         'photo_url', 'photoUrl',
         'created_at', 'createdAt', 'updated_at', 'updatedAt'
@@ -343,6 +408,14 @@ service cloud.firestore {
         (!('notifications_enabled' in data) || data.notifications_enabled is bool) &&
         (!('verificationStatus' in data) || (data.verificationStatus is string && data.verificationStatus in ['unverified', 'pending', 'verified', 'rejected'])) &&
         (!('verification_status' in data) || (data.verification_status is string && data.verification_status in ['unverified', 'pending', 'verified', 'rejected'])) &&
+        (!('cnic_verified' in data) || data.cnic_verified is bool) &&
+        (!('cnicVerified' in data) || data.cnicVerified is bool) &&
+        (!('isAdmin' in data) || data.isAdmin is bool) &&
+        (!('is_admin' in data) || data.is_admin is bool) &&
+        isValidOptionalString('rejectionReason', 1, 500) &&
+        isValidOptionalString('rejection_reason', 1, 500) &&
+        isValidTimestampOrString('verifiedAt') &&
+        isValidTimestampOrString('verified_at') &&
         isValidOptionalString('cnic_url', 1, 1000) &&
         isValidOptionalString('license_url', 1, 1000) &&
         isValidOptionalString('registration_url', 1, 1000) &&
@@ -360,22 +433,31 @@ service cloud.firestore {
         (isAdmin() || (
           (!('role' in data) || data.role in ['driver', 'owner']) &&
           (!('verificationStatus' in data) || data.verificationStatus != 'verified' || (resource != null && resource.data.get('verificationStatus', '') == 'verified')) &&
-          (!('verification_status' in data) || data.verification_status != 'verified' || (resource != null && resource.data.get('verification_status', '') == 'verified'))
+          (!('verification_status' in data) || data.verification_status != 'verified' || (resource != null && resource.data.get('verification_status', '') == 'verified')) &&
+          (!('cnic_verified' in data) || data.cnic_verified == false || (resource != null && resource.data.get('cnic_verified', false) == true)) &&
+          (!('cnicVerified' in data) || data.cnicVerified == false || (resource != null && resource.data.get('cnicVerified', false) == true)) &&
+          (!('isAdmin' in data) || data.isAdmin == false || (resource != null && resource.data.get('isAdmin', false) == true)) &&
+          (!('is_admin' in data) || data.is_admin == false || (resource != null && resource.data.get('is_admin', false) == true)) &&
+          (!('verifiedAt' in data) || (resource != null && data.verifiedAt == resource.data.get('verifiedAt', null))) &&
+          (!('verified_at' in data) || (resource != null && data.verified_at == resource.data.get('verified_at', null))) &&
+          (!('rejectionReason' in data) || (resource != null && data.rejectionReason == resource.data.get('rejectionReason', null))) &&
+          (!('rejection_reason' in data) || (resource != null && data.rejection_reason == resource.data.get('rejection_reason', null)))
         ));
     }
 
     match /users/{userId} {
-      // Authenticated user can read their own account record or admin
-      allow read: if isOwner(userId) || isAdmin();
+      // Authenticated user can get their own account record; admin can get or list all
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
 
       // Authenticated user can create or merge their own account document
       allow create: if isAuthorizedUserWrite(userId, request.resource.data) &&
         isValidUserData(request.resource.data);
 
-      // Authenticated user can update their own account document
-      allow update: if isAuthorizedUserWrite(userId, request.resource.data) &&
+      // Authenticated user can update their own account document, or admin can update verification fields / user data
+      allow update: if (isAuthorizedUserWrite(userId, request.resource.data) &&
         areImmutableFieldsUnchanged(['id', 'uid']) &&
-        isValidUserData(request.resource.data);
+        isValidUserData(request.resource.data)) || isAdmin();
 
       // Deletions restricted strictly to administrators
       allow delete: if isAdmin();
@@ -415,7 +497,9 @@ service cloud.firestore {
     match /notifications/{notifId} {
       // Allow read if user is the recipient or admin
       allow read: if isAuthenticated() &&
-        (resource.data.recipientId == request.auth.uid || isAdmin());
+        (resource.data.recipientId == request.auth.uid ||
+         resource.data.get('recipient_id', '') == request.auth.uid ||
+         isAdmin());
 
       // Allow create if authenticated, recipientId/title/body are strings, and required fields exist
       allow create: if isAuthenticated() &&
@@ -425,22 +509,26 @@ service cloud.firestore {
         request.resource.data.body is string &&
         isValidNotification(request.resource.data);
 
-      // Allow update if recipient and only modifying read status
+      // Allow update if recipient and only modifying read status, or admin
       allow update: if isAuthenticated() &&
-        resource.data.recipientId == request.auth.uid &&
-        (
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) ||
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'updated_at']) ||
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_read']) ||
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_read', 'updated_at'])
-        ) &&
-        (!('read' in request.resource.data) || request.resource.data.read is bool) &&
-        (!('is_read' in request.resource.data) || request.resource.data.is_read is bool) &&
-        isValidTimestampOrString('updated_at');
+        (isAdmin() || (
+          (resource.data.recipientId == request.auth.uid || resource.data.get('recipient_id', '') == request.auth.uid) &&
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) ||
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'updated_at']) ||
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_read']) ||
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_read', 'updated_at'])
+          ) &&
+          (!('read' in request.resource.data) || request.resource.data.read is bool) &&
+          (!('is_read' in request.resource.data) || request.resource.data.is_read is bool) &&
+          isValidTimestampOrString('updated_at')
+        ));
 
       // Allow delete if recipient or admin
       allow delete: if isAuthenticated() &&
-        (resource.data.recipientId == request.auth.uid || isAdmin());
+        (resource.data.recipientId == request.auth.uid ||
+         resource.data.get('recipient_id', '') == request.auth.uid ||
+         isAdmin());
     }
 
     // ===============================================================

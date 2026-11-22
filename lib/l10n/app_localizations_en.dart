@@ -392,4 +392,77 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noTurnStepsAvailable =>
       'Navigation instructions ready upon route calculation';
+
+  @override
+  String get adminVerificationTitle => 'Admin Document Verification';
+
+  @override
+  String get pendingReview => 'Pending Review';
+
+  @override
+  String get verifiedDrivers => 'Verified';
+
+  @override
+  String get rejectedDrivers => 'Rejected';
+
+  @override
+  String get approveButton => 'Approve';
+
+  @override
+  String get rejectButton => 'Reject';
+
+  @override
+  String get rejectionReasonPrompt => 'Select or enter rejection reason';
+
+  @override
+  String get reasonBlurryPhoto =>
+      'Blurry or unreadable photo / دستاویز واضح نہیں ہے';
+
+  @override
+  String get reasonExpiredLicense =>
+      'Expired driving license / ڈرائیونگ لائسنس کی مدت ختم ہو چکی ہے';
+
+  @override
+  String get reasonCnicMismatch =>
+      'CNIC number or details mismatch / شناختی کارڈ کی معلومات میں تضاد ہے';
+
+  @override
+  String get reasonOther => 'Other reason';
+
+  @override
+  String get enterCustomReason => 'Enter custom rejection reason...';
+
+  @override
+  String get cnicDocument => 'CNIC Card';
+
+  @override
+  String get licenseDocument => 'Driving License (HTV/LTV)';
+
+  @override
+  String get registrationDocument => 'Vehicle Registration';
+
+  @override
+  String get noPendingDrivers => 'No drivers pending review';
+
+  @override
+  String get noVerifiedDrivers => 'No verified drivers found';
+
+  @override
+  String get noRejectedDrivers => 'No rejected drivers found';
+
+  @override
+  String get driverApprovedSuccess => 'Driver documents approved successfully!';
+
+  @override
+  String get driverRejectedSuccess =>
+      'Driver documents rejected and notification sent.';
+
+  @override
+  String get adminPanel => 'Admin Panel';
+
+  @override
+  String get adminVerification => 'Admin Verification';
+
+  @override
+  String get toggleAdminMode => 'Toggle Admin Mode';
 }

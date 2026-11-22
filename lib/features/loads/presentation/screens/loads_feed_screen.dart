@@ -433,6 +433,12 @@ class _LoadsFeedScreenState extends State<LoadsFeedScreen> {
               );
             },
           ),
+          if (context.auth.isAdmin)
+            IconButton(
+              icon: const Icon(Icons.admin_panel_settings, color: Colors.amber),
+              tooltip: l10n.adminVerification,
+              onPressed: () => context.go('/admin/verification'),
+            ),
           const NotificationBellButton(),
           const Center(
             child: LanguageToggleButton(compact: true),

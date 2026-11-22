@@ -97,6 +97,12 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
       appBar: AppBar(
         title: Text(l10n.driverDashboardTitle),
         actions: [
+          if (context.auth.isAdmin)
+            IconButton(
+              icon: const Icon(Icons.admin_panel_settings, color: Colors.amber),
+              tooltip: l10n.adminVerification,
+              onPressed: () => context.go('/admin/verification'),
+            ),
           const NotificationBellButton(),
           const Center(
             child: LanguageToggleButton(compact: true),

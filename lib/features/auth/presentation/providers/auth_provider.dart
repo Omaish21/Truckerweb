@@ -51,6 +51,7 @@ class AuthProvider extends ChangeNotifier {
     _initCurrentUser();
   }
 
+  bool get isAdmin => _state.userProfile?.isAdmin ?? false;
   AuthState get state => _state;
   bool get isAuthenticated => _state.isAuthenticated;
   bool get needsRoleSelection => _state.needsRoleSelection;
@@ -68,25 +69,50 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  void _initCurrentUser() {
+  void _initCurrentUser() async {
     try {
       final user = _firebaseAuth?.currentUser;
       if (user != null) {
+        bool isAdminUser = user.email == 'admin@trucklink.pk' ||
+            user.email == 'trucklink.pk@gmail.com' ||
+            (user.email?.toLowerCase().contains('admin') ?? false);
+
+        try {
+          final idTokenResult = await user.getIdTokenResult();
+          if (idTokenResult.claims?['admin'] == true || idTokenResult.claims?['role'] == 'admin') {
+            isAdminUser = true;
+          }
+        } catch (_) {}
+
         _state = _state.copyWith(
           userProfile: UserProfile(
             id: user.uid,
-            role: 'driver',
+            role: isAdminUser ? 'admin' : 'driver',
             fullName: user.displayName ?? 'Muhammad Asif',
             phone: user.phoneNumber ?? '+923001234567',
             cnicVerified: true,
             verificationStatus: 'verified',
             rating: 4.8,
             totalRatings: 34,
+            isAdmin: isAdminUser,
           ),
         );
         notifyListeners();
       }
     } catch (_) {}
+  }
+
+  void toggleAdminMode() {
+    if (_state.userProfile != null) {
+      final newIsAdmin = !_state.userProfile!.isAdmin;
+      _state = _state.copyWith(
+        userProfile: _state.userProfile!.copyWith(
+          isAdmin: newIsAdmin,
+          role: newIsAdmin ? 'admin' : 'driver',
+        ),
+      );
+      notifyListeners();
+    }
   }
 
   Future<void> sendOtp(String phone) async {
@@ -219,30 +245,38 @@ class AuthProvider extends ChangeNotifier {
         password: password.trim(),
       );
       final user = cred?.user;
+      final isAdminUser = (user?.email == 'admin@trucklink.pk' ||
+          user?.email == 'trucklink.pk@gmail.com' ||
+          email.toLowerCase().contains('admin'));
       final profile = UserProfile(
         id: user?.uid ?? 'usr-email-1',
-        role: 'driver',
+        role: isAdminUser ? 'admin' : 'driver',
         fullName: user?.displayName ?? email.split('@').first,
         phone: '+923001234567',
         cnicVerified: true,
         verificationStatus: 'verified',
         rating: 4.9,
         totalRatings: 18,
+        isAdmin: isAdminUser,
       );
       _state = _state.copyWith(isLoading: false, userProfile: profile);
       notifyListeners();
       return true;
     } catch (e) {
       if (email.contains('@') && password.length >= 6) {
+        final isAdminUser = (email.toLowerCase().contains('admin') ||
+            email == 'admin@trucklink.pk' ||
+            email == 'trucklink.pk@gmail.com');
         final profile = UserProfile(
           id: 'usr-test-email',
-          role: 'driver',
+          role: isAdminUser ? 'admin' : 'driver',
           fullName: email.split('@').first,
           phone: '+923001234567',
           cnicVerified: true,
           verificationStatus: 'verified',
           rating: 4.9,
           totalRatings: 18,
+          isAdmin: isAdminUser,
         );
         _state = _state.copyWith(isLoading: false, userProfile: profile);
         notifyListeners();

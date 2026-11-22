@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
+import '../../features/auth/domain/user_profile.dart';
 import '../../features/loads/domain/bid_model.dart';
 import '../../features/loads/domain/load_model.dart';
 import '../../features/route_intelligence/domain/route_models.dart';
@@ -37,6 +38,174 @@ class FirebaseService {
       return FirebaseStorage.instance;
     } catch (_) {
       return null;
+    }
+  }
+
+  static final List<UserProfile> defaultSampleDrivers = [
+    UserProfile(
+      id: 'driver-pk-101',
+      role: 'driver',
+      fullName: 'Muhammad Tariq Mehmood',
+      phone: '+92 300 4567891',
+      cnicNumber: '35202-8765432-1',
+      cnicVerified: false,
+      verificationStatus: 'pending',
+      vehicleTypes: const ['22_wheeler', 'container'],
+      rating: 4.8,
+      totalRatings: 42,
+      cnicFrontUrl: 'https://images.unsplash.com/photo-1607344645866-009c320c5ab8?w=800&auto=format&fit=crop&q=80',
+      licenseUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop&q=80',
+      registrationUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80',
+    ),
+    UserProfile(
+      id: 'driver-pk-102',
+      role: 'driver',
+      fullName: 'Gulzar Ahmad Khan',
+      phone: '+92 321 8765432',
+      cnicNumber: '17301-3456789-5',
+      cnicVerified: false,
+      verificationStatus: 'pending',
+      vehicleTypes: const ['10_wheeler', 'flatbed'],
+      rating: 4.6,
+      totalRatings: 28,
+      cnicFrontUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=800&auto=format&fit=crop&q=80',
+      licenseUrl: 'https://images.unsplash.com/photo-1618042164219-62c820f10723?w=800&auto=format&fit=crop&q=80',
+      registrationUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80',
+    ),
+    UserProfile(
+      id: 'driver-pk-103',
+      role: 'driver',
+      fullName: 'Malik Jahangir Aslam',
+      phone: '+92 333 1122334',
+      cnicNumber: '37405-1234567-3',
+      cnicVerified: true,
+      verificationStatus: 'verified',
+      vehicleTypes: const ['mazda', 'shehzore'],
+      rating: 4.9,
+      totalRatings: 67,
+      verifiedAt: DateTime.now().subtract(const Duration(days: 12)),
+      cnicFrontUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80',
+      licenseUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop&q=80',
+      registrationUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80',
+    ),
+    UserProfile(
+      id: 'driver-pk-104',
+      role: 'driver',
+      fullName: 'Haji Noor Muhammad',
+      phone: '+92 345 9988776',
+      cnicNumber: '54400-5544332-1',
+      cnicVerified: false,
+      verificationStatus: 'rejected',
+      vehicleTypes: const ['tanker'],
+      rating: 4.2,
+      totalRatings: 15,
+      rejectionReason: 'Blurry or expired driving license / ڈرائیونگ لائسنس کی تصویر واضح نہیں ہے یا مدت ختم ہو چکی ہے',
+      cnicFrontUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&auto=format&fit=crop&q=80',
+      licenseUrl: 'https://images.unsplash.com/photo-1618042164219-62c820f10723?w=800&auto=format&fit=crop&q=80',
+      registrationUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80',
+    ),
+  ];
+
+  Stream<List<UserProfile>> watchDriversByStatus(String status) {
+    try {
+      final fs = firestore;
+      if (fs == null) {
+        return Stream.value(
+          status == 'all'
+              ? defaultSampleDrivers
+              : defaultSampleDrivers.where((d) => d.verificationStatus == status).toList(),
+        );
+      }
+
+      Query query = fs.collection('users');
+      if (status != 'all') {
+        query = query.where('verificationStatus', isEqualTo: status);
+      }
+
+      return query.snapshots().map((snapshot) {
+        if (snapshot.docs.isEmpty) {
+          return status == 'all'
+              ? defaultSampleDrivers
+              : defaultSampleDrivers.where((d) => d.verificationStatus == status).toList();
+        }
+        return snapshot.docs.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          data['id'] = doc.id;
+          return UserProfile.fromJson(data);
+        }).toList();
+      }).handleError((e) {
+        debugPrint('Firestore watchDriversByStatus error: $e');
+        return status == 'all'
+            ? defaultSampleDrivers
+            : defaultSampleDrivers.where((d) => d.verificationStatus == status).toList();
+      });
+    } catch (e) {
+      return Stream.value(
+        status == 'all'
+            ? defaultSampleDrivers
+            : defaultSampleDrivers.where((d) => d.verificationStatus == status).toList(),
+      );
+    }
+  }
+
+  Stream<List<UserProfile>> watchAllDrivers() => watchDriversByStatus('all');
+
+  Future<void> updateDriverVerificationStatus({
+    required String uid,
+    required String status, // 'verified' or 'rejected'
+    String? rejectionReason,
+  }) async {
+    try {
+      final fs = firestore;
+      final isVerified = status == 'verified';
+
+      if (fs != null) {
+        final updateData = <String, dynamic>{
+          'verificationStatus': status,
+          'verification_status': status,
+          'cnic_verified': isVerified,
+          'rejectionReason': rejectionReason,
+          'rejection_reason': rejectionReason,
+          'verifiedAt': isVerified ? FieldValue.serverTimestamp() : null,
+          'verified_at': isVerified ? FieldValue.serverTimestamp() : null,
+          'updated_at': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+
+        await fs.collection('users').doc(uid).set(updateData, SetOptions(merge: true));
+        try {
+          await fs.collection('profiles').doc(uid).set(updateData, SetOptions(merge: true));
+        } catch (_) {}
+
+        // Enqueue automated notification
+        await createNotification(
+          recipientId: uid,
+          title: isVerified ? 'Documents Approved / دستاویزات کی تصدیق ہو گئی' : 'Document Review Update / دستاویزات کی تصدیق',
+          body: isVerified
+              ? 'Your CNIC, Driving License, and Vehicle Registration have been verified. You can now bid on verified loads!'
+              : 'Your verification was not approved: ${rejectionReason ?? "Please re-upload clear document copies."}',
+          type: 'document_verification',
+          metadata: {
+            'status': status,
+            'rejectionReason': rejectionReason,
+            'timestamp': DateTime.now().toIso8601String(),
+          },
+        );
+      }
+
+      // Update local demo sample if present
+      final idx = defaultSampleDrivers.indexWhere((d) => d.id == uid);
+      if (idx != -1) {
+        defaultSampleDrivers[idx] = defaultSampleDrivers[idx].copyWith(
+          verificationStatus: status,
+          cnicVerified: isVerified,
+          rejectionReason: rejectionReason,
+          verifiedAt: isVerified ? DateTime.now() : null,
+        );
+      }
+    } catch (e) {
+      debugPrint('updateDriverVerificationStatus error: $e');
+      rethrow;
     }
   }
 

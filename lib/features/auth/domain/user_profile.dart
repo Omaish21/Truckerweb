@@ -5,7 +5,7 @@ class UserProfile {
   final String phone;
   final String? cnicNumber;
   final bool cnicVerified;
-  final String verificationStatus; // 'unverified', 'pending', 'verified'
+  final String verificationStatus; // 'unverified', 'pending', 'verified', 'rejected'
   final String? nadraTransactionId;
   final String? photoUrl;
   final String? cnicFrontUrl;
@@ -13,6 +13,10 @@ class UserProfile {
   final String? registrationUrl;
   final double rating;
   final int totalRatings;
+  final bool isAdmin;
+  final String? rejectionReason;
+  final DateTime? verifiedAt;
+  final List<String> vehicleTypes;
 
   const UserProfile({
     required this.id,
@@ -29,30 +33,52 @@ class UserProfile {
     this.registrationUrl,
     this.rating = 0.0,
     this.totalRatings = 0,
+    this.isAdmin = false,
+    this.rejectionReason,
+    this.verifiedAt,
+    this.vehicleTypes = const [],
   });
 
   bool get isDriver => role == 'driver';
   bool get isOwner => role == 'owner';
-  bool get isAdmin => role == 'admin';
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
-    final verified = json['cnic_verified'] as bool? ?? false;
-    final status = json['verification_status'] as String? ?? (verified ? 'verified' : 'unverified');
+    final verified = json['cnic_verified'] as bool? ?? json['cnicVerified'] as bool? ?? false;
+    final status = json['verification_status'] as String? ??
+        json['verificationStatus'] as String? ??
+        (verified ? 'verified' : 'unverified');
+    final adminFlag = json['isAdmin'] == true ||
+        json['is_admin'] == true ||
+        json['role'] == 'admin';
+
+    DateTime? parsedVerifiedAt;
+    if (json['verified_at'] != null) {
+      parsedVerifiedAt = DateTime.tryParse(json['verified_at'].toString());
+    } else if (json['verifiedAt'] != null) {
+      parsedVerifiedAt = DateTime.tryParse(json['verifiedAt'].toString());
+    }
+
     return UserProfile(
-      id: json['id'] as String? ?? '',
-      role: json['role'] as String? ?? 'driver',
-      fullName: json['full_name'] as String? ?? '',
+      id: json['id'] as String? ?? json['uid'] as String? ?? '',
+      role: json['role'] as String? ?? (adminFlag ? 'admin' : 'driver'),
+      fullName: json['full_name'] as String? ?? json['fullName'] as String? ?? '',
       phone: json['phone'] as String? ?? '',
-      cnicNumber: json['cnic_number'] as String?,
+      cnicNumber: json['cnic_number'] as String? ?? json['cnicNumber'] as String?,
       cnicVerified: verified,
       verificationStatus: status,
       nadraTransactionId: json['nadra_transaction_id'] as String?,
-      photoUrl: json['photo_url'] as String?,
-      cnicFrontUrl: json['cnic_front_url'] as String?,
-      licenseUrl: json['license_url'] as String?,
-      registrationUrl: json['registration_url'] as String?,
+      photoUrl: json['photo_url'] as String? ?? json['photoUrl'] as String?,
+      cnicFrontUrl: json['cnic_front_url'] as String? ?? json['cnicFrontUrl'] as String? ?? json['cnic_url'] as String?,
+      licenseUrl: json['license_url'] as String? ?? json['licenseUrl'] as String?,
+      registrationUrl: json['registration_url'] as String? ?? json['registrationUrl'] as String?,
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-      totalRatings: json['total_ratings'] as int? ?? 0,
+      totalRatings: json['total_ratings'] as int? ?? json['totalRatings'] as int? ?? 0,
+      isAdmin: adminFlag,
+      rejectionReason: json['rejection_reason'] as String? ?? json['rejectionReason'] as String?,
+      verifiedAt: parsedVerifiedAt,
+      vehicleTypes: (json['vehicle_types'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+          (json['vehicleTypes'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+          const [],
     );
   }
 
@@ -72,6 +98,10 @@ class UserProfile {
       'registration_url': registrationUrl,
       'rating': rating,
       'total_ratings': totalRatings,
+      'isAdmin': isAdmin,
+      'rejection_reason': rejectionReason,
+      'verified_at': verifiedAt?.toIso8601String(),
+      'vehicle_types': vehicleTypes,
     };
   }
 
@@ -90,6 +120,10 @@ class UserProfile {
     String? registrationUrl,
     double? rating,
     int? totalRatings,
+    bool? isAdmin,
+    String? rejectionReason,
+    DateTime? verifiedAt,
+    List<String>? vehicleTypes,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -106,6 +140,10 @@ class UserProfile {
       registrationUrl: registrationUrl ?? this.registrationUrl,
       rating: rating ?? this.rating,
       totalRatings: totalRatings ?? this.totalRatings,
+      isAdmin: isAdmin ?? this.isAdmin,
+      rejectionReason: rejectionReason ?? this.rejectionReason,
+      verifiedAt: verifiedAt ?? this.verifiedAt,
+      vehicleTypes: vehicleTypes ?? this.vehicleTypes,
     );
   }
 }

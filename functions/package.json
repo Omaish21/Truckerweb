@@ -1,0 +1,14 @@
+{
+  "name": "trucklink-functions",
+  "description": "Cloud Functions for TruckLink PK push notifications and background workflows",
+  "version": "1.0.0",
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^14.5.1",
+    "firebase-functions": "^7.4.0"
+  },
+  "private": true
+}

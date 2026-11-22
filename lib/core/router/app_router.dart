@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import '../../features/admin/presentation/screens/admin_verification_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/role_selection_screen.dart';
 import '../../features/driver_profile/presentation/screens/driver_home_screen.dart';
@@ -87,6 +88,14 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/report-hazard',
       redirect: (context, state) => '/report-condition',
+    ),
+    GoRoute(
+      path: '/admin/verification',
+      builder: (context, state) => const AdminVerificationScreen(),
+    ),
+    GoRoute(
+      path: '/admin',
+      redirect: (context, state) => '/admin/verification',
     ),
   ],
 );

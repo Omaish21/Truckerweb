@@ -805,6 +805,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Navigation instructions ready upon route calculation'**
   String get noTurnStepsAvailable;
+
+  /// No description provided for @adminVerificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin Document Verification'**
+  String get adminVerificationTitle;
+
+  /// No description provided for @pendingReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Review'**
+  String get pendingReview;
+
+  /// No description provided for @verifiedDrivers.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get verifiedDrivers;
+
+  /// No description provided for @rejectedDrivers.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get rejectedDrivers;
+
+  /// No description provided for @approveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get approveButton;
+
+  /// No description provided for @rejectButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get rejectButton;
+
+  /// No description provided for @rejectionReasonPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Select or enter rejection reason'**
+  String get rejectionReasonPrompt;
+
+  /// No description provided for @reasonBlurryPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Blurry or unreadable photo / دستاویز واضح نہیں ہے'**
+  String get reasonBlurryPhoto;
+
+  /// No description provided for @reasonExpiredLicense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired driving license / ڈرائیونگ لائسنس کی مدت ختم ہو چکی ہے'**
+  String get reasonExpiredLicense;
+
+  /// No description provided for @reasonCnicMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'CNIC number or details mismatch / شناختی کارڈ کی معلومات میں تضاد ہے'**
+  String get reasonCnicMismatch;
+
+  /// No description provided for @reasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other reason'**
+  String get reasonOther;
+
+  /// No description provided for @enterCustomReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter custom rejection reason...'**
+  String get enterCustomReason;
+
+  /// No description provided for @cnicDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'CNIC Card'**
+  String get cnicDocument;
+
+  /// No description provided for @licenseDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Driving License (HTV/LTV)'**
+  String get licenseDocument;
+
+  /// No description provided for @registrationDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle Registration'**
+  String get registrationDocument;
+
+  /// No description provided for @noPendingDrivers.
+  ///
+  /// In en, this message translates to:
+  /// **'No drivers pending review'**
+  String get noPendingDrivers;
+
+  /// No description provided for @noVerifiedDrivers.
+  ///
+  /// In en, this message translates to:
+  /// **'No verified drivers found'**
+  String get noVerifiedDrivers;
+
+  /// No description provided for @noRejectedDrivers.
+  ///
+  /// In en, this message translates to:
+  /// **'No rejected drivers found'**
+  String get noRejectedDrivers;
+
+  /// No description provided for @driverApprovedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver documents approved successfully!'**
+  String get driverApprovedSuccess;
+
+  /// No description provided for @driverRejectedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver documents rejected and notification sent.'**
+  String get driverRejectedSuccess;
+
+  /// No description provided for @adminPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin Panel'**
+  String get adminPanel;
+
+  /// No description provided for @adminVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin Verification'**
+  String get adminVerification;
+
+  /// No description provided for @toggleAdminMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle Admin Mode'**
+  String get toggleAdminMode;
 }
 
 class _AppLocalizationsDelegate

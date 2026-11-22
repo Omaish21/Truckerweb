@@ -10,6 +10,8 @@ import 'package:trucklink_pk/core/services/geocoding_service.dart';
 import 'package:trucklink_pk/core/utils/formatters.dart';
 import 'package:trucklink_pk/core/utils/urdu_text.dart';
 import 'package:trucklink_pk/core/utils/validators.dart';
+import 'package:trucklink_pk/features/auth/presentation/providers/auth_provider.dart';
+import 'package:trucklink_pk/core/services/firebase_service.dart';
 import 'package:trucklink_pk/features/loads/domain/load_model.dart';
 
 void main() {
@@ -107,6 +109,35 @@ void main() {
       expect(uri.path, '/loads-feed');
       expect(uri.queryParameters['city'], 'Lahore');
       expect(uri.queryParameters['vehicle'], '22_wheeler');
+    });
+
+    test('AuthProvider admin state and toggleAdminMode', () {
+      final auth = AuthProvider();
+      expect(auth.isAdmin, isFalse);
+      // Verify toggle switch
+      auth.toggleAdminMode();
+      // If no profile yet, state handles gracefully
+      expect(auth.state.isLoading, isFalse);
+    });
+
+    test('FirebaseService driver verification stream and updates', () async {
+      final service = FirebaseService.instance;
+      final drivers = await service.watchDriversByStatus('all').first;
+      expect(drivers.isNotEmpty, isTrue);
+
+      final pending = await service.watchDriversByStatus('pending').first;
+      expect(pending.every((d) => d.verificationStatus == 'pending'), isTrue);
+
+      // Verify updateDriverVerificationStatus
+      final target = drivers.first;
+      await service.updateDriverVerificationStatus(
+        uid: target.id,
+        status: 'verified',
+      );
+      final updatedList = await service.watchDriversByStatus('all').first;
+      final updatedDriver = updatedList.firstWhere((d) => d.id == target.id);
+      expect(updatedDriver.verificationStatus, 'verified');
+      expect(updatedDriver.cnicVerified, isTrue);
     });
 
     testWidgets('App initializes and renders Driver Dashboard without errors', (WidgetTester tester) async {

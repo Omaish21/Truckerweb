@@ -391,4 +391,76 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get noTurnStepsAvailable => 'روٹ کی ہدایات تیار ہیں';
+
+  @override
+  String get adminVerificationTitle => 'دستاویزات کی تصدیق و جائزہ';
+
+  @override
+  String get pendingReview => 'زیرِ جائزہ';
+
+  @override
+  String get verifiedDrivers => 'تصدیق شدہ';
+
+  @override
+  String get rejectedDrivers => 'مسترد شدہ';
+
+  @override
+  String get approveButton => 'تصدیق کریں';
+
+  @override
+  String get rejectButton => 'مسترد کریں';
+
+  @override
+  String get rejectionReasonPrompt => 'مسترد کرنے کی وجہ منتخب کریں یا لکھیں';
+
+  @override
+  String get reasonBlurryPhoto => 'دستاویز کی تصویر غیر واضح یا دھندلی ہے';
+
+  @override
+  String get reasonExpiredLicense => 'ڈرائیونگ لائسنس کی مدت ختم ہو چکی ہے';
+
+  @override
+  String get reasonCnicMismatch =>
+      'شناختی کارڈ نمبر یا معلومات کا اندراج غلط ہے';
+
+  @override
+  String get reasonOther => 'دیگر وجہ';
+
+  @override
+  String get enterCustomReason => 'وجہ تحریر کریں...';
+
+  @override
+  String get cnicDocument => 'شناختی کارڈ (CNIC)';
+
+  @override
+  String get licenseDocument => 'ڈرائیونگ لائسنس (HTV/LTV)';
+
+  @override
+  String get registrationDocument => 'گاڑی کی رجسٹریشن بک';
+
+  @override
+  String get noPendingDrivers => 'زیرِ جائزہ کوئی ڈرائیور موجود نہیں ہے';
+
+  @override
+  String get noVerifiedDrivers => 'کوئی تصدیق شدہ ڈرائیور نہیں ملا';
+
+  @override
+  String get noRejectedDrivers => 'کوئی مسترد شدہ ڈرائیور نہیں ہے';
+
+  @override
+  String get driverApprovedSuccess =>
+      'ڈرائیور کی دستاویزات کامیابی سے منظور ہو گئیں!';
+
+  @override
+  String get driverRejectedSuccess =>
+      'دستاویزات مسترد کر دی گئیں اور ڈرائیور کو الرٹ بھیج دیا گیا۔';
+
+  @override
+  String get adminPanel => 'ایڈمن پینل';
+
+  @override
+  String get adminVerification => 'دستاویزات کی تصدیق';
+
+  @override
+  String get toggleAdminMode => 'ایڈمن موڈ تبدیل کریں';
 }
