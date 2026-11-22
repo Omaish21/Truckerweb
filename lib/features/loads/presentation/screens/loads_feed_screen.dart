@@ -726,33 +726,79 @@ class _LoadsFeedScreenState extends State<LoadsFeedScreen> {
 
                         const Divider(height: 20),
 
-                        // Visible Contact Phone Number Display
-                        if (contactPhone.isNotEmpty) ...[
-                          Row(
-                            children: [
-                              const Icon(Icons.phone_in_talk, size: 14, color: AppColors.primary),
-                              const SizedBox(width: 6),
-                              Text(
-                                isUrdu ? 'رابطہ نمبر: ' : 'Contact: ',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textSecondaryLight,
-                                ),
+                        // Poster / Shipper Details Card
+                        Builder(
+                          builder: (context) {
+                            final hasPosterName = load.posterName != null && load.posterName!.isNotEmpty;
+                            final hasCompanyName = load.companyName != null && load.companyName!.isNotEmpty;
+
+                            if (!hasPosterName && !hasCompanyName && contactPhone.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.grey.shade200),
                               ),
-                              SelectableText(
-                                AppFormatters.formatPakistaniPhoneNumber(contactPhone),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                  letterSpacing: 0.5,
-                                ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.person_pin, size: 20, color: AppColors.primary),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        if (hasPosterName)
+                                          Text(
+                                            load.posterName! + (hasCompanyName ? ' • ${load.companyName!}' : ''),
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.textPrimaryLight,
+                                            ),
+                                          )
+                                        else if (hasCompanyName)
+                                          Text(
+                                            load.companyName!,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.textPrimaryLight,
+                                            ),
+                                          ),
+                                        if (contactPhone.isNotEmpty)
+                                          Row(
+                                            children: [
+                                              Text(
+                                                isUrdu ? 'رابطہ نمبر: ' : 'Contact: ',
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  color: AppColors.textSecondaryLight,
+                                                ),
+                                              ),
+                                              SelectableText(
+                                                AppFormatters.formatPakistaniPhoneNumber(contactPhone),
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.primary,
+                                                  letterSpacing: 0.3,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                        ],
+                            );
+                          },
+                        ),
 
                         // One-tap Call & WhatsApp Buttons
                         Row(

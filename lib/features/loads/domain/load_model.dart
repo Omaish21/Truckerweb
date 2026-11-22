@@ -17,7 +17,12 @@ class LoadModel {
   final DateTime createdAt;
   final String? assignedDriverId;
   final String? contactPhone;
+  final String? posterName;
+  final String? companyName;
   final int bidsCount;
+
+  String get shipperId => ownerId;
+  String? get shipperName => posterName;
 
   const LoadModel({
     required this.id,
@@ -38,6 +43,8 @@ class LoadModel {
     required this.createdAt,
     this.assignedDriverId,
     this.contactPhone,
+    this.posterName,
+    this.companyName,
     this.bidsCount = 0,
   });
 
@@ -47,7 +54,6 @@ class LoadModel {
       if (val is DateTime) return val;
       if (val.runtimeType.toString() == 'Timestamp' || val.toString().contains('Timestamp')) {
         try {
-          // Dynamic invocation for cloud_firestore Timestamp
           final dynamic ts = val;
           return ts.toDate() as DateTime;
         } catch (_) {}
@@ -69,7 +75,7 @@ class LoadModel {
 
     return LoadModel(
       id: json['id'] as String? ?? '',
-      ownerId: json['owner_id'] as String? ?? '',
+      ownerId: json['owner_id'] as String? ?? json['shipper_id'] as String? ?? '',
       originCity: json['origin_city'] as String? ?? '',
       destinationCity: json['destination_city'] as String? ?? '',
       vehicleTypeRequired: json['vehicle_type_required'] as String? ?? '22_wheeler',
@@ -85,7 +91,13 @@ class LoadModel {
       status: json['status'] as String? ?? 'open',
       createdAt: parseDate(json['created_at']),
       assignedDriverId: json['assigned_driver_id'] as String?,
-      contactPhone: json['contact_phone'] as String? ?? '+923001234567',
+      contactPhone: json['contact_phone'] as String? ?? json['phone'] as String?,
+      posterName: json['poster_name'] as String? ??
+          json['shipper_name'] as String? ??
+          json['owner_name'] as String?,
+      companyName: json['company_name'] as String? ??
+          json['companyName'] as String? ??
+          json['adda_name'] as String?,
       bidsCount: (json['bids_count'] as num?)?.toInt() ?? 0,
     );
   }
@@ -94,6 +106,7 @@ class LoadModel {
     return {
       'id': id,
       'owner_id': ownerId,
+      'shipper_id': ownerId,
       'origin_city': originCity,
       'destination_city': destinationCity,
       'vehicle_type_required': vehicleTypeRequired,
@@ -110,6 +123,9 @@ class LoadModel {
       'created_at': createdAt.toIso8601String(),
       'assigned_driver_id': assignedDriverId,
       'contact_phone': contactPhone,
+      'poster_name': posterName,
+      'shipper_name': posterName,
+      'company_name': companyName,
       'bids_count': bidsCount,
     };
   }
@@ -133,6 +149,8 @@ class LoadModel {
     DateTime? createdAt,
     String? assignedDriverId,
     String? contactPhone,
+    String? posterName,
+    String? companyName,
     int? bidsCount,
   }) {
     return LoadModel(
@@ -154,6 +172,8 @@ class LoadModel {
       createdAt: createdAt ?? this.createdAt,
       assignedDriverId: assignedDriverId ?? this.assignedDriverId,
       contactPhone: contactPhone ?? this.contactPhone,
+      posterName: posterName ?? this.posterName,
+      companyName: companyName ?? this.companyName,
       bidsCount: bidsCount ?? this.bidsCount,
     );
   }

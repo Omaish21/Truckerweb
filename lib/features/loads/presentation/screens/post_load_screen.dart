@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/ai/trucklink_ai_service.dart';
 import '../../../../core/constants/vehicle_types.dart';
+import '../../../../core/providers/app_scope.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/translation_service.dart';
 import '../../../../core/theme/colors.dart';
@@ -27,19 +28,67 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
   final _weightController = TextEditingController(text: '20');
   final _heightController = TextEditingController(text: '12');
   final _rateController = TextEditingController();
+  final _posterNameController = TextEditingController();
+  final _companyNameController = TextEditingController();
   final _contactPhoneController = TextEditingController();
   final _notesController = TextEditingController();
   String _selectedVehicleId = '22_wheeler';
   String _goodsType = 'general';
   bool _isSubmitting = false;
+  bool _profileInitialized = false;
 
   @override
-  void initState() {
-    super.initState();
-    final userPhone = FirebaseService.instance.auth?.currentUser?.phoneNumber;
-    if (userPhone != null && userPhone.isNotEmpty) {
-      _contactPhoneController.text = AppFormatters.formatPakistaniPhoneNumber(userPhone);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _populateAccountDetails();
+  }
+
+  void _populateAccountDetails({bool force = false}) {
+    if (_profileInitialized && !force) return;
+
+    final profile = context.auth.state.userProfile;
+    final currentUser = FirebaseService.instance.auth?.currentUser;
+    final phone = profile?.phone.isNotEmpty == true
+        ? profile!.phone
+        : (currentUser?.phoneNumber ?? context.auth.state.phoneNumber ?? '');
+    final name = profile?.fullName.isNotEmpty == true
+        ? profile!.fullName
+        : (currentUser?.displayName ?? '');
+    final company = profile?.companyName ?? '';
+
+    if (name.isNotEmpty && (_posterNameController.text.isEmpty || force)) {
+      _posterNameController.text = name;
     }
+    if (company.isNotEmpty && (_companyNameController.text.isEmpty || force)) {
+      _companyNameController.text = company;
+    }
+    if (phone.isNotEmpty && (_contactPhoneController.text.isEmpty || force)) {
+      _contactPhoneController.text = AppFormatters.formatPakistaniPhoneNumber(phone);
+    }
+
+    // Direct Firestore users/{uid} fetch fallback to guarantee account data loads
+    final uid = currentUser?.uid;
+    if (uid != null && (_posterNameController.text.isEmpty || _contactPhoneController.text.isEmpty || force)) {
+      FirebaseService.instance.firestore?.collection('users').doc(uid).get().then((doc) {
+        if (!mounted || !doc.exists) return;
+        final data = doc.data() ?? {};
+        final docName = (data['full_name'] ?? data['fullName'] ?? data['displayName'] ?? '').toString();
+        final docCompany = (data['company_name'] ?? data['companyName'] ?? data['adda_name'] ?? '').toString();
+        final docPhone = (data['phone'] ?? data['phoneNumber'] ?? '').toString();
+
+        if (docName.isNotEmpty && (_posterNameController.text.isEmpty || force)) {
+          setState(() => _posterNameController.text = docName);
+        }
+        if (docCompany.isNotEmpty && (_companyNameController.text.isEmpty || force)) {
+          setState(() => _companyNameController.text = docCompany);
+        }
+        if (docPhone.isNotEmpty && (_contactPhoneController.text.isEmpty || force)) {
+          setState(() => _contactPhoneController.text = AppFormatters.formatPakistaniPhoneNumber(docPhone));
+        }
+      }).catchError((_) {});
+    }
+
+    _profileInitialized = true;
   }
 
   @override
@@ -49,6 +98,8 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
     _weightController.dispose();
     _heightController.dispose();
     _rateController.dispose();
+    _posterNameController.dispose();
+    _companyNameController.dispose();
     _contactPhoneController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -138,6 +189,12 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
           contactPhone: _contactPhoneController.text.trim().isNotEmpty
               ? _contactPhoneController.text.trim()
               : (service.auth?.currentUser?.phoneNumber ?? ''),
+          posterName: _posterNameController.text.trim().isNotEmpty
+              ? _posterNameController.text.trim()
+              : null,
+          companyName: _companyNameController.text.trim().isNotEmpty
+              ? _companyNameController.text.trim()
+              : null,
           createdAt: DateTime.now(),
         );
 
@@ -359,30 +416,6 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
 
               const SizedBox(height: 16),
 
-              // Contact Phone Number for Drivers & Transporters
-              TextFormField(
-                controller: _contactPhoneController,
-                keyboardType: TextInputType.phone,
-                inputFormatters: [PakistaniPhoneInputFormatter()],
-                decoration: InputDecoration(
-                  labelText: isUrdu
-                      ? 'رابطہ فون نمبر (ڈرائیورز اس نمبر پر کال یا واٹس ایپ کریں گے)'
-                      : 'Contact Phone Number (Drivers will call or WhatsApp here)',
-                  hintText: '+92 308 750 2250',
-                  prefixIcon: const Icon(Icons.phone_enabled, color: AppColors.primary),
-                ),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return isUrdu
-                        ? 'برائے مہربانی رابطہ نمبر درج کریں'
-                        : 'Please provide a valid contact phone number';
-                  }
-                  return AppValidators.validatePhone(val);
-                },
-              ),
-
-              const SizedBox(height: 16),
-
               // Dictated Cargo Notes / Special Instructions
               TextFormField(
                 controller: _notesController,
@@ -416,7 +449,121 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
+
+              // Dedicated Poster / Shipper Contact Details Card
+              Card(
+                elevation: 1,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(color: AppColors.primary.withValues(alpha: 0.2)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            child: Row(
+                              children: [
+                                const Icon(Icons.badge_outlined, color: AppColors.primary, size: 20),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    isUrdu
+                                        ? 'لوڈ لگانے والے کی رابطہ تفصیلات'
+                                        : 'Poster / Shipper Contact Details',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimaryLight,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          TextButton.icon(
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                            ),
+                            icon: const Icon(Icons.restore, size: 16),
+                            label: Text(
+                              isUrdu ? 'اکاؤنٹ ڈیٹا' : 'Reset to Account',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                            onPressed: () => _populateAccountDetails(force: true),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isUrdu
+                            ? 'آپ کے اکاؤنٹ کے مطابق خودکار درج۔ ڈرائیورز رابطہ کے لیے یہ معلومات دیکھیں گے۔'
+                            : 'Pre-filled from your signed-in account. Drivers and transporters will use these details to contact you.',
+                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondaryLight),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Contact Person Name
+                      TextFormField(
+                        controller: _posterNameController,
+                        decoration: InputDecoration(
+                          labelText: isUrdu ? 'رابطہ کار کا نام' : 'Contact Person Name',
+                          hintText: isUrdu ? 'مثلاً: میاں عثمان' : 'e.g. Malik Usman',
+                          prefixIcon: const Icon(Icons.person, color: AppColors.primary),
+                        ),
+                        validator: (val) => val == null || val.trim().isEmpty ? l10n.requiredField : null,
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Company / Adda Name (Optional)
+                      TextFormField(
+                        controller: _companyNameController,
+                        decoration: InputDecoration(
+                          labelText: isUrdu
+                              ? 'کمپنی یا ٹرانسپورٹ اڈا کا نام (اختیاری)'
+                              : 'Company / Goods Transport Adda (Optional)',
+                          hintText: isUrdu ? 'مثلاً: المدینہ گڈز فارورڈنگ' : 'e.g. Al-Madina Goods Transport',
+                          prefixIcon: const Icon(Icons.business, color: AppColors.primary),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Contact Phone Number
+                      TextFormField(
+                        controller: _contactPhoneController,
+                        keyboardType: TextInputType.phone,
+                        inputFormatters: [PakistaniPhoneInputFormatter()],
+                        decoration: InputDecoration(
+                          labelText: isUrdu
+                              ? 'رابطہ فون نمبر (کال اور واٹس ایپ)'
+                              : 'Contact Phone Number (Call & WhatsApp)',
+                          hintText: '+92 308 750 2250',
+                          prefixIcon: const Icon(Icons.phone_enabled, color: AppColors.primary),
+                        ),
+                        validator: (val) {
+                          if (val == null || val.trim().isEmpty) {
+                            return isUrdu
+                                ? 'برائے مہربانی رابطہ نمبر درج کریں'
+                                : 'Please provide a valid contact phone number';
+                          }
+                          return AppValidators.validatePhone(val);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
 
               ElevatedButton(
                 style: ElevatedButton.styleFrom(

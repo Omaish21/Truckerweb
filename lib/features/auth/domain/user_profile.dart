@@ -17,6 +17,7 @@ class UserProfile {
   final String? rejectionReason;
   final DateTime? verifiedAt;
   final List<String> vehicleTypes;
+  final String? companyName;
 
   const UserProfile({
     required this.id,
@@ -37,6 +38,7 @@ class UserProfile {
     this.rejectionReason,
     this.verifiedAt,
     this.vehicleTypes = const [],
+    this.companyName,
   });
 
   bool get isDriver => role == 'driver';
@@ -81,6 +83,10 @@ class UserProfile {
       vehicleTypes: (json['vehicle_types'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
           (json['vehicleTypes'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
           const [],
+      companyName: json['company_name'] as String? ??
+          json['companyName'] as String? ??
+          json['adda_name'] as String? ??
+          json['addaName'] as String?,
     );
   }
 
@@ -104,6 +110,8 @@ class UserProfile {
       'rejection_reason': rejectionReason,
       'verified_at': verifiedAt?.toIso8601String(),
       'vehicle_types': vehicleTypes,
+      'company_name': companyName,
+      'companyName': companyName,
     };
   }
 
@@ -126,6 +134,7 @@ class UserProfile {
     String? rejectionReason,
     DateTime? verifiedAt,
     List<String>? vehicleTypes,
+    String? companyName,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -146,6 +155,7 @@ class UserProfile {
       rejectionReason: rejectionReason ?? this.rejectionReason,
       verifiedAt: verifiedAt ?? this.verifiedAt,
       vehicleTypes: vehicleTypes ?? this.vehicleTypes,
+      companyName: companyName ?? this.companyName,
     );
   }
 }
