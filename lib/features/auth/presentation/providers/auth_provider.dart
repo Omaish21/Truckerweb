@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:flutter/foundation.dart';
+import '../../../../core/utils/validators.dart';
 import '../../domain/user_profile.dart';
 
 class AuthState {
@@ -150,21 +152,30 @@ class AuthProvider extends ChangeNotifier {
     _state = _state.copyWith(isLoading: true, errorMessage: null);
     notifyListeners();
 
-    // Format phone number to E.164 (+92)
-    String formattedPhone = phone.replaceAll(RegExp(r'\s+'), '');
-    if (formattedPhone.startsWith('0')) {
-      formattedPhone = '+92${formattedPhone.substring(1)}';
-    } else if (!formattedPhone.startsWith('+')) {
-      formattedPhone = '+92$formattedPhone';
-    }
+    // Format phone number to clean E.164 (+92)
+    final formattedPhone = AppValidators.normalizePhone(phone);
 
     try {
       if (kIsWeb) {
+        RecaptchaVerifier? verifier;
         try {
-          _webConfirmationResult = await _firebaseAuth?.signInWithPhoneNumber(formattedPhone);
+          verifier = RecaptchaVerifier(
+            auth: FirebaseAuthPlatform.instance,
+            container: 'recaptcha-container',
+            size: RecaptchaVerifierSize.compact,
+            theme: RecaptchaVerifierTheme.light,
+            onSuccess: () => debugPrint('[Auth] Google reCAPTCHA passed!'),
+            onError: (err) => debugPrint('[Auth] Google reCAPTCHA error: $err'),
+            onExpired: () => debugPrint('[Auth] Google reCAPTCHA expired'),
+          );
         } catch (e) {
-          debugPrint('Web phone sign in fallback / test mode: $e');
+          debugPrint('[Auth] RecaptchaVerifier init error (using default): $e');
         }
+
+        _webConfirmationResult = await _firebaseAuth!.signInWithPhoneNumber(
+          formattedPhone,
+          verifier,
+        );
       } else {
         await _firebaseAuth?.verifyPhoneNumber(
           phoneNumber: formattedPhone,
@@ -172,11 +183,20 @@ class AuthProvider extends ChangeNotifier {
             await _firebaseAuth?.signInWithCredential(credential);
           },
           verificationFailed: (FirebaseAuthException e) {
-            _state = _state.copyWith(isLoading: false, errorMessage: e.message);
+            _state = _state.copyWith(
+              isLoading: false,
+              isOtpSent: false,
+              errorMessage: '[${e.code}] ${e.message ?? "Phone verification failed"}',
+            );
             notifyListeners();
           },
           codeSent: (String verificationId, int? resendToken) {
-            _state = _state.copyWith(verificationId: verificationId);
+            _state = _state.copyWith(
+              verificationId: verificationId,
+              isLoading: false,
+              isOtpSent: true,
+              phoneNumber: formattedPhone,
+            );
             notifyListeners();
           },
           codeAutoRetrievalTimeout: (String verificationId) {},
@@ -187,14 +207,36 @@ class AuthProvider extends ChangeNotifier {
         isLoading: false,
         isOtpSent: true,
         phoneNumber: formattedPhone,
+        errorMessage: null,
+      );
+      notifyListeners();
+    } on FirebaseAuthException catch (e) {
+      debugPrint('[Auth] Send OTP FirebaseAuthException [${e.code}]: ${e.message}');
+      String friendlyMessage = '[${e.code}] ${e.message ?? "Phone verification failed"}';
+      if (e.code == 'too-many-requests') {
+        friendlyMessage = '[auth/too-many-requests] SMS quota exceeded or too many attempts. Please try again in a few minutes or add a test phone number in Firebase Console.';
+      } else if (e.code == 'captcha-check-failed') {
+        friendlyMessage = '[auth/captcha-check-failed] Google reCAPTCHA verification failed. Please check browser pop-up permissions, ad blockers, or network connection.';
+      } else if (e.code == 'invalid-phone-number') {
+        friendlyMessage = '[auth/invalid-phone-number] The provided phone number ($formattedPhone) is invalid. Must be in +92 3XX XXXXXXX format.';
+      } else if (e.code == 'quota-exceeded') {
+        friendlyMessage = '[auth/quota-exceeded] Daily SMS quota exceeded on Firebase. Add test numbers in Firebase Console > Authentication > Phone for instant testing.';
+      } else if (e.code == 'sms-region-blocked' || (e.message?.toLowerCase().contains('region') ?? false) || (e.message?.toLowerCase().contains('country') ?? false)) {
+        friendlyMessage = '[auth/sms-region-blocked] SMS to Pakistan (+92) is blocked in your Firebase project settings. Please allow Pakistan in Firebase Console > Authentication > Settings > SMS region policy.';
+      }
+
+      _state = _state.copyWith(
+        isLoading: false,
+        isOtpSent: false,
+        errorMessage: friendlyMessage,
       );
       notifyListeners();
     } catch (e) {
+      debugPrint('[Auth] Send OTP general error: $e');
       _state = _state.copyWith(
         isLoading: false,
-        isOtpSent: true,
-        phoneNumber: formattedPhone,
-        errorMessage: null,
+        isOtpSent: false,
+        errorMessage: 'Authentication error: $e',
       );
       notifyListeners();
     }
@@ -209,6 +251,13 @@ class AuthProvider extends ChangeNotifier {
       if (_webConfirmationResult != null) {
         final cred = await _webConfirmationResult!.confirm(otp.trim());
         user = cred.user;
+      } else if (_state.verificationId != null) {
+        final credential = PhoneAuthProvider.credential(
+          verificationId: _state.verificationId!,
+          smsCode: otp.trim(),
+        );
+        final userCred = await _firebaseAuth?.signInWithCredential(credential);
+        user = userCred?.user;
       }
 
       if (user != null) {
@@ -242,7 +291,21 @@ class AuthProvider extends ChangeNotifier {
 
       _state = _state.copyWith(
         isLoading: false,
-        errorMessage: 'Invalid OTP code / غلط تصدیقی کوڈ',
+        errorMessage: 'Invalid OTP code / غلط تصدیقی کوڈ درج کیا گیا ہے',
+      );
+      notifyListeners();
+      return false;
+    } on FirebaseAuthException catch (e) {
+      debugPrint('[Auth] Verify OTP error [${e.code}]: ${e.message}');
+      String friendlyMessage = '[${e.code}] ${e.message ?? "OTP verification failed"}';
+      if (e.code == 'invalid-verification-code') {
+        friendlyMessage = '[auth/invalid-verification-code] The entered 6-digit code is incorrect. Please check your SMS.';
+      } else if (e.code == 'session-expired') {
+        friendlyMessage = '[auth/session-expired] The SMS verification session has expired. Please go back and request a new code.';
+      }
+      _state = _state.copyWith(
+        isLoading: false,
+        errorMessage: friendlyMessage,
       );
       notifyListeners();
       return false;

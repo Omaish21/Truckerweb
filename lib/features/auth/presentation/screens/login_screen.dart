@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/providers/app_scope.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/captcha_verification_widget.dart';
@@ -37,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleSendOtp() {
+  void _handleSendOtp() async {
     if (!_isCaptchaVerified) {
       setState(() => _captchaError = true);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -55,7 +56,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (_formKey.currentState?.validate() ?? false) {
       final phone = AppValidators.normalizePhone(_phoneController.text);
-      context.authActions.sendOtp(phone);
+      await context.authActions.sendOtp(phone);
+      if (mounted) {
+        final error = context.auth.errorMessage;
+        if (error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: AppColors.danger,
+              duration: const Duration(seconds: 8),
+              content: SelectableText(
+                error,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              action: SnackBarAction(
+                label: 'DISMISS',
+                textColor: Colors.white,
+                onPressed: () {},
+              ),
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -63,6 +84,25 @@ class _LoginScreenState extends State<LoginScreen> {
     final success = await context.authActions.verifyOtp(_otpController.text.trim());
     if (success && mounted) {
       context.go('/role-selection');
+    } else if (mounted) {
+      final error = context.auth.errorMessage;
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.danger,
+            duration: const Duration(seconds: 8),
+            content: SelectableText(
+              error,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            action: SnackBarAction(
+              label: 'DISMISS',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -605,6 +645,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 18),
                   TextFormField(
                     controller: _phoneController,
+                    inputFormatters: [PakistaniPhoneInputFormatter()],
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -624,7 +665,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       fillColor: Colors.white.withValues(alpha: 0.10),
                       floatingLabelBehavior: FloatingLabelBehavior.always,
                       labelText: isUrdu ? 'پاکستانی موبائل نمبر' : 'Pakistani Mobile Number',
-                      hintText: '0300 1234567',
+                      hintText: '+92 308 750 2250',
                       labelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                       hintStyle: TextStyle(
                         color: Colors.white.withValues(alpha: 0.38),
@@ -636,16 +677,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text('🇵🇰', style: TextStyle(fontSize: 18)),
-                            const SizedBox(width: 6),
-                            const Text(
-                              '+92',
-                              style: TextStyle(
-                                color: AppColors.accent,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                              ),
-                            ),
+                            const Text('🇵🇰', style: TextStyle(fontSize: 20)),
                             const SizedBox(width: 8),
                             Container(height: 22, width: 1.2, color: Colors.white30),
                           ],
@@ -674,9 +706,37 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    isUrdu ? 'فارمیٹ: 0300 1234567 یا 300 1234567' : 'Format: 0300 1234567 or 300 1234567',
+                    isUrdu ? 'فارمیٹ: +92 308 750 2250 (خودکار فارمیٹنگ)' : 'Format: +92 308 750 2250 (Auto-formatted)',
                     style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 11),
                   ),
+                  if (authState.errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.danger.withValues(alpha: 0.8)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.error_outline, color: AppColors.danger, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: SelectableText(
+                              authState.errorMessage!,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   CaptchaVerificationWidget(
                     isUrdu: isUrdu,
@@ -754,9 +814,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   if (authState.errorMessage != null) ...[
-                    Text(
-                      authState.errorMessage!,
-                      style: const TextStyle(color: AppColors.danger, fontSize: 13),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.danger.withValues(alpha: 0.8)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.error_outline, color: AppColors.danger, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: SelectableText(
+                              authState.errorMessage!,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 8),
                   ],

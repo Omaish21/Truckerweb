@@ -41,11 +41,28 @@ void main() {
       expect(AppValidators.validatePhone('03001234567'), isNull);
       expect(AppValidators.validatePhone('+923001234567'), isNull);
       expect(AppValidators.validatePhone('300 1234567'), isNull);
+      expect(AppValidators.validatePhone('+92 308 750 2250'), isNull);
       expect(AppValidators.validatePhone('0211234567'), isNotNull);
 
       expect(AppValidators.normalizePhone('0300 1234567'), '+923001234567');
       expect(AppValidators.normalizePhone('300 1234567'), '+923001234567');
       expect(AppValidators.normalizePhone('+923001234567'), '+923001234567');
+      expect(AppValidators.normalizePhone('+92 308 750 2250'), '+923087502250');
+      expect(AppValidators.normalizePhone('0308 750 2250'), '+923087502250');
+    });
+
+    test('formatPakistaniPhoneNumber formats to +92 308 750 2250', () {
+      expect(AppFormatters.formatPakistaniPhoneNumber('03087502250'), '+92 308 750 2250');
+      expect(AppFormatters.formatPakistaniPhoneNumber('3087502250'), '+92 308 750 2250');
+      expect(AppFormatters.formatPakistaniPhoneNumber('+923087502250'), '+92 308 750 2250');
+      expect(AppFormatters.formatPakistaniPhoneNumber('0300 1234567'), '+92 300 123 4567');
+
+      final formatter = PakistaniPhoneInputFormatter();
+      final updated = formatter.formatEditUpdate(
+        const TextEditingValue(text: ''),
+        const TextEditingValue(text: '03087502250'),
+      );
+      expect(updated.text, '+92 308 750 2250');
     });
 
     testWidgets('CaptchaVerificationWidget verifies on user tap', (WidgetTester tester) async {

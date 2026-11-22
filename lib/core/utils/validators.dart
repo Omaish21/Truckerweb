@@ -37,17 +37,23 @@ class AppValidators {
     return null;
   }
 
-  /// Normalizes to standard +923XXXXXXXXX
+  /// Normalizes to standard E.164 format: +923XXXXXXXXX
   static String normalizePhone(String raw) {
     var clean = raw.replaceAll(RegExp(r'[^\d+]'), '');
-    if (clean.startsWith('03')) {
+    if (clean.startsWith('+9203')) {
+      return '+92${clean.substring(5)}';
+    } else if (clean.startsWith('+923')) {
+      return clean;
+    } else if (clean.startsWith('03')) {
       return '+92${clean.substring(1)}';
     } else if (clean.startsWith('3') && clean.length == 10) {
       return '+92$clean';
     } else if (clean.startsWith('923')) {
       return '+$clean';
     } else if (clean.startsWith('00923')) {
-      return '+92${clean.substring(4)}';
+      return '+92${clean.substring(5)}';
+    } else if (!clean.startsWith('+') && clean.isNotEmpty) {
+      return '+92$clean';
     }
     return clean;
   }
