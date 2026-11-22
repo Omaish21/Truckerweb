@@ -3,6 +3,7 @@ import '../../../../core/constants/vehicle_types.dart';
 import '../../../../core/providers/app_scope.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../core/widgets/notification_bell_button.dart';
 import '../../../../core/widgets/verified_badge.dart';
@@ -599,7 +600,19 @@ class _AdminVerificationScreenState extends State<AdminVerificationScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.adminVerificationTitle),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppLogo(size: 28, borderRadius: 6),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                l10n.adminVerificationTitle,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: Icon(

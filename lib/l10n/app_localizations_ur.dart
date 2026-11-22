@@ -10,7 +10,7 @@ class AppLocalizationsUr extends AppLocalizations {
   AppLocalizationsUr([String locale = 'ur']) : super(locale);
 
   @override
-  String get appTitle => 'ٹرک لنک پاکستان';
+  String get appTitle => 'Truck Link PK (ٹرک لنک)';
 
   @override
   String get appSubtitle => 'پاکستان ٹرک ڈرائیور و لوڈ لاجسٹکس پلیٹ فارم';

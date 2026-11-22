@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'TruckLink PK'**
+  /// **'Truck Link PK'**
   String get appTitle;
 
   /// No description provided for @appSubtitle.
@@ -275,7 +275,7 @@ abstract class AppLocalizations {
   /// No description provided for @selectRoleHeader.
   ///
   /// In en, this message translates to:
-  /// **'How do you want to use TruckLink PK?'**
+  /// **'How do you want to use Truck Link PK?'**
   String get selectRoleHeader;
 
   /// No description provided for @driverRole.

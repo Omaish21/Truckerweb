@@ -14,6 +14,7 @@ import '../../../../core/services/google_maps_service.dart';
 import '../../../../core/services/launcher/app_launcher.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/route_models.dart';
@@ -392,7 +393,19 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.routePlannerTitle),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppLogo(size: 28, borderRadius: 6),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                l10n.routePlannerTitle,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
@@ -414,8 +427,8 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen>
                     textColor: AppColors.accent,
                     onPressed: () {
                       final msg = isUrdu
-                          ? 'TruckLink PK پر روٹ دیکھیں ($_origin تا $_destination):\n$shareUrl'
-                          : 'Check this route on TruckLink PK ($_origin to $_destination):\n$shareUrl';
+                          ? 'Truck Link PK پر روٹ دیکھیں ($_origin تا $_destination):\n$shareUrl'
+                          : 'Check this route on Truck Link PK ($_origin to $_destination):\n$shareUrl';
                       AppLauncher.openWhatsApp(phone: '', message: msg);
                     },
                   ),

@@ -7,6 +7,7 @@ import '../../../../core/services/launcher/app_launcher.dart';
 import '../../../../core/services/picker/app_document_picker.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../core/widgets/logistics_video_dialog.dart';
 import '../../../../core/widgets/notification_bell_button.dart';
@@ -95,7 +96,19 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.driverDashboardTitle),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppLogo(size: 28, borderRadius: 6),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                l10n.driverDashboardTitle,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
         actions: [
           if (context.auth.isAdmin)
             IconButton(

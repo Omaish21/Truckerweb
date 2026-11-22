@@ -3,6 +3,7 @@ import '../../../../core/constants/vehicle_types.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/translation_service.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../core/widgets/voice_input_button.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -91,7 +92,19 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.postNewLoad),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppLogo(size: 28, borderRadius: 6),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                l10n.postNewLoad,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
         actions: const [
           Center(child: LanguageToggleButton(compact: true)),
           SizedBox(width: 8),

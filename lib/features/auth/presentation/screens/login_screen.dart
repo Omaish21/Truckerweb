@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/providers/app_scope.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/captcha_verification_widget.dart';
 import '../../../../core/widgets/cinematic_hero_background.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
@@ -113,6 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        title: const AppLogoWithTitle(iconSize: 28, isLight: true),
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -185,6 +187,18 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const AppLogoWithTitle(
+          iconSize: 48,
+          isLight: true,
+          titleStyle: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 16),
+
         // Verified Government & Security Pill
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -326,25 +340,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildMobileHeroHeader(bool isUrdu, AppLocalizations l10n) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
-            border: Border.all(color: AppColors.accent.withValues(alpha: 0.5), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.accent.withValues(alpha: 0.25),
-                blurRadius: 20,
-                spreadRadius: 4,
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.local_shipping,
-            size: 48,
-            color: AppColors.accent,
-          ),
+        const AppLogo(
+          size: 76,
+          borderRadius: 20,
+          showGlow: true,
         ),
         const SizedBox(height: 14),
         Text(

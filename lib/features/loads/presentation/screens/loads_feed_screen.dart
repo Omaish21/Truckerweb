@@ -9,6 +9,7 @@ import '../../../../core/services/launcher/app_launcher.dart';
 import '../../../../core/services/translation_service.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../core/widgets/notification_bell_button.dart';
 import '../../../../core/widgets/truck_icon.dart';
@@ -79,8 +80,8 @@ class _LoadsFeedScreenState extends State<LoadsFeedScreen> {
 
   Future<void> _launchWhatsApp(String phone, LoadModel load, bool isUrdu) async {
     final message = isUrdu
-        ? 'السلام علیکم، میں TruckLink PK پر آپ کا لوڈ (${load.originCity} تا ${load.destinationCity} - ${load.weightTons} ٹن) دیکھ رہا ہوں۔ کیا یہ دستیاب ہے؟'
-        : 'Salam, I saw your load from ${load.originCity} to ${load.destinationCity} (${load.weightTons} tons) on TruckLink PK. Is it available?';
+        ? 'السلام علیکم، میں Truck Link PK پر آپ کا لوڈ (${load.originCity} تا ${load.destinationCity} - ${load.weightTons} ٹن) دیکھ رہا ہوں۔ کیا یہ دستیاب ہے؟'
+        : 'Salam, I saw your load from ${load.originCity} to ${load.destinationCity} (${load.weightTons} tons) on Truck Link PK. Is it available?';
     await AppLauncher.openWhatsApp(phone: phone, message: message);
   }
 
@@ -404,7 +405,19 @@ class _LoadsFeedScreenState extends State<LoadsFeedScreen> {
 
         return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.availableLoadsTitle),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppLogo(size: 28, borderRadius: 6),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                l10n.availableLoadsTitle,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
@@ -721,8 +734,8 @@ class _LoadsFeedScreenState extends State<LoadsFeedScreen> {
                                       textColor: AppColors.accent,
                                       onPressed: () {
                                         final msg = isUrdu
-                                            ? 'TruckLink PK پر یہ لوڈ دیکھیں:\n$loadDetails'
-                                            : 'Check this load on TruckLink PK:\n$loadDetails';
+                                            ? 'Truck Link PK پر یہ لوڈ دیکھیں:\n$loadDetails'
+                                            : 'Check this load on Truck Link PK:\n$loadDetails';
                                         AppLauncher.openWhatsApp(phone: '', message: msg);
                                       },
                                     ),

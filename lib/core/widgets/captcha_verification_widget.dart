@@ -196,7 +196,7 @@ class _CaptchaVerificationWidgetState extends State<CaptchaVerificationWidget>
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          isUrdu ? 'ٹرک لنک PK اینٹی بوٹ و سیکیورٹی فلٹر' : 'TruckLink PK Cloud Defense',
+                          isUrdu ? 'ٹرک لنک PK اینٹی بوٹ و سیکیورٹی فلٹر' : 'Truck Link PK Cloud Defense',
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.55),
                             fontSize: 10,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/providers/app_scope.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -15,7 +16,14 @@ class RoleSelectionScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: Text(l10n.selectRoleTitle),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppLogo(size: 28, borderRadius: 6),
+            const SizedBox(width: 10),
+            Text(l10n.selectRoleTitle),
+          ],
+        ),
         centerTitle: true,
         actions: const [
           Padding(

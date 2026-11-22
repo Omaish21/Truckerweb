@@ -28,7 +28,7 @@ class _TruckLinkAppState extends State<TruckLinkApp> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final title = lastMessage.notification?.title ??
             lastMessage.data['title'] ??
-            'TruckLink Alert';
+            'Truck Link Alert';
         final body =
             lastMessage.notification?.body ?? lastMessage.data['body'] ?? '';
 
@@ -40,7 +40,15 @@ class _TruckLinkAppState extends State<TruckLinkApp> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             content: Row(
               children: [
-                const Icon(Icons.notifications_active, color: AppColors.accent),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Image.asset(
+                    'assets/truck_link_icon_square.png',
+                    width: 24,
+                    height: 24,
+                    fit: BoxFit.cover,
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -71,7 +79,7 @@ class _TruckLinkAppState extends State<TruckLinkApp> {
 
     return MaterialApp.router(
       scaffoldMessengerKey: _scaffoldMessengerKey,
-      title: 'TruckLink PK',
+      title: 'Truck Link PK',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

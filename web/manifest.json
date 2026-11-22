@@ -1,11 +1,11 @@
 {
-    "name": "TruckLink PK",
-    "short_name": "TruckLink",
+    "name": "Truck Link PK",
+    "short_name": "Truck Link PK",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "TruckLink PK - Pakistan Truck Driver & Load Logistics Platform",
+    "background_color": "#0F2B48",
+    "theme_color": "#0F2B48",
+    "description": "Truck Link PK - Pakistan Truck Driver & Load Logistics Platform",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

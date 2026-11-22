@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/route_models.dart';
@@ -129,7 +130,19 @@ class CityTimingScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(l10n.cityTimingTitle),
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const AppLogo(size: 28, borderRadius: 6),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    l10n.cityTimingTitle,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
             actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
