@@ -80,8 +80,8 @@ class _LoadsFeedScreenState extends State<LoadsFeedScreen> {
 
   Future<void> _launchWhatsApp(String phone, LoadModel load, bool isUrdu) async {
     final message = isUrdu
-        ? 'السلام علیکم، میں Truck Link PK پر آپ کا لوڈ (${load.originCity} تا ${load.destinationCity} - ${load.weightTons} ٹن) دیکھ رہا ہوں۔ کیا یہ دستیاب ہے؟'
-        : 'Salam, I saw your load from ${load.originCity} to ${load.destinationCity} (${load.weightTons} tons) on Truck Link PK. Is it available?';
+        ? 'السلام علیکم، میں TruckLink PK (ٹرک لنک پی کے) پر آپ کا لوڈ (${load.originCity} تا ${load.destinationCity} - ${load.weightTons} ٹن) دیکھ رہا ہوں۔ کیا یہ دستیاب ہے؟'
+        : 'Salam, I saw your load from ${load.originCity} to ${load.destinationCity} (${load.weightTons} tons) on TruckLink PK. Is it available?';
     await AppLauncher.openWhatsApp(phone: phone, message: message);
   }
 
@@ -734,8 +734,8 @@ class _LoadsFeedScreenState extends State<LoadsFeedScreen> {
                                       textColor: AppColors.accent,
                                       onPressed: () {
                                         final msg = isUrdu
-                                            ? 'Truck Link PK پر یہ لوڈ دیکھیں:\n$loadDetails'
-                                            : 'Check this load on Truck Link PK:\n$loadDetails';
+                                            ? 'TruckLink PK (ٹرک لنک پی کے) پر یہ لوڈ دیکھیں:\n$loadDetails'
+                                            : 'Check this load on TruckLink PK:\n$loadDetails';
                                         AppLauncher.openWhatsApp(phone: '', message: msg);
                                       },
                                     ),

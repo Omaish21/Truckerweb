@@ -10,7 +10,7 @@ class AppLocalizationsUr extends AppLocalizations {
   AppLocalizationsUr([String locale = 'ur']) : super(locale);
 
   @override
-  String get appTitle => 'Truck Link PK (ٹرک لنک)';
+  String get appTitle => 'ٹرک لنک پی کے';
 
   @override
   String get appSubtitle => 'پاکستان ٹرک ڈرائیور و لوڈ لاجسٹکس پلیٹ فارم';
@@ -104,7 +104,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get selectRoleHeader =>
-      'آپ ٹرک لنک کس حیثیت سے استعمال کرنا چاہتے ہیں؟';
+      'آپ ٹرک لنک پی کے کس حیثیت سے استعمال کرنا چاہتے ہیں؟';
 
   @override
   String get driverRole => 'ڈرائیور (ملازمت تلاش کنندہ)';

@@ -1,4 +1,4 @@
-// Firebase Cloud Messaging Service Worker for Truck Link PK
+// Firebase Cloud Messaging Service Worker for TruckLink PK
 importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js');
 
@@ -18,7 +18,7 @@ const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(function(payload) {
   console.log('[firebase-messaging-sw.js] Received background message:', payload);
-  const notificationTitle = payload.notification?.title || payload.data?.title || 'Truck Link PK Notification';
+  const notificationTitle = payload.notification?.title || payload.data?.title || 'TruckLink PK Notification';
   const notificationOptions = {
     body: payload.notification?.body || payload.data?.body || 'New logistics update received.',
     icon: '/icons/Icon-192.png',

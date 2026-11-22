@@ -123,7 +123,7 @@ void main() {
     });
 
     test('Route planner parameters and deep link query parsing', () {
-      final uri = Uri.parse('https://trucker-s-website.web.app/route-planner?origin=Multan&destination=Faisalabad&vehicle=10_wheeler&motorway=false');
+      final uri = Uri.parse('https://trucklink-pk.web.app/route-planner?origin=Multan&destination=Faisalabad&vehicle=10_wheeler&motorway=false');
       expect(uri.path, '/route-planner');
       expect(uri.queryParameters['origin'], 'Multan');
       expect(uri.queryParameters['destination'], 'Faisalabad');
@@ -132,7 +132,7 @@ void main() {
     });
 
     test('Loads feed query parameter parsing for sharing', () {
-      final uri = Uri.parse('https://trucker-s-website.web.app/loads-feed?city=Lahore&vehicle=22_wheeler');
+      final uri = Uri.parse('https://trucklink-pk.web.app/loads-feed?city=Lahore&vehicle=22_wheeler');
       expect(uri.path, '/loads-feed');
       expect(uri.queryParameters['city'], 'Lahore');
       expect(uri.queryParameters['vehicle'], '22_wheeler');

@@ -53,6 +53,9 @@ exports.onNotificationCreated = onDocumentCreated(
               icon: "/favicon.png",
               badge: "/favicon.png",
             },
+            fcmOptions: {
+              link: "https://trucklink-pk.web.app",
+            },
           },
         };
         const response = await messaging.send(topicMessage);
@@ -115,6 +118,9 @@ exports.onNotificationCreated = onDocumentCreated(
             body,
             icon: "/favicon.png",
             badge: "/favicon.png",
+          },
+          fcmOptions: {
+            link: "https://trucklink-pk.web.app",
           },
         },
       };

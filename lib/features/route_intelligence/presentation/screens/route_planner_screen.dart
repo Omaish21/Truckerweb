@@ -427,8 +427,8 @@ class _RoutePlannerScreenState extends State<RoutePlannerScreen>
                     textColor: AppColors.accent,
                     onPressed: () {
                       final msg = isUrdu
-                          ? 'Truck Link PK پر روٹ دیکھیں ($_origin تا $_destination):\n$shareUrl'
-                          : 'Check this route on Truck Link PK ($_origin to $_destination):\n$shareUrl';
+                          ? 'TruckLink PK (ٹرک لنک پی کے) پر روٹ دیکھیں ($_origin تا $_destination):\n$shareUrl'
+                          : 'Check this route on TruckLink PK ($_origin to $_destination):\n$shareUrl';
                       AppLauncher.openWhatsApp(phone: '', message: msg);
                     },
                   ),

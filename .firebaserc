@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "trucker-s-website"
-  }
+  },
+  "targets": {
+    "trucker-s-website": {
+      "hosting": {
+        "trucklink-pk": [
+          "trucklink-pk"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

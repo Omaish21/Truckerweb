@@ -10,7 +10,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Truck Link PK';
+  String get appTitle => 'TruckLink PK';
 
   @override
   String get appSubtitle => 'Pakistan Truck Driver & Load Logistics Platform';
@@ -104,7 +104,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectRoleTitle => 'Select Role';
 
   @override
-  String get selectRoleHeader => 'How do you want to use Truck Link PK?';
+  String get selectRoleHeader => 'How do you want to use TruckLink PK?';
 
   @override
   String get driverRole => 'Driver (Job Seeker)';

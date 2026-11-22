@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "Truck Link PK",
+  "appTitle": "TruckLink PK",
   "appSubtitle": "Pakistan Truck Driver & Load Logistics Platform",
   "switchToTransporter": "Switch to Transporter Mode",
   "switchToDriver": "Switch to Driver Mode",
@@ -43,7 +43,7 @@
   "validCnicRequired": "Valid 13-digit CNIC required (e.g. 42101-1234567-1)",
   "cnicRequired": "CNIC number is required",
   "selectRoleTitle": "Select Role",
-  "selectRoleHeader": "How do you want to use Truck Link PK?",
+  "selectRoleHeader": "How do you want to use TruckLink PK?",
   "driverRole": "Driver (Job Seeker)",
   "driverRoleSubtitle": "Find high-paying loads & route alerts",
   "driverRoleDescription": "Find high-paying loads, live bridge clearance alerts, city curfews, and verified profile.",

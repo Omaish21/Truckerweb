@@ -116,7 +116,7 @@ class _LogisticsVideoDialogState extends State<LogisticsVideoDialog> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    isUrdu ? 'ٹرک لنک لائیو ویڈیو ڈیمو (۴ کے)' : 'Truck Link PK Cinematic Showcase (4K)',
+                    isUrdu ? 'ٹرک لنک پی کے لائیو ویڈیو ڈیمو (۴ کے)' : 'TruckLink PK Cinematic Showcase (4K)',
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                   const Spacer(),

@@ -77,7 +77,7 @@ class AppLogoWithTitle extends StatelessWidget {
         AppLogo(size: iconSize, borderRadius: 8),
         const SizedBox(width: 10),
         Text(
-          'Truck Link PK',
+          'TruckLink PK',
           style: titleStyle ??
               TextStyle(
                 fontSize: 18,

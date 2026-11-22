@@ -79,7 +79,7 @@ class _TruckLinkAppState extends State<TruckLinkApp> {
 
     return MaterialApp.router(
       scaffoldMessengerKey: _scaffoldMessengerKey,
-      title: 'Truck Link PK',
+      title: 'TruckLink PK',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
