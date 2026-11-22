@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/ai/trucklink_ai_service.dart';
 import '../../../../core/constants/load_statuses.dart';
 import '../../../../core/constants/vehicle_types.dart';
 import '../../../../core/providers/app_scope.dart';
@@ -9,6 +10,7 @@ import '../../../../core/services/launcher/app_launcher.dart';
 import '../../../../core/services/translation_service.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/ai_copilot_sheet.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../core/widgets/notification_bell_button.dart';
@@ -420,6 +422,11 @@ class _LoadsFeedScreenState extends State<LoadsFeedScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.auto_awesome, color: Colors.amber),
+            tooltip: isUrdu ? 'استاد جی اے آئی کو پائلٹ' : 'TruckLink AI Co-Pilot',
+            onPressed: () => AiCopilotSheet.show(context),
+          ),
+          IconButton(
             icon: const Icon(Icons.share_outlined),
             tooltip: isUrdu ? 'لوڈز فیڈ کا لنک شیئر کریں' : 'Share Feed Link',
             onPressed: () {
@@ -659,22 +666,60 @@ class _LoadsFeedScreenState extends State<LoadsFeedScreen> {
                                 ],
                               ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: load.status == LoadStatus.open
-                                    ? AppColors.success.withValues(alpha: 0.12)
-                                    : AppColors.accent.withValues(alpha: 0.25),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                LoadStatus.getLabel(load.status),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: load.status == LoadStatus.open ? AppColors.success : Colors.black87,
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Builder(
+                                  builder: (context) {
+                                    final match = TruckLinkAiService.instance.matchDriverToLoad(
+                                      driver: authUser,
+                                      load: load,
+                                    );
+                                    return Container(
+                                      margin: const EdgeInsets.only(right: 6),
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+                                        ),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.auto_awesome, size: 12, color: Colors.amberAccent),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${match.percentage}% AI Match',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 ),
-                              ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: load.status == LoadStatus.open
+                                        ? AppColors.success.withValues(alpha: 0.12)
+                                        : AppColors.accent.withValues(alpha: 0.25),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    LoadStatus.getLabel(load.status),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: load.status == LoadStatus.open ? AppColors.success : Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),

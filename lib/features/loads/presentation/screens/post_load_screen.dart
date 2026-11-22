@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../../core/ai/trucklink_ai_service.dart';
 import '../../../../core/constants/vehicle_types.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/translation_service.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../core/widgets/voice_input_button.dart';
@@ -37,6 +39,45 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
     _rateController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  void _estimateRateWithAi() {
+    final origin = _originController.text.trim();
+    final dest = _destController.text.trim();
+    final weight = double.tryParse(_weightController.text.trim()) ?? 15.0;
+    final vehicle = _selectedVehicleId;
+    final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
+
+    final est = TruckLinkAiService.instance.predictRate(
+      origin: origin,
+      destination: dest,
+      vehicleType: vehicle,
+      weightTons: weight,
+    );
+
+    setState(() {
+      _rateController.text = est.recommendedRatePkr.round().toString();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF6A11CB),
+        content: Row(
+          children: [
+            const Icon(Icons.auto_awesome, color: Colors.amberAccent),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                isUrdu
+                    ? 'اے آئی تخمینہ: ${AppFormatters.formatPkr(est.recommendedRatePkr)} (ڈیزل: ${est.estimatedDieselLiters.toStringAsFixed(0)} لیٹر | ٹول: ${AppFormatters.formatPkr(est.estimatedTollCostPkr)})'
+                    : 'AI Market Estimate: ${AppFormatters.formatPkr(est.recommendedRatePkr)} (${est.estimatedDieselLiters.toStringAsFixed(0)}L diesel | ${AppFormatters.formatPkr(est.estimatedTollCostPkr)} tolls)',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _handleSubmit() async {
@@ -210,14 +251,36 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
               const SizedBox(height: 16),
 
               // Offered Rate
-              TextFormField(
-                controller: _rateController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: l10n.offeredRateLabel,
-                  prefixIcon: const Icon(Icons.payments_outlined, color: AppColors.success),
-                ),
-                validator: (val) => val == null || val.isEmpty ? l10n.requiredField : null,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _rateController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: l10n.offeredRateLabel,
+                        prefixIcon: const Icon(Icons.payments_outlined, color: AppColors.success),
+                      ),
+                      validator: (val) => val == null || val.isEmpty ? l10n.requiredField : null,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6A11CB),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.auto_awesome, color: Colors.amber, size: 18),
+                    label: Text(
+                      isUrdu ? 'اے آئی ریٹ' : 'AI Rate',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    onPressed: _estimateRateWithAi,
+                  ),
+                ],
               ),
 
               const SizedBox(height: 16),

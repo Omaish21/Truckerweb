@@ -3,6 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trucklink_pk/app.dart';
+import 'package:trucklink_pk/core/ai/tensor.dart';
+import 'package:trucklink_pk/core/ai/models/rate_prediction_network.dart';
+import 'package:trucklink_pk/core/ai/models/load_matching_network.dart';
+import 'package:trucklink_pk/core/ai/models/intent_classification_network.dart';
+import 'package:trucklink_pk/core/ai/trainer/neural_trainer.dart';
+import 'package:trucklink_pk/core/ai/trucklink_ai_service.dart';
 import 'package:trucklink_pk/core/constants/vehicle_types.dart';
 import 'package:trucklink_pk/core/localization/locale_provider.dart';
 import 'package:trucklink_pk/core/providers/app_scope.dart';
@@ -11,6 +17,7 @@ import 'package:trucklink_pk/core/utils/formatters.dart';
 import 'package:trucklink_pk/core/utils/urdu_text.dart';
 import 'package:trucklink_pk/core/utils/validators.dart';
 import 'package:trucklink_pk/core/widgets/captcha_verification_widget.dart';
+import 'package:trucklink_pk/features/auth/domain/user_profile.dart';
 import 'package:trucklink_pk/features/auth/presentation/providers/auth_provider.dart';
 import 'package:trucklink_pk/features/auth/presentation/screens/login_screen.dart';
 import 'package:trucklink_pk/core/services/firebase_service.dart';
@@ -169,6 +176,132 @@ void main() {
 
       // Strictly redirects unauthenticated visitor to Login Screen
       expect(find.byType(LoginScreen), findsOneWidget);
+    });
+
+    group('Neural Network & AI Engine Tests', () {
+      test('Tensor vector operations and activations (GELU, ReLU, Softmax, LayerNorm)', () {
+        final t1 = Tensor.vector([1.0, 2.0, 3.0]);
+        final t2 = Tensor.vector([4.0, 5.0, 6.0]);
+
+        // Dot product: 1*4 + 2*5 + 3*6 = 32
+        expect(Tensor.dot(t1, t2), closeTo(32.0, 1e-5));
+
+        // Cosine similarity of identical vectors is 1.0
+        expect(Tensor.cosineSimilarity(t1, t1), closeTo(1.0, 1e-5));
+
+        // Activations
+        final geluOut = Tensor.vector([-2.0, 0.0, 2.0]).gelu();
+        expect(geluOut[1], closeTo(0.0, 1e-5));
+        expect(geluOut[2], greaterThan(1.9));
+
+        final reluOut = Tensor.vector([-5.0, 0.0, 5.0]).relu();
+        expect(reluOut[0], 0.0);
+        expect(reluOut[2], 5.0);
+
+        final softmaxOut = Tensor.vector([1.0, 2.0, 3.0]).softmax();
+        final sum = softmaxOut.data.reduce((a, b) => a + b);
+        expect(sum, closeTo(1.0, 1e-5));
+        expect(softmaxOut[2], greaterThan(softmaxOut[0]));
+
+        final norm = Tensor.vector([10.0, 20.0, 30.0]).layerNorm();
+        final mean = norm.data.reduce((a, b) => a + b) / norm.length;
+        expect(mean, closeTo(0.0, 1e-5));
+      });
+
+      test('PakFreightRateNet computes realistic rate and margin forecasts', () {
+        final net = PakFreightRateNet.instance;
+
+        final pred = net.predict(
+          distanceKm: 1210.0,
+          weightTons: 35.0,
+          vehicleType: '22_wheeler',
+          goodsType: 'general',
+          isMotorway: true,
+          dieselPricePerLiter: 285.0,
+        );
+        expect(pred.recommendedRatePkr, greaterThan(180000.0));
+        expect(pred.recommendedRatePkr, lessThan(350000.0));
+        expect(pred.maxRatePkr, greaterThan(pred.recommendedRatePkr));
+        expect(pred.minRatePkr, lessThan(pred.recommendedRatePkr));
+        expect(pred.estimatedDieselLiters, greaterThan(300.0));
+        expect(pred.estimatedNetDriverProfitPkr, greaterThan(0.0));
+      });
+
+      test('LoadMatchNet evaluates driver-load compatibility via Two-Tower embeddings', () {
+        final net = LoadMatchNet.instance;
+        final driver = UserProfile(
+          id: 'drv-test',
+          fullName: 'Tariq Khan',
+          phone: '+923001234567',
+          role: 'driver',
+          vehicleTypes: ['22_wheeler'],
+          rating: 4.9,
+          totalRatings: 45,
+          verificationStatus: 'verified',
+        );
+
+        final matchedLoad = LoadModel(
+          id: 'l-1',
+          ownerId: 'own-1',
+          originCity: 'Lahore',
+          destinationCity: 'Karachi',
+          vehicleTypeRequired: '22_wheeler',
+          weightTons: 35.0,
+          offeredRatePkr: 250000.0,
+          status: 'open',
+          createdAt: DateTime.now(),
+        );
+
+        final result = net.evaluate(driver: driver, load: matchedLoad);
+        expect(result.score, greaterThan(0.60));
+        expect(result.percentage, greaterThan(60));
+        expect(result.backhaulScore, greaterThan(0.40));
+        expect(result.recommendationEn, isNotEmpty);
+        expect(result.recommendationUr, isNotEmpty);
+      });
+
+      test('LogisticsIntentNet classifies Urdu and Roman Urdu freight queries accurately', () {
+        final net = LogisticsIntentNet.instance;
+
+        final urduQuery = net.classify('لاہور سے کراچی کا کرایہ کیا ہے؟');
+        expect(urduQuery.intent, AiIntent.rateEstimate);
+        expect(urduQuery.entities.origin, 'Lahore');
+        expect(urduQuery.entities.destination, 'Karachi');
+
+        final romanUrduQuery = net.classify('mujhe Faisalabad k loads dikhao');
+        expect(romanUrduQuery.intent, AiIntent.searchLoads);
+
+        final routeQuery = net.classify('M-2 motorway toll tax aur bridge height check karo');
+        expect(routeQuery.intent, AiIntent.bridgeClearance);
+      });
+
+      test('NeuralTrainer executes backprop epochs and updates network weights', () async {
+        final metrics = await NeuralTrainer.trainRateModel(epochs: 3);
+
+        expect(metrics.totalEpochs, 3);
+        expect(metrics.initialLoss, isPositive);
+        expect(metrics.finalLoss, isPositive);
+        expect(metrics.meanAbsoluteErrorPkr, isPositive);
+      });
+
+      test('TruckLinkAiService orchestrates predictions and end-to-end assistant flows', () {
+        final service = TruckLinkAiService.instance;
+
+        // Rate prediction
+        final rate = service.predictRate(
+          origin: 'Rawalpindi',
+          destination: 'Lahore',
+          vehicleType: 'mazda',
+          weightTons: 7.0,
+        );
+        expect(rate.recommendedRatePkr, greaterThanOrEqualTo(25000.0));
+        expect(rate.recommendedRatePkr, lessThan(95000.0));
+
+        // Assistant query handling
+        final response = service.queryAssistant('لاہور سے کراچی کا کرایہ کتنا ہے');
+        expect(response.responseEn, contains('Lahore'));
+        expect(response.responseUr, contains('کرایہ'));
+      });
     });
   });
 }

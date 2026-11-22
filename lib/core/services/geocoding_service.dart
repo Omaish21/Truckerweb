@@ -447,6 +447,9 @@ class GeocodingService {
 
   static double _degreesToRadians(double degrees) => degrees * math.pi / 180.0;
 
+  /// Synchronous fast lookup for known Pakistani cities and hubs
+  LatLng? getKnownCoordinates(String cityName) => _getCityFallbackCoordinate(cityName);
+
   static LatLng? _getCityFallbackCoordinate(String cityName) {
     final lower = cityName.toLowerCase();
     const map = {

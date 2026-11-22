@@ -7,6 +7,7 @@ import '../../../../core/services/launcher/app_launcher.dart';
 import '../../../../core/services/picker/app_document_picker.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/ai_copilot_sheet.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../core/widgets/logistics_video_dialog.dart';
@@ -101,6 +102,11 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.auto_awesome, color: Colors.amber),
+            tooltip: isUrdu ? 'استاد جی اے آئی کو پائلٹ' : 'AI Co-Pilot',
+            onPressed: () => AiCopilotSheet.show(context),
+          ),
           if (context.auth.isAdmin)
             IconButton(
               icon: const Icon(Icons.admin_panel_settings, color: Colors.amber),
@@ -539,6 +545,16 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             const SizedBox(height: 24),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: const Color(0xFF1E3C72),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.auto_awesome, color: Colors.amberAccent),
+        label: Text(
+          isUrdu ? 'استاد جی اے آئی' : 'AI Co-Pilot',
+          style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5),
+        ),
+        onPressed: () => AiCopilotSheet.show(context),
       ),
     );
   }
