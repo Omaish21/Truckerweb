@@ -400,23 +400,26 @@ class _RoutePlannerScreenState extends ConsumerState<RoutePlannerScreen> {
                                 point: place.location,
                                 width: 34,
                                 height: 34,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() => _selectedPlace = place);
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.25),
-                                          blurRadius: 4,
-                                        ),
-                                      ],
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() => _selectedPlace = place);
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.25),
+                                            blurRadius: 4,
+                                          ),
+                                        ],
+                                      ),
+                                      padding: const EdgeInsets.all(4),
+                                      child: Icon(icon, color: pinColor, size: 20),
                                     ),
-                                    padding: const EdgeInsets.all(4),
-                                    child: Icon(icon, color: pinColor, size: 20),
                                   ),
                                 ),
                               );

@@ -26,6 +26,7 @@ class LanguageToggleButton extends ConsumerWidget {
 
     return InkWell(
       onTap: () => ref.read(localeProvider.notifier).toggleLocale(),
+      mouseCursor: SystemMouseCursors.click,
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: EdgeInsets.symmetric(

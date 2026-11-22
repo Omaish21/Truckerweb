@@ -55,6 +55,11 @@ class AppTheme {
           color: AppColors.textSecondaryLight,
         ).copyWith(fontFamilyFallback: urduFallback),
       ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: AppColors.primary,
+        selectionColor: Color(0x400A2540),
+        selectionHandleColor: AppColors.primary,
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
@@ -73,7 +78,35 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+        ).copyWith(
+          mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
         ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ).copyWith(
+          mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primary,
+        ).copyWith(
+          mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
+        ),
+      ),
+      iconButtonTheme: const IconButtonThemeData(
+        style: ButtonStyle(
+          mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
+        ),
+      ),
+      listTileTheme: const ListTileThemeData(
+        mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
+      ),
+      switchTheme: const SwitchThemeData(
+        mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -123,6 +156,11 @@ class AppTheme {
       ),
       fontFamily: GoogleFonts.inter().fontFamily,
       textTheme: baseTextTheme,
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: AppColors.accent,
+        selectionColor: Color(0x40F59E0B),
+        selectionHandleColor: AppColors.accent,
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.surfaceDark,
         foregroundColor: Colors.white,
@@ -132,6 +170,43 @@ class AppTheme {
         color: AppColors.surfaceDark,
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.accent,
+          foregroundColor: Colors.black,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+        ).copyWith(
+          mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.accent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ).copyWith(
+          mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.accent,
+        ).copyWith(
+          mouseCursor: const WidgetStatePropertyAll(SystemMouseCursors.click),
+        ),
+      ),
+      iconButtonTheme: const IconButtonThemeData(
+        style: ButtonStyle(
+          mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
+        ),
+      ),
+      listTileTheme: const ListTileThemeData(
+        mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
+      ),
+      switchTheme: const SwitchThemeData(
+        mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.click),
       ),
     );
   }

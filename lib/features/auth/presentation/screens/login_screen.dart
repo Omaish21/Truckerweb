@@ -208,6 +208,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         // Interactive Video Showcase Card
         InkWell(
           onTap: _openVideoShowcase,
+          mouseCursor: SystemMouseCursors.click,
           borderRadius: BorderRadius.circular(16),
           child: Container(
             padding: const EdgeInsets.all(16),
@@ -387,65 +388,71 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedTab = 0),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: _selectedTab == 0 ? AppColors.accent : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            alignment: Alignment.center,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.phone_iphone,
-                                  size: 16,
-                                  color: _selectedTab == 0 ? Colors.black87 : Colors.white70,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  isUrdu ? 'فون نمبر (OTP)' : 'Phone OTP',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () => setState(() => _selectedTab = 0),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _selectedTab == 0 ? AppColors.accent : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              alignment: Alignment.center,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.phone_iphone,
+                                    size: 16,
                                     color: _selectedTab == 0 ? Colors.black87 : Colors.white70,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    isUrdu ? 'فون نمبر (OTP)' : 'Phone OTP',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: _selectedTab == 0 ? Colors.black87 : Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
                       Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedTab = 1),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: _selectedTab == 1 ? AppColors.accent : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            alignment: Alignment.center,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.lock_outline,
-                                  size: 16,
-                                  color: _selectedTab == 1 ? Colors.black87 : Colors.white70,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  isUrdu ? 'ای میل / پاس ورڈ' : 'Email / Pass',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () => setState(() => _selectedTab = 1),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _selectedTab == 1 ? AppColors.accent : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              alignment: Alignment.center,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.lock_outline,
+                                    size: 16,
                                     color: _selectedTab == 1 ? Colors.black87 : Colors.white70,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    isUrdu ? 'ای میل / پاس ورڈ' : 'Email / Pass',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                      color: _selectedTab == 1 ? Colors.black87 : Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -472,6 +479,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextFormField(
                     controller: _emailController,
                     style: const TextStyle(color: Colors.white),
+                    cursorColor: AppColors.accent,
+                    cursorWidth: 2.2,
+                    showCursor: true,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       filled: true,
@@ -488,6 +498,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextFormField(
                     controller: _passwordController,
                     style: const TextStyle(color: Colors.white),
+                    cursorColor: AppColors.accent,
+                    cursorWidth: 2.2,
+                    showCursor: true,
                     obscureText: true,
                     decoration: InputDecoration(
                       filled: true,
@@ -551,6 +564,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextFormField(
                     controller: _phoneController,
                     style: const TextStyle(color: Colors.white),
+                    cursorColor: AppColors.accent,
+                    cursorWidth: 2.2,
+                    showCursor: true,
                     keyboardType: TextInputType.phone,
                     decoration: InputDecoration(
                       filled: true,
@@ -614,6 +630,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   TextFormField(
                     controller: _otpController,
                     style: const TextStyle(color: Colors.white, letterSpacing: 4, fontSize: 18),
+                    cursorColor: AppColors.accent,
+                    cursorWidth: 2.5,
+                    showCursor: true,
                     keyboardType: TextInputType.number,
                     maxLength: 6,
                     decoration: InputDecoration(
@@ -673,6 +692,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(width: 8),
                     InkWell(
+                      mouseCursor: SystemMouseCursors.click,
                       onTap: () {
                         setState(() {
                           _selectedTab = 0;
@@ -695,6 +715,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(width: 8),
                     InkWell(
+                      mouseCursor: SystemMouseCursors.click,
                       onTap: () {
                         setState(() {
                           _selectedTab = 1;

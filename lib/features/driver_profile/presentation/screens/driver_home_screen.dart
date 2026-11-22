@@ -226,6 +226,7 @@ class _DriverHomeScreenState extends ConsumerState<DriverHomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         InkWell(
+                          mouseCursor: SystemMouseCursors.click,
                           onTap: () => AppLauncher.makeCall('130'),
                           child: Row(
                             children: [
@@ -528,6 +529,7 @@ class _QuickActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
+      mouseCursor: SystemMouseCursors.click,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(14),

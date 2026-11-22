@@ -118,6 +118,9 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: rateCtrl,
+                cursorColor: AppColors.primary,
+                cursorWidth: 2.2,
+                showCursor: true,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: isUrdu ? 'آپ کی پیشکش (روپے)' : 'Proposed Rate (PKR)',
@@ -127,6 +130,9 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: hoursCtrl,
+                cursorColor: AppColors.primary,
+                cursorWidth: 2.2,
+                showCursor: true,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   labelText: isUrdu ? 'متوقع وقت (گھنٹے)' : 'Estimated Delivery (Hours)',
@@ -136,6 +142,9 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: notesCtrl,
+                cursorColor: AppColors.primary,
+                cursorWidth: 2.2,
+                showCursor: true,
                 decoration: InputDecoration(
                   labelText: isUrdu ? 'ڈرائیور نوٹس / شرائط' : 'Driver Notes / Terms',
                   prefixIcon: const Icon(Icons.edit_note, color: AppColors.accent),
@@ -500,6 +509,7 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
                                       ),
                                       const SizedBox(width: 8),
                                       InkWell(
+                                        mouseCursor: SystemMouseCursors.click,
                                         onTap: () {
                                           final current = load.goodsType ?? l10n.goodsGeneral;
                                           final trans = TranslationService().translate(
