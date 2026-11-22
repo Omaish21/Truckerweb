@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
 import '../../../../core/constants/report_categories.dart';
@@ -16,7 +18,18 @@ import '../../domain/route_models.dart';
 import '../widgets/bridge_alert_banner.dart';
 
 class RoutePlannerScreen extends ConsumerStatefulWidget {
-  const RoutePlannerScreen({super.key});
+  final String? initialOrigin;
+  final String? initialDestination;
+  final String? initialVehicle;
+  final bool? initialMotorway;
+
+  const RoutePlannerScreen({
+    super.key,
+    this.initialOrigin,
+    this.initialDestination,
+    this.initialVehicle,
+    this.initialMotorway,
+  });
 
   @override
   ConsumerState<RoutePlannerScreen> createState() => _RoutePlannerScreenState();
@@ -75,9 +88,35 @@ class _RoutePlannerScreenState extends ConsumerState<RoutePlannerScreen>
   @override
   void initState() {
     super.initState();
+    if (widget.initialOrigin != null && widget.initialOrigin!.isNotEmpty) {
+      _origin = widget.initialOrigin!;
+    }
+    if (widget.initialDestination != null && widget.initialDestination!.isNotEmpty) {
+      _destination = widget.initialDestination!;
+    }
+    if (widget.initialVehicle != null && widget.initialVehicle!.isNotEmpty) {
+      _selectedVehicleId = widget.initialVehicle!;
+    }
+    if (widget.initialMotorway != null) {
+      _useMotorwayBypass = widget.initialMotorway!;
+    }
     _tabController = TabController(length: 3, vsync: this);
     _fetchLiveRoute();
     _fetchNearbyPlaces();
+  }
+
+  void _syncUrl() {
+    if (!mounted) return;
+    final uri = Uri(
+      path: '/route-planner',
+      queryParameters: {
+        'origin': _origin,
+        'destination': _destination,
+        'vehicle': _selectedVehicleId,
+        'motorway': _useMotorwayBypass.toString(),
+      },
+    );
+    GoRouter.of(context).replace(uri.toString());
   }
 
   @override
@@ -340,8 +379,37 @@ class _RoutePlannerScreenState extends ConsumerState<RoutePlannerScreen>
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.routePlannerTitle),
-        actions: const [
-          Center(child: LanguageToggleButton(compact: true)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share_outlined),
+            tooltip: isUrdu ? 'روٹ کا لنک شیئر کریں' : 'Share Route Link',
+            onPressed: () {
+              final baseUri = Uri.base;
+              final shareUrl = '${baseUri.scheme}://${baseUri.host}${baseUri.hasPort ? ':${baseUri.port}' : ''}/route-planner?origin=${Uri.encodeComponent(_origin)}&destination=${Uri.encodeComponent(_destination)}&vehicle=${Uri.encodeComponent(_selectedVehicleId)}&motorway=$_useMotorwayBypass';
+              Clipboard.setData(ClipboardData(text: shareUrl));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  backgroundColor: AppColors.primary,
+                  content: Text(
+                    isUrdu
+                        ? 'روٹ کا لنک کاپی کر لیا گیا ہے: $_origin تا $_destination'
+                        : 'Route link copied to clipboard: $_origin to $_destination',
+                  ),
+                  action: SnackBarAction(
+                    label: isUrdu ? 'واٹس ایپ' : 'WhatsApp',
+                    textColor: AppColors.accent,
+                    onPressed: () {
+                      final msg = isUrdu
+                          ? 'TruckLink PK پر روٹ دیکھیں ($_origin تا $_destination):\n$shareUrl'
+                          : 'Check this route on TruckLink PK ($_origin to $_destination):\n$shareUrl';
+                      AppLauncher.openWhatsApp(phone: '', message: msg);
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+          const Center(child: LanguageToggleButton(compact: true)),
           SizedBox(width: 8),
         ],
       ),
@@ -414,6 +482,7 @@ class _RoutePlannerScreenState extends ConsumerState<RoutePlannerScreen>
                                 onChanged: (v) {
                                   if (v != null && v != _origin) {
                                     setState(() => _origin = v);
+                                    _syncUrl();
                                     _fetchLiveRoute();
                                   }
                                 },
@@ -431,6 +500,7 @@ class _RoutePlannerScreenState extends ConsumerState<RoutePlannerScreen>
                                 _origin = _destination;
                                 _destination = temp;
                               });
+                              _syncUrl();
                               _fetchLiveRoute();
                               _fetchNearbyPlaces();
                             },
@@ -471,6 +541,7 @@ class _RoutePlannerScreenState extends ConsumerState<RoutePlannerScreen>
                                 onChanged: (v) {
                                   if (v != null && v != _destination) {
                                     setState(() => _destination = v);
+                                    _syncUrl();
                                     _fetchLiveRoute();
                                     _fetchNearbyPlaces();
                                   }
@@ -515,6 +586,7 @@ class _RoutePlannerScreenState extends ConsumerState<RoutePlannerScreen>
                                 onChanged: (val) {
                                   if (val != null) {
                                     setState(() => _selectedVehicleId = val);
+                                    _syncUrl();
                                     _fetchLiveRoute();
                                   }
                                 },
@@ -776,6 +848,7 @@ class _RoutePlannerScreenState extends ConsumerState<RoutePlannerScreen>
                     activeThumbColor: AppColors.primary,
                     onChanged: (val) {
                       setState(() => _useMotorwayBypass = val);
+                      _syncUrl();
                       _fetchLiveRoute();
                     },
                   ),

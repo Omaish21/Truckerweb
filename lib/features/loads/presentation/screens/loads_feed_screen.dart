@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/load_statuses.dart';
@@ -18,7 +19,14 @@ import '../../domain/bid_model.dart';
 import '../../domain/load_model.dart';
 
 class LoadsFeedScreen extends ConsumerStatefulWidget {
-  const LoadsFeedScreen({super.key});
+  final String? initialCity;
+  final String? initialVehicle;
+
+  const LoadsFeedScreen({
+    super.key,
+    this.initialCity,
+    this.initialVehicle,
+  });
 
   @override
   ConsumerState<LoadsFeedScreen> createState() => _LoadsFeedScreenState();
@@ -28,6 +36,33 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
   String? _selectedVehicleFilter;
   String? _selectedCityFilter;
   final Map<String, String> _translatedNotes = {};
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialCity != null && widget.initialCity!.isNotEmpty) {
+      _selectedCityFilter = widget.initialCity;
+    }
+    if (widget.initialVehicle != null && widget.initialVehicle!.isNotEmpty) {
+      _selectedVehicleFilter = widget.initialVehicle;
+    }
+  }
+
+  void _syncUrl() {
+    if (!mounted) return;
+    final params = <String, String>{};
+    if (_selectedCityFilter != null && _selectedCityFilter != 'All') {
+      params['city'] = _selectedCityFilter!;
+    }
+    if (_selectedVehicleFilter != null && _selectedVehicleFilter != 'all') {
+      params['vehicle'] = _selectedVehicleFilter!;
+    }
+    final uri = Uri(
+      path: '/loads-feed',
+      queryParameters: params.isEmpty ? null : params,
+    );
+    GoRouter.of(context).replace(uri.toString());
+  }
 
   final List<String> _majorHubs = const [
     'All',
@@ -368,6 +403,33 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
       appBar: AppBar(
         title: Text(l10n.availableLoadsTitle),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.share_outlined),
+            tooltip: isUrdu ? 'لوڈز فیڈ کا لنک شیئر کریں' : 'Share Feed Link',
+            onPressed: () {
+              final baseUri = Uri.base;
+              final params = <String, String>{};
+              if (_selectedCityFilter != null && _selectedCityFilter != 'All') {
+                params['city'] = _selectedCityFilter!;
+              }
+              if (_selectedVehicleFilter != null && _selectedVehicleFilter != 'all') {
+                params['vehicle'] = _selectedVehicleFilter!;
+              }
+              final queryStr = params.isEmpty ? '' : '?${Uri(queryParameters: params).query}';
+              final shareUrl = '${baseUri.scheme}://${baseUri.host}${baseUri.hasPort ? ':${baseUri.port}' : ''}/loads-feed$queryStr';
+              Clipboard.setData(ClipboardData(text: shareUrl));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  backgroundColor: AppColors.primary,
+                  content: Text(
+                    isUrdu
+                        ? 'لوڈز فیڈ کا لنک کاپی کر لیا گیا ہے: $shareUrl'
+                        : 'Loads feed link copied to clipboard: $shareUrl',
+                  ),
+                ),
+              );
+            },
+          ),
           const NotificationBellButton(),
           const Center(
             child: LanguageToggleButton(compact: true),
@@ -407,7 +469,10 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                     onSelected: (val) {
-                      if (val) setState(() => _selectedVehicleFilter = 'all');
+                      if (val) {
+                        setState(() => _selectedVehicleFilter = 'all');
+                        _syncUrl();
+                      }
                     },
                   ),
                   const SizedBox(width: 8),
@@ -426,6 +491,7 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
                         ),
                         onSelected: (val) {
                           setState(() => _selectedVehicleFilter = val ? vt.id : null);
+                          _syncUrl();
                         },
                       ),
                     );
@@ -453,6 +519,7 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
                       checkmarkColor: AppColors.primary,
                       onSelected: (val) {
                         setState(() => _selectedCityFilter = hub == 'All' ? null : hub);
+                        _syncUrl();
                       },
                     ),
                   );
@@ -610,7 +677,9 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
                               icon: const Icon(Icons.map_outlined, size: 16, color: AppColors.accentOrange),
                               label: Text(isUrdu ? 'گوگل روٹ' : 'Route Map'),
                               onPressed: () {
-                                context.push('/route-planner');
+                                context.push(
+                                  '/route-planner?origin=${Uri.encodeComponent(load.originCity)}&destination=${Uri.encodeComponent(load.destinationCity)}&vehicle=${Uri.encodeComponent(load.vehicleTypeRequired)}',
+                                );
                               },
                             ),
 
@@ -625,11 +694,41 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
                               onPressed: () => _showBidsViewer(context, load),
                             ),
 
+                            // Share Load Card button
+                            IconButton(
+                              icon: const Icon(Icons.share, size: 18, color: AppColors.primary),
+                              tooltip: isUrdu ? 'لوڈ شیئر کریں' : 'Share Load',
+                              onPressed: () {
+                                final baseUri = Uri.base;
+                                final shareUrl = '${baseUri.scheme}://${baseUri.host}${baseUri.hasPort ? ':${baseUri.port}' : ''}/route-planner?origin=${Uri.encodeComponent(load.originCity)}&destination=${Uri.encodeComponent(load.destinationCity)}&vehicle=${Uri.encodeComponent(load.vehicleTypeRequired)}';
+                                final loadDetails = '${load.originCity} ➔ ${load.destinationCity} (${load.weightTons}T, ${AppFormatters.formatPkr(load.offeredRatePkr)})\n$shareUrl';
+                                Clipboard.setData(ClipboardData(text: loadDetails));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    backgroundColor: AppColors.primary,
+                                    content: Text(isUrdu ? 'لوڈ کا لنک کاپی کر لیا گیا ہے' : 'Load link copied!'),
+                                    action: SnackBarAction(
+                                      label: isUrdu ? 'واٹس ایپ' : 'WhatsApp',
+                                      textColor: AppColors.accent,
+                                      onPressed: () {
+                                        final msg = isUrdu
+                                            ? 'TruckLink PK پر یہ لوڈ دیکھیں:\n$loadDetails'
+                                            : 'Check this load on TruckLink PK:\n$loadDetails';
+                                        AppLauncher.openWhatsApp(phone: '', message: msg);
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+
                             // Route Inspector button
                             IconButton(
                               icon: const Icon(Icons.alt_route, color: AppColors.primary),
                               tooltip: l10n.inspectRoute,
-                              onPressed: () => context.push('/route-planner'),
+                              onPressed: () => context.push(
+                                '/route-planner?origin=${Uri.encodeComponent(load.originCity)}&destination=${Uri.encodeComponent(load.destinationCity)}&vehicle=${Uri.encodeComponent(load.vehicleTypeRequired)}',
+                              ),
                             ),
 
                             // Trip Lifecycle progression for assigned driver
