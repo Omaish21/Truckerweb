@@ -12,6 +12,7 @@ class RoleSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -35,12 +36,12 @@ class RoleSelectionScreen extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Text(
                 l10n.selectRoleHeader,
                 style: const TextStyle(
@@ -50,9 +51,9 @@ class RoleSelectionScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 36),
+              const SizedBox(height: 28),
 
-              // Driver Card
+              // 1. Driver Card
               _RoleCard(
                 icon: Icons.drive_eta_rounded,
                 title: l10n.driverRole,
@@ -65,9 +66,9 @@ class RoleSelectionScreen extends StatelessWidget {
                 },
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-              // Owner / Shipper Card
+              // 2. Owner / Shipper Card
               _RoleCard(
                 icon: Icons.business_center_rounded,
                 title: l10n.ownerRole,
@@ -79,6 +80,25 @@ class RoleSelectionScreen extends StatelessWidget {
                   context.go('/loads-feed');
                 },
               ),
+
+              const SizedBox(height: 16),
+
+              // 3. Freight Broker & Transporter / اڈا کمیشن ایجنٹ
+              _RoleCard(
+                icon: Icons.hub_rounded,
+                title: isUrdu ? 'ٹرانسپورٹ ایجنٹ / اڈا کمیشن بروکر' : 'Freight Broker & Fleet Transporter',
+                subtitle: isUrdu ? 'ملک گیر روٹ ٹرپس اور گاڑیوں کے بیڑے' : 'Corridor routes, bulk dispatches & fleet contracts',
+                description: isUrdu
+                    ? 'نئے روٹ ٹرپس اور مال کے سودے پوسٹ کریں، متعدد گاڑیوں کے بیڑے بک کروائیں اور بیوپاریوں کو رجسٹرڈ ڈرائیورز سے جوڑیں۔'
+                    : 'Post regular corridor trips and freight dispatches, manage multiple truck bookings, and broker cargo contracts.',
+                badgeColor: const Color(0xFF00897B),
+                onTap: () {
+                  context.authActions.switchRole('broker');
+                  context.go('/loads-feed');
+                },
+              ),
+
+              const SizedBox(height: 20),
             ],
           ),
         ),

@@ -41,6 +41,8 @@ class UserProfile {
 
   bool get isDriver => role == 'driver';
   bool get isOwner => role == 'owner';
+  bool get isBroker => role == 'broker' || role == 'transporter';
+  bool get canPostLoads => isOwner || isBroker || isAdmin;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     final verified = json['cnic_verified'] as bool? ?? json['cnicVerified'] as bool? ?? false;
