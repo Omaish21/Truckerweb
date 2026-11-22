@@ -726,6 +726,34 @@ class _LoadsFeedScreenState extends State<LoadsFeedScreen> {
 
                         const Divider(height: 20),
 
+                        // Visible Contact Phone Number Display
+                        if (contactPhone.isNotEmpty) ...[
+                          Row(
+                            children: [
+                              const Icon(Icons.phone_in_talk, size: 14, color: AppColors.primary),
+                              const SizedBox(width: 6),
+                              Text(
+                                isUrdu ? 'رابطہ نمبر: ' : 'Contact: ',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondaryLight,
+                                ),
+                              ),
+                              SelectableText(
+                                AppFormatters.formatPakistaniPhoneNumber(contactPhone),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+
                         // One-tap Call & WhatsApp Buttons
                         Row(
                           children: [

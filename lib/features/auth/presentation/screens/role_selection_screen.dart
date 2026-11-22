@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/providers/app_scope.dart';
+import '../../../../core/services/firebase_service.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -13,6 +15,12 @@ class RoleSelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
+
+    final authPhone = context.auth.state.userProfile?.phone.isNotEmpty == true
+        ? context.auth.state.userProfile!.phone
+        : (context.auth.state.phoneNumber ??
+            FirebaseService.instance.auth?.currentUser?.phoneNumber ??
+            '');
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -26,13 +34,22 @@ class RoleSelectionScreen extends StatelessWidget {
           ],
         ),
         centerTitle: true,
-        actions: const [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
+        actions: [
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
             child: Center(
               child: LanguageToggleButton(),
             ),
           ),
+          IconButton(
+            icon: const Icon(Icons.logout, size: 20),
+            tooltip: isUrdu ? 'لاگ آؤٹ' : 'Logout',
+            onPressed: () {
+              context.authActions.logout();
+              context.go('/login');
+            },
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
@@ -51,7 +68,42 @@ class RoleSelectionScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 28),
+
+              // Active Contact Number Badge
+              if (authPhone.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.phone_android, size: 16, color: AppColors.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          isUrdu
+                              ? 'رابطہ نمبر: ${AppFormatters.formatPakistaniPhoneNumber(authPhone)}'
+                              : 'Contact Number: ${AppFormatters.formatPakistaniPhoneNumber(authPhone)}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(Icons.verified, size: 15, color: AppColors.success),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 24),
 
               // 1. Driver Card
               _RoleCard(

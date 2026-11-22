@@ -5,6 +5,7 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/translation_service.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
 import '../../../../core/widgets/location_search_bar.dart';
@@ -26,10 +27,20 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
   final _weightController = TextEditingController(text: '20');
   final _heightController = TextEditingController(text: '12');
   final _rateController = TextEditingController();
+  final _contactPhoneController = TextEditingController();
   final _notesController = TextEditingController();
   String _selectedVehicleId = '22_wheeler';
   String _goodsType = 'general';
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final userPhone = FirebaseService.instance.auth?.currentUser?.phoneNumber;
+    if (userPhone != null && userPhone.isNotEmpty) {
+      _contactPhoneController.text = AppFormatters.formatPakistaniPhoneNumber(userPhone);
+    }
+  }
 
   @override
   void dispose() {
@@ -38,6 +49,7 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
     _weightController.dispose();
     _heightController.dispose();
     _rateController.dispose();
+    _contactPhoneController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -123,6 +135,9 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
           heightFt: double.tryParse(_heightController.text.trim()),
           goodsType: _goodsType,
           offeredRatePkr: double.tryParse(_rateController.text.trim()) ?? 50000.0,
+          contactPhone: _contactPhoneController.text.trim().isNotEmpty
+              ? _contactPhoneController.text.trim()
+              : (service.auth?.currentUser?.phoneNumber ?? ''),
           createdAt: DateTime.now(),
         );
 
@@ -340,6 +355,30 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
                     onPressed: () => _estimateRateWithAi(silent: false),
                   ),
                 ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // Contact Phone Number for Drivers & Transporters
+              TextFormField(
+                controller: _contactPhoneController,
+                keyboardType: TextInputType.phone,
+                inputFormatters: [PakistaniPhoneInputFormatter()],
+                decoration: InputDecoration(
+                  labelText: isUrdu
+                      ? 'رابطہ فون نمبر (ڈرائیورز اس نمبر پر کال یا واٹس ایپ کریں گے)'
+                      : 'Contact Phone Number (Drivers will call or WhatsApp here)',
+                  hintText: '+92 308 750 2250',
+                  prefixIcon: const Icon(Icons.phone_enabled, color: AppColors.primary),
+                ),
+                validator: (val) {
+                  if (val == null || val.trim().isEmpty) {
+                    return isUrdu
+                        ? 'برائے مہربانی رابطہ نمبر درج کریں'
+                        : 'Please provide a valid contact phone number';
+                  }
+                  return AppValidators.validatePhone(val);
+                },
               ),
 
               const SizedBox(height: 16),
