@@ -92,7 +92,30 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
                 '${load.originCity} ➔ ${load.destinationCity} (${load.weightTons} Tons)',
                 style: const TextStyle(color: AppColors.textSecondaryLight, fontSize: 13),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber.shade300),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.lightbulb_outline, color: Colors.orange, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        isUrdu
+                            ? '💡 منافع کا تخمینہ: موجودہ ڈیزل (285 روپے/لیٹر) اور ٹول ٹیکس کو مدنظر رکھ کر بولی درج کریں۔'
+                            : '💡 Margin Advisor: Factor in current diesel (~PKR 285/L) and highway tolls when proposing your bid.',
+                        style: const TextStyle(fontSize: 11, color: Colors.black87),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               TextField(
                 controller: rateCtrl,
                 keyboardType: TextInputType.number,
@@ -570,6 +593,15 @@ class _LoadsFeedScreenState extends ConsumerState<LoadsFeedScreen> {
                               icon: const Icon(Icons.gavel, size: 16),
                               label: Text(isUrdu ? 'بولی لگائیں' : 'Submit Bid'),
                               onPressed: () => _showBidDialog(context, load),
+                            ),
+
+                            // Map / Route Preview button
+                            OutlinedButton.icon(
+                              icon: const Icon(Icons.map_outlined, size: 16, color: AppColors.accentOrange),
+                              label: Text(isUrdu ? 'گوگل روٹ' : 'Route Map'),
+                              onPressed: () {
+                                context.push('/route-planner');
+                              },
                             ),
 
                             // View Bids button

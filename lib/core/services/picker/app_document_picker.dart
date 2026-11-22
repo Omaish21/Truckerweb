@@ -1,4 +1,3 @@
-import 'app_document_picker_stub.dart' show PickedDocument;
 import 'app_document_picker_stub.dart'
     if (dart.library.html) 'app_document_picker_web.dart';
 

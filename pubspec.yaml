@@ -27,6 +27,7 @@ dependencies:
   go_router: ^14.2.0
 
   # Utilities & Media
+  http: ^1.2.0
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
 

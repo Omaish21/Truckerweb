@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:html' as html;
 import 'dart:typed_data';
 import 'app_document_picker_stub.dart';
+export 'app_document_picker_stub.dart' show PickedDocument;
 
 Future<PickedDocument?> appPickDocument({String accept = 'image/*'}) async {
   final completer = Completer<PickedDocument?>();
