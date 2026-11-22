@@ -251,8 +251,8 @@ class PakistanBridgesDataset {
 
     for (final bridge in all) {
       // Filter motorway vs non-motorway
-      if (isMotorway && !bridge.isMotorway && bridge.roadSegment.contains('N-5') && bridge.id != 'sahiwal_rail') {
-        // When motorway is selected, N-5 local bridges are avoided
+      if (isMotorway && !bridge.isMotorway) {
+        // When motorway is selected, non-motorway local bridges are avoided
         continue;
       }
       if (!isMotorway && bridge.isMotorway) {

@@ -74,7 +74,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String codeSentTo(String phone) {
-    return 'Code sent to $phone. (Demo OTP: 123456)';
+    return 'Code sent to $phone.';
   }
 
   @override

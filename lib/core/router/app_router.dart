@@ -1,4 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../providers/app_scope.dart';
 import '../../features/admin/presentation/screens/admin_verification_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/role_selection_screen.dart';
@@ -11,6 +14,36 @@ import '../../features/route_intelligence/presentation/screens/route_planner_scr
 
 final appRouter = GoRouter(
   initialLocation: '/driver-home',
+  redirect: (BuildContext context, GoRouterState state) {
+    User? currentUser;
+    try {
+      currentUser = FirebaseAuth.instance.currentUser;
+    } catch (_) {}
+
+    final path = state.uri.path;
+    final isLogin = path == '/login';
+    final isRoleSelection = path == '/role-selection';
+
+    // 1. Unauthenticated visitors are redirected to /login
+    if (currentUser == null) {
+      return isLogin ? null : '/login';
+    }
+
+    // 2. Authenticated users: check if profile has selected a role
+    final profile = context.auth.userProfile;
+    final needsRole = profile == null || profile.role.isEmpty;
+
+    if (needsRole) {
+      return isRoleSelection ? null : '/role-selection';
+    }
+
+    // 3. Authenticated users on /login are redirected to dashboard
+    if (isLogin) {
+      return '/driver-home';
+    }
+
+    return null;
+  },
   routes: [
     GoRoute(
       path: '/',

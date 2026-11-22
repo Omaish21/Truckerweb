@@ -7,6 +7,9 @@
       "hosting": {
         "trucklink-pk": [
           "trucklink-pk"
+        ],
+        "trucker-s-website": [
+          "trucker-s-website"
         ]
       }
     }

@@ -654,7 +654,7 @@ class _AdminVerificationScreenState extends State<AdminVerificationScreen>
             return const Center(child: CircularProgressIndicator());
           }
 
-          final allDrivers = snapshot.data ?? FirebaseService.defaultSampleDrivers;
+          final allDrivers = snapshot.data ?? const <UserProfile>[];
           final pendingDrivers = allDrivers.where((d) => d.verificationStatus == 'pending').toList();
           final verifiedDrivers = allDrivers.where((d) => d.verificationStatus == 'verified').toList();
           final rejectedDrivers = allDrivers.where((d) => d.verificationStatus == 'rejected').toList();

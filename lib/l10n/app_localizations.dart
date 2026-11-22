@@ -221,7 +221,7 @@ abstract class AppLocalizations {
   /// No description provided for @codeSentTo.
   ///
   /// In en, this message translates to:
-  /// **'Code sent to {phone}. (Demo OTP: 123456)'**
+  /// **'Code sent to {phone}.'**
   String codeSentTo(String phone);
 
   /// No description provided for @otpLabel.

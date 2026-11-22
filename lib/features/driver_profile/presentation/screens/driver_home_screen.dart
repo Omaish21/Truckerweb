@@ -30,15 +30,6 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
   bool _isOnline = true;
   bool _isUploadingDoc = false;
 
-  final _mockBridgeAlert = const BridgeClearanceAlert(
-    bridgeName: 'Railway Overhead Bridge #12',
-    clearanceHeightFt: 14.0,
-    truckHeightFt: 15.2,
-    roadSegment: 'National Highway N-5 near Sahiwal',
-    distanceAheadKm: 3.4,
-    isCritical: true,
-  );
-
   Future<void> _pickAndUploadDocument(String docType) async {
     final pickedFile = await AppDocumentPicker.pickImage();
     if (pickedFile == null || !mounted) return;
@@ -166,7 +157,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              user?.fullName ?? 'Muhammad Asif',
+                              user?.fullName.isNotEmpty == true ? user!.fullName : (isUrdu ? 'نیا ڈرائیور' : 'New Transporter'),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
@@ -176,25 +167,27 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                const VerifiedBadge(isVerified: true),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white12,
-                                    borderRadius: BorderRadius.circular(4),
+                                VerifiedBadge(isVerified: user?.cnicVerified ?? false),
+                                if (user?.vehicleTypes.isNotEmpty == true) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white12,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      user!.vehicleTypes.first.toUpperCase(),
+                                      style: const TextStyle(color: Colors.white70, fontSize: 11),
+                                    ),
                                   ),
-                                  child: Text(
-                                    l10n.htvPlusLicense,
-                                    style: const TextStyle(color: Colors.white70, fontSize: 11),
-                                  ),
-                                ),
+                                ],
                               ],
                             ),
                           ],
                         ),
                       ),
-                      RatingStars(rating: user?.rating ?? 4.8, totalRatings: user?.totalRatings ?? 34),
+                      RatingStars(rating: user?.rating ?? 0.0, totalRatings: user?.totalRatings ?? 0),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -403,9 +396,28 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                     onRerouteTap: () => context.push('/route-planner'),
                   );
                 }
-                return BridgeAlertBanner(
-                  alert: _mockBridgeAlert,
-                  onRerouteTap: () => context.push('/route-planner'),
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle_outline, color: AppColors.success, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          isUrdu
+                              ? 'کوئی فعال سڑک کا خطرہ یا پل کا مسئلہ درج نہیں ہے۔ تمام راستے کلیئر ہیں۔'
+                              : 'No active road hazards or bridge alerts reported. Corridors are clear.',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
@@ -492,7 +504,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             StreamBuilder<List<LoadModel>>(
               stream: FirebaseService.loadsStream,
               builder: (context, snapshot) {
-                final loads = snapshot.data ?? FirebaseService.defaultSampleLoads;
+                final loads = snapshot.data ?? [];
                 if (loads.isEmpty) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),

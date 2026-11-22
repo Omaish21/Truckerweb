@@ -41,80 +41,11 @@ class FirebaseService {
     }
   }
 
-  static final List<UserProfile> defaultSampleDrivers = [
-    UserProfile(
-      id: 'driver-pk-101',
-      role: 'driver',
-      fullName: 'Muhammad Tariq Mehmood',
-      phone: '+92 300 4567891',
-      cnicNumber: '35202-8765432-1',
-      cnicVerified: false,
-      verificationStatus: 'pending',
-      vehicleTypes: const ['22_wheeler', 'container'],
-      rating: 4.8,
-      totalRatings: 42,
-      cnicFrontUrl: 'https://images.unsplash.com/photo-1607344645866-009c320c5ab8?w=800&auto=format&fit=crop&q=80',
-      licenseUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop&q=80',
-      registrationUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80',
-    ),
-    UserProfile(
-      id: 'driver-pk-102',
-      role: 'driver',
-      fullName: 'Gulzar Ahmad Khan',
-      phone: '+92 321 8765432',
-      cnicNumber: '17301-3456789-5',
-      cnicVerified: false,
-      verificationStatus: 'pending',
-      vehicleTypes: const ['10_wheeler', 'flatbed'],
-      rating: 4.6,
-      totalRatings: 28,
-      cnicFrontUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?w=800&auto=format&fit=crop&q=80',
-      licenseUrl: 'https://images.unsplash.com/photo-1618042164219-62c820f10723?w=800&auto=format&fit=crop&q=80',
-      registrationUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80',
-    ),
-    UserProfile(
-      id: 'driver-pk-103',
-      role: 'driver',
-      fullName: 'Malik Jahangir Aslam',
-      phone: '+92 333 1122334',
-      cnicNumber: '37405-1234567-3',
-      cnicVerified: true,
-      verificationStatus: 'verified',
-      vehicleTypes: const ['mazda', 'shehzore'],
-      rating: 4.9,
-      totalRatings: 67,
-      verifiedAt: DateTime.now().subtract(const Duration(days: 12)),
-      cnicFrontUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80',
-      licenseUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop&q=80',
-      registrationUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80',
-    ),
-    UserProfile(
-      id: 'driver-pk-104',
-      role: 'driver',
-      fullName: 'Haji Noor Muhammad',
-      phone: '+92 345 9988776',
-      cnicNumber: '54400-5544332-1',
-      cnicVerified: false,
-      verificationStatus: 'rejected',
-      vehicleTypes: const ['tanker'],
-      rating: 4.2,
-      totalRatings: 15,
-      rejectionReason: 'Blurry or expired driving license / ڈرائیونگ لائسنس کی تصویر واضح نہیں ہے یا مدت ختم ہو چکی ہے',
-      cnicFrontUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&auto=format&fit=crop&q=80',
-      licenseUrl: 'https://images.unsplash.com/photo-1618042164219-62c820f10723?w=800&auto=format&fit=crop&q=80',
-      registrationUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80',
-    ),
-  ];
-
   Stream<List<UserProfile>> watchDriversByStatus(String status) {
     try {
       final fs = firestore;
       if (fs == null) {
-        return Stream.value(
-          status == 'all'
-              ? defaultSampleDrivers
-              : defaultSampleDrivers.where((d) => d.verificationStatus == status).toList(),
-        );
+        return Stream.value(const <UserProfile>[]);
       }
 
       Query query = fs.collection('users');
@@ -123,11 +54,6 @@ class FirebaseService {
       }
 
       return query.snapshots().map((snapshot) {
-        if (snapshot.docs.isEmpty) {
-          return status == 'all'
-              ? defaultSampleDrivers
-              : defaultSampleDrivers.where((d) => d.verificationStatus == status).toList();
-        }
         return snapshot.docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
           data['id'] = doc.id;
@@ -135,16 +61,10 @@ class FirebaseService {
         }).toList();
       }).handleError((e) {
         debugPrint('Firestore watchDriversByStatus error: $e');
-        return status == 'all'
-            ? defaultSampleDrivers
-            : defaultSampleDrivers.where((d) => d.verificationStatus == status).toList();
+        return const <UserProfile>[];
       });
     } catch (e) {
-      return Stream.value(
-        status == 'all'
-            ? defaultSampleDrivers
-            : defaultSampleDrivers.where((d) => d.verificationStatus == status).toList(),
-      );
+      return Stream.value(const <UserProfile>[]);
     }
   }
 
@@ -192,90 +112,22 @@ class FirebaseService {
           },
         );
       }
-
-      // Update local demo sample if present
-      final idx = defaultSampleDrivers.indexWhere((d) => d.id == uid);
-      if (idx != -1) {
-        defaultSampleDrivers[idx] = defaultSampleDrivers[idx].copyWith(
-          verificationStatus: status,
-          cnicVerified: isVerified,
-          rejectionReason: rejectionReason,
-          verifiedAt: isVerified ? DateTime.now() : null,
-        );
-      }
     } catch (e) {
       debugPrint('updateDriverVerificationStatus error: $e');
       rethrow;
     }
   }
 
-  static final List<LoadModel> defaultSampleLoads = [
-    LoadModel(
-      id: 'load-1',
-      ownerId: 'own-1',
-      originCity: 'Lahore (Badami Bagh)',
-      destinationCity: 'Karachi (Port Qasim)',
-      vehicleTypeRequired: '22_wheeler',
-      weightTons: 35.0,
-      heightFt: 15.2,
-      goodsType: 'General Cargo',
-      offeredRatePkr: 245000,
-      contactPhone: '+923001234567',
-      createdAt: DateTime.now().subtract(const Duration(minutes: 25)),
-    ),
-    LoadModel(
-      id: 'load-2',
-      ownerId: 'own-2',
-      originCity: 'Faisalabad (Industrial Area)',
-      destinationCity: 'Rawalpindi (I-9 Sector)',
-      vehicleTypeRequired: '10_wheeler',
-      weightTons: 16.0,
-      heightFt: 13.5,
-      goodsType: 'Textile Yarn',
-      offeredRatePkr: 85000,
-      contactPhone: '+923219876543',
-      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-    ),
-    LoadModel(
-      id: 'load-3',
-      ownerId: 'own-3',
-      originCity: 'Multan (Chowk Kumharan)',
-      destinationCity: 'Quetta (Eastern Bypass)',
-      vehicleTypeRequired: 'container',
-      weightTons: 28.0,
-      heightFt: 14.8,
-      goodsType: 'Agricultural Produce',
-      offeredRatePkr: 190000,
-      contactPhone: '+923334567890',
-      createdAt: DateTime.now().subtract(const Duration(hours: 3)),
-    ),
-    LoadModel(
-      id: 'load-4',
-      ownerId: 'own-4',
-      originCity: 'Karachi (S.I.T.E)',
-      destinationCity: 'Peshawar (Hayatabad)',
-      vehicleTypeRequired: 'tanker',
-      weightTons: 40.0,
-      goodsType: 'Industrial Solvents',
-      offeredRatePkr: 320000,
-      contactPhone: '+923456789012',
-      createdAt: DateTime.now().subtract(const Duration(hours: 5)),
-    ),
-  ];
-
   Stream<List<LoadModel>> watchLoads() {
     try {
       final fs = firestore;
-      if (fs == null) return Stream.value(defaultSampleLoads);
+      if (fs == null) return Stream.value(const <LoadModel>[]);
 
       return fs
           .collection('loads')
           .orderBy('created_at', descending: true)
           .snapshots()
           .map((snapshot) {
-            if (snapshot.docs.isEmpty) {
-              return defaultSampleLoads;
-            }
             return snapshot.docs.map((doc) {
               final data = doc.data();
               data['id'] = doc.id;
@@ -283,12 +135,12 @@ class FirebaseService {
             }).toList();
           })
           .handleError((e) {
-            debugPrint('Firestore loads error (fallback to sample data): $e');
-            return defaultSampleLoads;
+            debugPrint('Firestore loads error: $e');
+            return const <LoadModel>[];
           });
     } catch (e) {
       debugPrint('Firestore watchLoads initialization failed: $e');
-      return Stream.value(defaultSampleLoads);
+      return Stream.value(const <LoadModel>[]);
     }
   }
 
@@ -427,7 +279,7 @@ class FirebaseService {
       final st = storage;
       final fs = firestore;
       if (st == null || fs == null) {
-        return 'https://storage.googleapis.com/demo/$fileName';
+        throw Exception('Firebase Storage or Firestore is not available');
       }
 
       final storageRef = st.ref().child('driver_docs/$uid/$docType-$fileName');

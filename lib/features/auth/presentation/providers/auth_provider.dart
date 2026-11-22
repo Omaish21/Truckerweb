@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../../domain/user_profile.dart';
@@ -84,19 +85,49 @@ class AuthProvider extends ChangeNotifier {
           }
         } catch (_) {}
 
-        _state = _state.copyWith(
-          userProfile: UserProfile(
-            id: user.uid,
-            role: isAdminUser ? 'admin' : 'driver',
-            fullName: user.displayName ?? 'Muhammad Asif',
-            phone: user.phoneNumber ?? '+923001234567',
-            cnicVerified: true,
-            verificationStatus: 'verified',
-            rating: 4.8,
-            totalRatings: 34,
-            isAdmin: isAdminUser,
-          ),
-        );
+        // Fetch user document from Firestore users/{uid}
+        UserProfile? loadedProfile;
+        try {
+          final fs = FirebaseFirestore.instance;
+          final doc = await fs.collection('users').doc(user.uid).get();
+          if (doc.exists && doc.data() != null) {
+            final data = doc.data()!;
+            data['id'] = doc.id;
+            loadedProfile = UserProfile.fromJson(data);
+          } else {
+            final pDoc = await fs.collection('profiles').doc(user.uid).get();
+            if (pDoc.exists && pDoc.data() != null) {
+              final data = pDoc.data()!;
+              data['id'] = pDoc.id;
+              loadedProfile = UserProfile.fromJson(data);
+            }
+          }
+        } catch (e) {
+          debugPrint('Firestore fetch user error: $e');
+        }
+
+        if (loadedProfile != null) {
+          _state = _state.copyWith(
+            userProfile: loadedProfile.copyWith(
+              isAdmin: isAdminUser ? true : loadedProfile.isAdmin,
+            ),
+          );
+        } else {
+          // No document yet: profile role is empty string so user is guided to /role-selection
+          _state = _state.copyWith(
+            userProfile: UserProfile(
+              id: user.uid,
+              role: '',
+              fullName: user.displayName ?? '',
+              phone: user.phoneNumber ?? '',
+              cnicVerified: false,
+              verificationStatus: 'unverified',
+              rating: 0.0,
+              totalRatings: 0,
+              isAdmin: isAdminUser,
+            ),
+          );
+        }
         notifyListeners();
       }
     } catch (_) {}
@@ -176,55 +207,45 @@ class AuthProvider extends ChangeNotifier {
     try {
       User? user;
       if (_webConfirmationResult != null) {
-        try {
-          final cred = await _webConfirmationResult!.confirm(otp);
-          user = cred.user;
-        } catch (e) {
-          debugPrint('Web confirmation error (testing fallback): $e');
-        }
+        final cred = await _webConfirmationResult!.confirm(otp.trim());
+        user = cred.user;
       }
 
       if (user != null) {
-        final profile = UserProfile(
-          id: user.uid,
-          role: 'driver',
-          fullName: user.displayName ?? 'Muhammad Asif',
-          phone: user.phoneNumber ?? _state.phoneNumber ?? '+923001234567',
-          cnicNumber: '35202-1234567-1',
-          cnicVerified: true,
-          verificationStatus: 'verified',
-          rating: 4.8,
-          totalRatings: 34,
-        );
+        UserProfile? loadedProfile;
+        try {
+          final fs = FirebaseFirestore.instance;
+          final doc = await fs.collection('users').doc(user.uid).get();
+          if (doc.exists && doc.data() != null) {
+            final data = doc.data()!;
+            data['id'] = doc.id;
+            loadedProfile = UserProfile.fromJson(data);
+          }
+        } catch (_) {}
+
+        final profile = loadedProfile ??
+            UserProfile(
+              id: user.uid,
+              role: '',
+              fullName: user.displayName ?? '',
+              phone: user.phoneNumber ?? _state.phoneNumber ?? '',
+              cnicVerified: false,
+              verificationStatus: 'unverified',
+              rating: 0.0,
+              totalRatings: 0,
+            );
+
         _state = _state.copyWith(isLoading: false, userProfile: profile);
         notifyListeners();
         return true;
       }
 
-      // Fallback for mock/test numbers (e.g. 123456)
-      if (otp == '123456' || otp.length == 6) {
-        final profile = UserProfile(
-          id: 'usr-101',
-          role: 'driver',
-          fullName: 'Muhammad Asif',
-          phone: _state.phoneNumber ?? '+923001234567',
-          cnicNumber: '35202-1234567-1',
-          cnicVerified: true,
-          verificationStatus: 'verified',
-          rating: 4.8,
-          totalRatings: 34,
-        );
-        _state = _state.copyWith(isLoading: false, userProfile: profile);
-        notifyListeners();
-        return true;
-      } else {
-        _state = _state.copyWith(
-          isLoading: false,
-          errorMessage: 'Invalid OTP code / غلط تصدیقی کوڈ',
-        );
-        notifyListeners();
-        return false;
-      }
+      _state = _state.copyWith(
+        isLoading: false,
+        errorMessage: 'Invalid OTP code / غلط تصدیقی کوڈ',
+      );
+      notifyListeners();
+      return false;
     } catch (e) {
       _state = _state.copyWith(
         isLoading: false,
@@ -245,43 +266,47 @@ class AuthProvider extends ChangeNotifier {
         password: password.trim(),
       );
       final user = cred?.user;
-      final isAdminUser = (user?.email == 'admin@trucklink.pk' ||
-          user?.email == 'trucklink.pk@gmail.com' ||
+      if (user == null) {
+        _state = _state.copyWith(
+          isLoading: false,
+          errorMessage: 'Sign-in failed. Please check your credentials.',
+        );
+        notifyListeners();
+        return false;
+      }
+
+      final isAdminUser = (user.email == 'admin@trucklink.pk' ||
+          user.email == 'trucklink.pk@gmail.com' ||
           email.toLowerCase().contains('admin'));
-      final profile = UserProfile(
-        id: user?.uid ?? 'usr-email-1',
-        role: isAdminUser ? 'admin' : 'driver',
-        fullName: user?.displayName ?? email.split('@').first,
-        phone: '+923001234567',
-        cnicVerified: true,
-        verificationStatus: 'verified',
-        rating: 4.9,
-        totalRatings: 18,
-        isAdmin: isAdminUser,
-      );
+
+      UserProfile? loadedProfile;
+      try {
+        final fs = FirebaseFirestore.instance;
+        final doc = await fs.collection('users').doc(user.uid).get();
+        if (doc.exists && doc.data() != null) {
+          final data = doc.data()!;
+          data['id'] = doc.id;
+          loadedProfile = UserProfile.fromJson(data);
+        }
+      } catch (_) {}
+
+      final profile = loadedProfile ??
+          UserProfile(
+            id: user.uid,
+            role: isAdminUser ? 'admin' : '',
+            fullName: user.displayName ?? email.split('@').first,
+            phone: user.phoneNumber ?? '',
+            cnicVerified: false,
+            verificationStatus: 'unverified',
+            rating: 0.0,
+            totalRatings: 0,
+            isAdmin: isAdminUser,
+          );
+
       _state = _state.copyWith(isLoading: false, userProfile: profile);
       notifyListeners();
       return true;
     } catch (e) {
-      if (email.contains('@') && password.length >= 6) {
-        final isAdminUser = (email.toLowerCase().contains('admin') ||
-            email == 'admin@trucklink.pk' ||
-            email == 'trucklink.pk@gmail.com');
-        final profile = UserProfile(
-          id: 'usr-test-email',
-          role: isAdminUser ? 'admin' : 'driver',
-          fullName: email.split('@').first,
-          phone: '+923001234567',
-          cnicVerified: true,
-          verificationStatus: 'verified',
-          rating: 4.9,
-          totalRatings: 18,
-          isAdmin: isAdminUser,
-        );
-        _state = _state.copyWith(isLoading: false, userProfile: profile);
-        notifyListeners();
-        return true;
-      }
       _state = _state.copyWith(isLoading: false, errorMessage: e.toString());
       notifyListeners();
       return false;
@@ -297,47 +322,86 @@ class AuthProvider extends ChangeNotifier {
         email: email.trim(),
         password: password.trim(),
       );
-      await cred?.user?.updateDisplayName(fullName);
-      final profile = UserProfile(
-        id: cred?.user?.uid ?? 'usr-new',
-        role: 'driver',
-        fullName: fullName,
-        phone: '+923001234567',
+      final user = cred?.user;
+      if (user == null) {
+        _state = _state.copyWith(
+          isLoading: false,
+          errorMessage: 'Registration failed.',
+        );
+        notifyListeners();
+        return false;
+      }
+
+      await user.updateDisplayName(fullName);
+
+      final newProfile = UserProfile(
+        id: user.uid,
+        role: '',
+        fullName: fullName.trim(),
+        phone: '',
         cnicVerified: false,
         verificationStatus: 'unverified',
-        rating: 5.0,
-        totalRatings: 1,
+        rating: 0.0,
+        totalRatings: 0,
       );
-      _state = _state.copyWith(isLoading: false, userProfile: profile);
+
+      try {
+        final fs = FirebaseFirestore.instance;
+        await fs.collection('users').doc(user.uid).set({
+          'id': user.uid,
+          'role': '',
+          'fullName': fullName.trim(),
+          'full_name': fullName.trim(),
+          'email': email.trim(),
+          'phone': '',
+          'cnicVerified': false,
+          'cnic_verified': false,
+          'verificationStatus': 'unverified',
+          'verification_status': 'unverified',
+          'rating': 0.0,
+          'totalRatings': 0,
+          'total_ratings': 0,
+          'createdAt': FieldValue.serverTimestamp(),
+          'created_at': FieldValue.serverTimestamp(),
+        });
+      } catch (err) {
+        debugPrint('Error creating Firestore user doc: $err');
+      }
+
+      _state = _state.copyWith(isLoading: false, userProfile: newProfile);
       notifyListeners();
       return true;
     } catch (e) {
-      if (email.contains('@') && password.length >= 6) {
-        final profile = UserProfile(
-          id: 'usr-new-local',
-          role: 'driver',
-          fullName: fullName,
-          phone: '+923001234567',
-          cnicVerified: false,
-          verificationStatus: 'unverified',
-          rating: 5.0,
-          totalRatings: 1,
-        );
-        _state = _state.copyWith(isLoading: false, userProfile: profile);
-        notifyListeners();
-        return true;
-      }
       _state = _state.copyWith(isLoading: false, errorMessage: e.toString());
       notifyListeners();
       return false;
     }
   }
 
-  void switchRole(String newRole) {
+  Future<void> switchRole(String newRole) async {
     if (_state.userProfile != null) {
       final updated = _state.userProfile!.copyWith(role: newRole);
       _state = _state.copyWith(userProfile: updated);
       notifyListeners();
+
+      try {
+        final fs = FirebaseFirestore.instance;
+        final uid = updated.id;
+        if (uid.isNotEmpty) {
+          await fs.collection('users').doc(uid).set({
+            'role': newRole,
+            'updated_at': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+          await fs.collection('profiles').doc(uid).set({
+            'role': newRole,
+            'updated_at': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+      } catch (err) {
+        debugPrint('Error syncing role to Firestore: $err');
+      }
     }
   }
 

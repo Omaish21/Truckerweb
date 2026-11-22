@@ -21,8 +21,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _phoneController = TextEditingController();
   final _otpController = TextEditingController();
-  final _emailController = TextEditingController(text: 'driver@trucklink.pk');
-  final _passwordController = TextEditingController(text: '123456');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   int _selectedTab = 0; // 0: Phone OTP, 1: Email/Password
   bool _isCaptchaVerified = false;
@@ -309,7 +309,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
-                              '4K DEMO',
+                              '4K VIDEO',
                               style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -673,34 +673,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     validator: AppValidators.validatePhone,
                   ),
                   const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        isUrdu ? 'فارمیٹ: 0300 1234567 یا 300 1234567' : 'Format: 0300 1234567 or 300 1234567',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 11),
-                      ),
-                      InkWell(
-                        mouseCursor: SystemMouseCursors.click,
-                        onTap: () {
-                          setState(() {
-                            _phoneController.text = '0300 1234567';
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.white10,
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: AppColors.accent.withValues(alpha: 0.5)),
-                          ),
-                          child: Text(
-                            isUrdu ? 'ڈیمو نمبر درج کریں' : 'Fill Demo Phone',
-                            style: const TextStyle(color: AppColors.accent, fontSize: 10, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ],
+                  Text(
+                    isUrdu ? 'فارمیٹ: 0300 1234567 یا 300 1234567' : 'Format: 0300 1234567 or 300 1234567',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 11),
                   ),
                   const SizedBox(height: 12),
                   CaptchaVerificationWidget(
@@ -809,72 +784,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ],
-
-                const SizedBox(height: 20),
-                const Divider(color: Colors.white24),
-                const SizedBox(height: 12),
-
-                // Fast Quick-Test Demo Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      isUrdu ? 'فوری ٹیسٹ:' : 'Quick Demo:',
-                      style: const TextStyle(color: Colors.white60, fontSize: 12),
-                    ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      mouseCursor: SystemMouseCursors.click,
-                      onTap: () {
-                        setState(() {
-                          _selectedTab = 0;
-                          _phoneController.text = '0300 1234567';
-                          _isCaptchaVerified = true;
-                          _captchaError = false;
-                        });
-                        _handleSendOtp();
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: Colors.white12,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.white30),
-                        ),
-                        child: Text(
-                          isUrdu ? 'ڈرائیور OTP' : 'Driver OTP',
-                          style: const TextStyle(color: AppColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      mouseCursor: SystemMouseCursors.click,
-                      onTap: () {
-                        setState(() {
-                          _selectedTab = 1;
-                          _emailController.text = 'owner@trucklink.pk';
-                          _passwordController.text = '123456';
-                          _isCaptchaVerified = true;
-                          _captchaError = false;
-                        });
-                        _handleEmailLogin();
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: Colors.white12,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.white30),
-                        ),
-                        child: Text(
-                          isUrdu ? 'ٹرانسپورٹر لاگ ان' : 'Shipper Login',
-                          style: const TextStyle(color: AppColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),

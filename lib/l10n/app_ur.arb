@@ -27,7 +27,7 @@
   "mobileNumberHint": "۰۳۰۰ ۱۲۳۴۵۶۷",
   "sendVerificationCode": "تصدیقی کوڈ بھیجیں",
   "verifyOtpTitle": "کوڈ کی تصدیق کریں",
-  "codeSentTo": "کوڈ {phone} پر بھیجا گیا ہے۔ (ڈیمو کوڈ: 123456)",
+  "codeSentTo": "کوڈ {phone} پر بھیجا گیا ہے۔",
   "@codeSentTo": {
     "placeholders": {
       "phone": {

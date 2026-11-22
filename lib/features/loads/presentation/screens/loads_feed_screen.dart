@@ -197,11 +197,11 @@ class _LoadsFeedScreenState extends State<LoadsFeedScreen> {
                   final newBid = BidModel(
                     id: '',
                     loadId: load.id,
-                    driverId: authUser?.id ?? 'driver-1',
-                    driverName: authUser?.fullName ?? 'Muhammad Asif',
-                    driverPhone: authUser?.phone ?? '+923001234567',
-                    driverRating: authUser?.rating ?? 4.8,
-                    isVerifiedDriver: authUser?.cnicVerified ?? true,
+                    driverId: authUser?.id ?? '',
+                    driverName: (authUser?.fullName.isNotEmpty == true) ? authUser!.fullName : (isUrdu ? 'ڈرائیور' : 'Driver'),
+                    driverPhone: authUser?.phone ?? '',
+                    driverRating: authUser?.rating ?? 0.0,
+                    isVerifiedDriver: authUser?.cnicVerified ?? false,
                     proposedRatePkr: double.tryParse(rateCtrl.text.trim()) ?? load.offeredRatePkr,
                     estimatedHours: int.tryParse(hoursCtrl.text.trim()) ?? 24,
                     notes: notesCtrl.text.trim().isEmpty ? null : notesCtrl.text.trim(),
@@ -387,9 +387,9 @@ class _LoadsFeedScreenState extends State<LoadsFeedScreen> {
 
     return StreamBuilder<List<LoadModel>>(
       stream: FirebaseService.loadsStream,
-      initialData: FirebaseService.defaultSampleLoads,
+      initialData: const <LoadModel>[],
       builder: (context, snapshot) {
-        var loadsList = snapshot.data ?? FirebaseService.defaultSampleLoads;
+        var loadsList = snapshot.data ?? const <LoadModel>[];
 
         // Apply vehicle type filtering
         if (_selectedVehicleFilter != null && _selectedVehicleFilter != 'all') {
@@ -552,14 +552,50 @@ class _LoadsFeedScreenState extends State<LoadsFeedScreen> {
 
           // Loads List
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: loadsList.length,
-              itemBuilder: (context, index) {
-                final load = loadsList[index];
-                final contactPhone = load.contactPhone ?? '+923001234567';
-                final isMyLoad = authUser != null && authUser.id == load.ownerId;
-                final isAssignedToMe = authUser != null && authUser.id == load.assignedDriverId;
+            child: loadsList.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.shade400),
+                          const SizedBox(height: 16),
+                          Text(
+                            isUrdu ? 'کوئی لوڈ دستیاب نہیں ہے' : 'No Loads Posted Yet',
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            isUrdu
+                                ? 'ابھی تک کوئی نیا مال پوسٹ نہیں کیا گیا ہے۔ نیا لوڈ پوسٹ کرنے کے لیے نیچے بٹن دبائیں۔'
+                                : 'There are currently no active freight loads matching this filter. Post a load to get started!',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            ),
+                            icon: const Icon(Icons.add),
+                            label: Text(l10n.postNewLoad),
+                            onPressed: () => context.push('/post-load'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: loadsList.length,
+                    itemBuilder: (context, index) {
+                      final load = loadsList[index];
+                      final contactPhone = load.contactPhone ?? '';
+                      final isMyLoad = authUser != null && authUser.id == load.ownerId;
+                      final isAssignedToMe = authUser != null && authUser.id == load.assignedDriverId;
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),

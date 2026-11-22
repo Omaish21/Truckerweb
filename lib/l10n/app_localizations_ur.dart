@@ -74,7 +74,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String codeSentTo(String phone) {
-    return 'کوڈ $phone پر بھیجا گیا ہے۔ (ڈیمو کوڈ: 123456)';
+    return 'کوڈ $phone پر بھیجا گیا ہے۔';
   }
 
   @override

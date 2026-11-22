@@ -27,7 +27,7 @@
   "mobileNumberHint": "0300 1234567",
   "sendVerificationCode": "Send Verification Code",
   "verifyOtpTitle": "Verify OTP",
-  "codeSentTo": "Code sent to {phone}. (Demo OTP: 123456)",
+  "codeSentTo": "Code sent to {phone}.",
   "@codeSentTo": {
     "placeholders": {
       "phone": {
