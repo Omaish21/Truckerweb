@@ -17,6 +17,7 @@ import 'package:trucklink_pk/core/utils/formatters.dart';
 import 'package:trucklink_pk/core/utils/urdu_text.dart';
 import 'package:trucklink_pk/core/utils/validators.dart';
 import 'package:trucklink_pk/core/widgets/captcha_verification_widget.dart';
+import 'package:trucklink_pk/core/widgets/location_search_bar.dart';
 import 'package:trucklink_pk/features/auth/domain/user_profile.dart';
 import 'package:trucklink_pk/features/auth/presentation/providers/auth_provider.dart';
 import 'package:trucklink_pk/features/auth/presentation/screens/login_screen.dart';
@@ -318,6 +319,41 @@ void main() {
         final response = service.queryAssistant('لاہور سے کراچی کا کرایہ کتنا ہے');
         expect(response.responseEn, contains('Lahore'));
         expect(response.responseUr, contains('کرایہ'));
+      });
+
+      testWidgets('LocationSearchBar displays search label, quick hubs, and handles tap selection', (tester) async {
+        String? selectedLocation;
+        final controller = TextEditingController();
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: LocationSearchBar(
+                label: 'Pickup Area / مقام روانگی',
+                controller: controller,
+                quickHubs: const [
+                  'Lahore (Badami Bagh)',
+                  'Karachi Port (KPT)',
+                  'Port Qasim',
+                ],
+                onSelected: (val) {
+                  selectedLocation = val;
+                },
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('Pickup Area / مقام روانگی'), findsOneWidget);
+        expect(find.text('Lahore (Badami Bagh)'), findsOneWidget);
+        expect(find.text('Karachi Port (KPT)'), findsOneWidget);
+
+        // Tap a quick hub chip
+        await tester.tap(find.text('Lahore (Badami Bagh)'));
+        await tester.pumpAndSettle();
+
+        expect(selectedLocation, equals('Lahore (Badami Bagh)'));
+        expect(controller.text, equals('Lahore (Badami Bagh)'));
       });
     });
   });

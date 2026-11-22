@@ -1,24 +1,39 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/geocoding_service.dart';
 import '../services/google_maps_service.dart';
 import '../theme/colors.dart';
 
-/// Interactive Geocoding & Logistics Location Picker Widget.
-/// Zero external package dependency; pure Flutter and Google Geocoding API.
+/// Interactive Google Maps Places & Logistics Location Search Widget.
+/// Supports real-time Google Places Autocomplete API + offline Pakistani hubs catalog.
 class LocationSearchBar extends StatefulWidget {
   final String label;
-  final String initialValue;
-  final ValueChanged<GeocodingLocation> onLocationSelected;
+  final String? initialValue;
+  final TextEditingController? controller;
+  final FormFieldValidator<String>? validator;
+  final ValueChanged<GeocodingLocation>? onLocationSelected;
+  final ValueChanged<String>? onSelected;
+  final ValueChanged<String>? onChanged;
   final IconData leadingIcon;
+  final Color? iconColor;
+  final String? hintText;
   final bool showQuickHubs;
+  final List<String>? quickHubs;
 
   const LocationSearchBar({
     super.key,
     required this.label,
-    required this.initialValue,
-    required this.onLocationSelected,
+    this.initialValue,
+    this.controller,
+    this.validator,
+    this.onLocationSelected,
+    this.onSelected,
+    this.onChanged,
     this.leadingIcon = Icons.location_on,
+    this.iconColor,
+    this.hintText,
     this.showQuickHubs = true,
+    this.quickHubs,
   });
 
   @override
@@ -26,18 +41,35 @@ class LocationSearchBar extends StatefulWidget {
 }
 
 class _LocationSearchBarState extends State<LocationSearchBar> {
-  late TextEditingController _controller;
+  TextEditingController? _internalController;
+  TextEditingController get _effectiveController =>
+      widget.controller ?? _internalController!;
+
   final FocusNode _focusNode = FocusNode();
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
+  Timer? _debounceTimer;
 
   List<String> _suggestions = [];
   bool _isLoading = false;
 
+  static const List<String> _defaultHubs = [
+    'Lahore (Badami Bagh)',
+    'Karachi Port (KPT)',
+    'Port Qasim',
+    'Faisalabad Dry Port',
+    'Multan (Chowk Kumharan)',
+    'Rawalpindi (Pirwadhai)',
+    'Peshawar (Chamkani)',
+    'Quetta Dry Port',
+  ];
+
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.initialValue);
+    if (widget.controller == null) {
+      _internalController = TextEditingController(text: widget.initialValue ?? '');
+    }
     _focusNode.addListener(() {
       if (_focusNode.hasFocus) {
         _showSuggestionsOverlay();
@@ -49,53 +81,69 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _hideSuggestionsOverlay();
     _focusNode.dispose();
-    _controller.dispose();
+    _internalController?.dispose();
     super.dispose();
   }
 
-  void _onQueryChanged(String query) async {
+  void _onQueryChanged(String query) {
+    _debounceTimer?.cancel();
     if (query.trim().length < 2) {
       setState(() => _suggestions = []);
       _updateOverlay();
       return;
     }
 
-    setState(() => _isLoading = true);
-    final results = await GoogleMapsService.getPlaceSuggestions(query);
-
-    // Merge with any matching offline logistics landmarks
-    final landmarkMatches = GeocodingService.majorLogisticsLandmarks
-        .where((l) =>
-            l.nameEn.toLowerCase().contains(query.toLowerCase()) ||
-            l.city.toLowerCase().contains(query.toLowerCase()))
-        .map((l) => '${l.nameEn} (${l.city})')
-        .toList();
-
-    final merged = <String>{...landmarkMatches, ...results}.toList();
-
-    if (mounted) {
-      setState(() {
-        _suggestions = merged.take(6).toList();
-        _isLoading = false;
-      });
+    _debounceTimer = Timer(const Duration(milliseconds: 250), () async {
+      if (!mounted) return;
+      setState(() => _isLoading = true);
       _updateOverlay();
-    }
+
+      // Query Google Maps Places API (JS or REST)
+      final googleResults = await GoogleMapsService.getPlaceSuggestions(query);
+
+      // Match against offline verified Pakistani logistics hubs
+      final landmarkMatches = GeocodingService.majorLogisticsLandmarks
+          .where((l) =>
+              l.nameEn.toLowerCase().contains(query.toLowerCase()) ||
+              l.city.toLowerCase().contains(query.toLowerCase()) ||
+              l.nameUr.contains(query))
+          .map((l) => '${l.nameEn} (${l.city})')
+          .toList();
+
+      final merged = <String>{...landmarkMatches, ...googleResults}.toList();
+
+      if (mounted) {
+        setState(() {
+          _suggestions = merged.take(8).toList();
+          _isLoading = false;
+        });
+        _updateOverlay();
+      }
+    });
   }
 
   void _selectLocation(String address) async {
-    _controller.text = address;
+    _effectiveController.text = address;
     _hideSuggestionsOverlay();
     _focusNode.unfocus();
 
-    final resolved = await GeocodingService.instance.forwardGeocode(address);
-    if (resolved != null && mounted) {
-      widget.onLocationSelected(resolved);
+    widget.onChanged?.call(address);
+    widget.onSelected?.call(address);
+
+    if (widget.onLocationSelected != null) {
+      final resolved = await GeocodingService.instance.forwardGeocode(address);
+      if (resolved != null && mounted) {
+        widget.onLocationSelected!(resolved);
+      }
     }
+    setState(() {});
   }
 
   void _showSuggestionsOverlay() {
+    if (_overlayEntry != null) return;
     _overlayEntry = _createOverlayEntry();
     Overlay.of(context).insert(_overlayEntry!);
   }
@@ -121,28 +169,37 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
           showWhenUnlinked: false,
           offset: Offset(0.0, size.height + 4.0),
           child: Material(
-            elevation: 6,
+            elevation: 8,
             borderRadius: BorderRadius.circular(12),
             color: Colors.white,
+            shadowColor: Colors.black26,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 240),
+              constraints: const BoxConstraints(maxHeight: 260),
               child: _isLoading
                   ? const Padding(
                       padding: EdgeInsets.all(16.0),
                       child: Center(
                         child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2.5),
                         ),
                       ),
                     )
                   : _suggestions.isEmpty
-                      ? const Padding(
-                          padding: EdgeInsets.all(12.0),
-                          child: Text(
-                            'Type to search cities, dry ports, or toll plazas...',
-                            style: TextStyle(color: Colors.grey, fontSize: 13),
+                      ? Padding(
+                          padding: const EdgeInsets.all(14.0),
+                          child: Row(
+                            children: [
+                              Icon(Icons.search, size: 16, color: Colors.grey.shade500),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Search Google Maps or select a quick logistics hub below...',
+                                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                                ),
+                              ),
+                            ],
                           ),
                         )
                       : ListView.separated(
@@ -154,13 +211,15 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
                             final item = _suggestions[index];
                             final isHub = item.contains('Dry Port') ||
                                 item.contains('Port') ||
-                                item.contains('Toll');
+                                item.contains('Toll') ||
+                                item.contains('Adda') ||
+                                item.contains('Terminal');
 
                             return ListTile(
                               dense: true,
                               leading: Icon(
                                 isHub ? Icons.warehouse : Icons.location_on,
-                                color: isHub ? AppColors.accentOrange : AppColors.primary,
+                                color: isHub ? AppColors.accentOrange : (widget.iconColor ?? AppColors.primary),
                                 size: 18,
                               ),
                               title: Text(
@@ -174,12 +233,17 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
                                   ? Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: AppColors.accent.withValues(alpha: 0.2),
+                                        color: AppColors.accent.withValues(alpha: 0.15),
                                         borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(color: AppColors.accent.withValues(alpha: 0.4)),
                                       ),
-                                      child: const Text(
+                                      child: Text(
                                         'Verified Hub',
-                                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.primary,
+                                        ),
                                       ),
                                     )
                                   : null,
@@ -196,18 +260,29 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    final chips = widget.quickHubs ?? _defaultHubs;
+
     return CompositedTransformTarget(
       link: _layerLink,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextField(
-            controller: _controller,
+          TextFormField(
+            controller: _effectiveController,
             focusNode: _focusNode,
-            onChanged: _onQueryChanged,
+            validator: widget.validator,
+            onChanged: (val) {
+              widget.onChanged?.call(val);
+              _onQueryChanged(val);
+            },
             decoration: InputDecoration(
               labelText: widget.label,
-              prefixIcon: Icon(widget.leadingIcon, color: AppColors.primary, size: 20),
+              hintText: widget.hintText,
+              prefixIcon: Icon(
+                widget.leadingIcon,
+                color: widget.iconColor ?? AppColors.primary,
+                size: 20,
+              ),
               suffixIcon: _isLoading
                   ? const Padding(
                       padding: EdgeInsets.all(12.0),
@@ -217,13 +292,17 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     )
-                  : IconButton(
-                      icon: const Icon(Icons.clear, size: 18),
-                      onPressed: () {
-                        _controller.clear();
-                        _onQueryChanged('');
-                      },
-                    ),
+                  : _effectiveController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 18),
+                          onPressed: () {
+                            _effectiveController.clear();
+                            widget.onChanged?.call('');
+                            _onQueryChanged('');
+                            setState(() {});
+                          },
+                        )
+                      : const Icon(Icons.search, size: 20, color: Colors.grey),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               filled: true,
@@ -235,14 +314,7 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: [
-                  _quickChip('Lahore (Badami Bagh)'),
-                  _quickChip('Karachi Port'),
-                  _quickChip('Faisalabad Dry Port'),
-                  _quickChip('Port Qasim'),
-                  _quickChip('Multan Sher Shah'),
-                  _quickChip('Sialkot Sambrial'),
-                ],
+                children: chips.map((hub) => _quickChip(hub)).toList(),
               ),
             ),
           ],
@@ -256,7 +328,11 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
       padding: const EdgeInsets.only(right: 6.0),
       child: ActionChip(
         label: Text(name, style: const TextStyle(fontSize: 11)),
-        avatar: const Icon(Icons.tag, size: 13, color: AppColors.primary),
+        avatar: Icon(
+          Icons.tag,
+          size: 13,
+          color: widget.iconColor ?? AppColors.primary,
+        ),
         backgroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 4),
         side: BorderSide(color: Colors.grey.shade300),

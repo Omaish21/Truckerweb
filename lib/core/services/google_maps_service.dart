@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
+import 'places/places_interop.dart';
 
 class RouteStep {
   final String instruction;
@@ -312,9 +313,22 @@ class GoogleMapsService {
     return [];
   }
 
-  /// Fetches place autocomplete predictions in Pakistan
+  /// Fetches place autocomplete predictions in Pakistan using Google Places API (JS client + REST fallback)
   static Future<List<String>> getPlaceSuggestions(String input) async {
-    if (input.trim().length < 2) return [];
+    final cleanInput = input.trim();
+    if (cleanInput.length < 2) return [];
+
+    // 1. Try web JavaScript Google Places Autocomplete first (runs in browser domain with paid API key)
+    try {
+      final webPredictions = await getWebPlacePredictions(cleanInput);
+      if (webPredictions.isNotEmpty) {
+        return webPredictions;
+      }
+    } catch (e) {
+      debugPrint('getWebPlacePredictions error: $e');
+    }
+
+    // 2. Fallback to Google Places (New) REST API
     try {
       final response = await http.post(
         Uri.parse('https://places.googleapis.com/v1/places:autocomplete'),
@@ -323,7 +337,7 @@ class GoogleMapsService {
           'X-Goog-Api-Key': apiKey,
         },
         body: jsonEncode({
-          'input': input,
+          'input': cleanInput,
           'includedRegionCodes': ['pk'],
         }),
       );

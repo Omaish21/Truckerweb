@@ -47,8 +47,34 @@
   <title>TruckLink PK - Pakistan Logistics</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- Google Maps JavaScript API -->
+  <!-- Google Maps JavaScript API with Places & Marker Libraries -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3-mnY90RAu4nEV3iOG6j9aH2XQAbW0tg&libraries=marker,places,geometry"></script>
+  <script>
+    // Browser-based Google Places Autocomplete helper using authorized domain session
+    window.truckLinkGetPlacePredictions = function(input, callback) {
+      if (!window.google || !window.google.maps || !window.google.maps.places) {
+        if (callback) callback([]);
+        return;
+      }
+      try {
+        var service = new window.google.maps.places.AutocompleteService();
+        service.getPlacePredictions({
+          input: input,
+          componentRestrictions: { country: 'pk' }
+        }, function(predictions, status) {
+          if (predictions && predictions.length > 0) {
+            var results = predictions.map(function(p) { return p.description; });
+            if (callback) callback(results);
+          } else {
+            if (callback) callback([]);
+          }
+        });
+      } catch (err) {
+        console.warn('Google Places JS Autocomplete error:', err);
+        if (callback) callback([]);
+      }
+    };
+  </script>
 
   <style>
     /* Global web mouse cursor behavior for Flutter Web */

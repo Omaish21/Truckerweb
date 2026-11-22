@@ -7,6 +7,7 @@ import '../../../../core/theme/colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../../core/widgets/language_toggle_button.dart';
+import '../../../../core/widgets/location_search_bar.dart';
 import '../../../../core/widgets/voice_input_button.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/load_model.dart';
@@ -20,11 +21,11 @@ class PostLoadScreen extends StatefulWidget {
 
 class _PostLoadScreenState extends State<PostLoadScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _originController = TextEditingController(text: 'Lahore (Badami Bagh)');
-  final _destController = TextEditingController(text: 'Karachi (Port Qasim)');
-  final _weightController = TextEditingController(text: '35');
-  final _heightController = TextEditingController(text: '15.2');
-  final _rateController = TextEditingController(text: '245000');
+  final _originController = TextEditingController();
+  final _destController = TextEditingController();
+  final _weightController = TextEditingController(text: '20');
+  final _heightController = TextEditingController(text: '12');
+  final _rateController = TextEditingController();
   final _notesController = TextEditingController();
   String _selectedVehicleId = '22_wheeler';
   String _goodsType = 'general';
@@ -41,12 +42,35 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
     super.dispose();
   }
 
-  void _estimateRateWithAi() {
+  void _checkAndEstimateRate() {
+    if (_originController.text.trim().isNotEmpty &&
+        _destController.text.trim().isNotEmpty) {
+      _estimateRateWithAi(silent: true);
+    }
+  }
+
+  void _estimateRateWithAi({bool silent = false}) {
     final origin = _originController.text.trim();
     final dest = _destController.text.trim();
     final weight = double.tryParse(_weightController.text.trim()) ?? 15.0;
     final vehicle = _selectedVehicleId;
     final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
+
+    if (origin.isEmpty || dest.isEmpty) {
+      if (!silent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: AppColors.accentOrange,
+            content: Text(
+              isUrdu
+                  ? 'برائے مہربانی پہلے مقام روانگی اور منزل منتخب کریں۔'
+                  : 'Please specify pickup and destination locations first.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
 
     final est = TruckLinkAiService.instance.predictRate(
       origin: origin,
@@ -59,25 +83,27 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
       _rateController.text = est.recommendedRatePkr.round().toString();
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: const Color(0xFF6A11CB),
-        content: Row(
-          children: [
-            const Icon(Icons.auto_awesome, color: Colors.amberAccent),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                isUrdu
-                    ? 'اے آئی تخمینہ: ${AppFormatters.formatPkr(est.recommendedRatePkr)} (ڈیزل: ${est.estimatedDieselLiters.toStringAsFixed(0)} لیٹر | ٹول: ${AppFormatters.formatPkr(est.estimatedTollCostPkr)})'
-                    : 'AI Market Estimate: ${AppFormatters.formatPkr(est.recommendedRatePkr)} (${est.estimatedDieselLiters.toStringAsFixed(0)}L diesel | ${AppFormatters.formatPkr(est.estimatedTollCostPkr)} tolls)',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+    if (!silent) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFF6A11CB),
+          content: Row(
+            children: [
+              const Icon(Icons.auto_awesome, color: Colors.amberAccent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  isUrdu
+                      ? 'اے آئی تخمینہ: ${AppFormatters.formatPkr(est.recommendedRatePkr)} (ڈیزل: ${est.estimatedDieselLiters.toStringAsFixed(0)} لیٹر | ٹول: ${AppFormatters.formatPkr(est.estimatedTollCostPkr)})'
+                      : 'AI Market Estimate: ${AppFormatters.formatPkr(est.recommendedRatePkr)} (${est.estimatedDieselLiters.toStringAsFixed(0)}L diesel | ${AppFormatters.formatPkr(est.estimatedTollCostPkr)} tolls)',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   void _handleSubmit() async {
@@ -158,23 +184,52 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Origin & Destination
-              TextFormField(
+              // Origin Pickup Location (Google Maps Places Search & Logistics Hubs)
+              LocationSearchBar(
+                label: l10n.pickupLocationLabel,
+                hintText: isUrdu
+                    ? 'شہر، پورٹ یا اڈا تلاش کریں (مثلاً بادامی باغ، پورٹ قاسم)...'
+                    : 'Search city, dry port, or truck stand (e.g. Badami Bagh, Port Qasim)...',
                 controller: _originController,
-                decoration: InputDecoration(
-                  labelText: l10n.pickupLocationLabel,
-                  prefixIcon: const Icon(Icons.trip_origin, color: AppColors.primary),
-                ),
-                validator: (val) => val == null || val.isEmpty ? l10n.requiredField : null,
+                leadingIcon: Icons.trip_origin,
+                iconColor: AppColors.primary,
+                validator: (val) => val == null || val.trim().isEmpty ? l10n.requiredField : null,
+                quickHubs: const [
+                  'Lahore (Badami Bagh)',
+                  'Karachi Port (KPT)',
+                  'Port Qasim',
+                  'Faisalabad Dry Port',
+                  'Multan (Chowk Kumharan)',
+                  'Sialkot Dry Port',
+                  'Peshawar (Chamkani)',
+                ],
+                onSelected: (val) => _checkAndEstimateRate(),
+                onChanged: (val) => _checkAndEstimateRate(),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+
+              const SizedBox(height: 16),
+
+              // Destination Drop-off Location (Google Maps Places Search & Logistics Hubs)
+              LocationSearchBar(
+                label: l10n.dropoffLocationLabel,
+                hintText: isUrdu
+                    ? 'منزل کا شہر، پورٹ یا اڈا تلاش کریں (مثلاً چوک کمہاراں، ایسٹرن بائی پاس)...'
+                    : 'Search destination city, port, or hub (e.g. Chowk Kumharan, Eastern Bypass)...',
                 controller: _destController,
-                decoration: InputDecoration(
-                  labelText: l10n.dropoffLocationLabel,
-                  prefixIcon: const Icon(Icons.location_on, color: AppColors.accent),
-                ),
-                validator: (val) => val == null || val.isEmpty ? l10n.requiredField : null,
+                leadingIcon: Icons.location_on,
+                iconColor: AppColors.accentOrange,
+                validator: (val) => val == null || val.trim().isEmpty ? l10n.requiredField : null,
+                quickHubs: const [
+                  'Karachi (Port Qasim)',
+                  'Lahore (Badami Bagh)',
+                  'Quetta (Eastern Bypass)',
+                  'Peshawar (Chamkani)',
+                  'Rawalpindi / Islamabad',
+                  'Gwadar Deep Sea Port',
+                  'Sukkur (CPEC)',
+                ],
+                onSelected: (val) => _checkAndEstimateRate(),
+                onChanged: (val) => _checkAndEstimateRate(),
               ),
 
               const SizedBox(height: 16),
@@ -193,7 +248,10 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
                   );
                 }).toList(),
                 onChanged: (val) {
-                  if (val != null) setState(() => _selectedVehicleId = val);
+                  if (val != null) {
+                    setState(() => _selectedVehicleId = val);
+                    _checkAndEstimateRate();
+                  }
                 },
               ),
 
@@ -211,6 +269,7 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
                         prefixIcon: const Icon(Icons.scale_outlined),
                       ),
                       validator: (val) => val == null || val.isEmpty ? l10n.requiredField : null,
+                      onChanged: (_) => _checkAndEstimateRate(),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -250,7 +309,7 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
 
               const SizedBox(height: 16),
 
-              // Offered Rate
+              // Offered Rate with AI Predictor
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -278,7 +337,7 @@ class _PostLoadScreenState extends State<PostLoadScreen> {
                       isUrdu ? 'اے آئی ریٹ' : 'AI Rate',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
-                    onPressed: _estimateRateWithAi,
+                    onPressed: () => _estimateRateWithAi(silent: false),
                   ),
                 ],
               ),
