@@ -49,6 +49,7 @@ class AuthState {
 class AuthProvider extends ChangeNotifier {
   AuthState _state = const AuthState();
   ConfirmationResult? _webConfirmationResult;
+  RecaptchaVerifier? _recaptchaVerifier;
 
   AuthProvider() {
     _initCurrentUser();
@@ -149,6 +150,11 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> sendOtp(String phone) async {
+    if (_state.isLoading) {
+      debugPrint('[Auth] sendOtp ignored because authentication is already in progress.');
+      return;
+    }
+
     _state = _state.copyWith(isLoading: true, errorMessage: null);
     notifyListeners();
 
@@ -157,9 +163,16 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       if (kIsWeb) {
-        RecaptchaVerifier? verifier;
+        // Clear any previous reCAPTCHA instance to prevent stale widget errors
         try {
-          verifier = RecaptchaVerifier(
+          _recaptchaVerifier?.clear();
+          _recaptchaVerifier = null;
+        } catch (e) {
+          debugPrint('[Auth] Error clearing previous RecaptchaVerifier: $e');
+        }
+
+        try {
+          _recaptchaVerifier = RecaptchaVerifier(
             auth: FirebaseAuthPlatform.instance,
             container: 'recaptcha-container',
             size: RecaptchaVerifierSize.compact,
@@ -170,11 +183,12 @@ class AuthProvider extends ChangeNotifier {
           );
         } catch (e) {
           debugPrint('[Auth] RecaptchaVerifier init error (using default): $e');
+          _recaptchaVerifier = null;
         }
 
         _webConfirmationResult = await _firebaseAuth!.signInWithPhoneNumber(
           formattedPhone,
-          verifier,
+          _recaptchaVerifier,
         );
       } else {
         await _firebaseAuth?.verifyPhoneNumber(
@@ -243,21 +257,41 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> verifyOtp(String otp) async {
+    final cleanOtp = otp.replaceAll(RegExp(r'\D'), '');
+    if (cleanOtp.length != 6) {
+      _state = _state.copyWith(
+        isLoading: false,
+        errorMessage: 'Please enter the full 6-digit code / براہ کرم مکمل ۶ ہندسوں کا کوڈ درج کریں',
+      );
+      notifyListeners();
+      return false;
+    }
+
     _state = _state.copyWith(isLoading: true, errorMessage: null);
     notifyListeners();
+
+    debugPrint('[Auth] Confirming OTP for phone=${_state.phoneNumber}, length=${cleanOtp.length}, hasWebResult=${_webConfirmationResult != null}');
 
     try {
       User? user;
       if (_webConfirmationResult != null) {
-        final cred = await _webConfirmationResult!.confirm(otp.trim());
+        final cred = await _webConfirmationResult!.confirm(cleanOtp);
         user = cred.user;
       } else if (_state.verificationId != null) {
         final credential = PhoneAuthProvider.credential(
           verificationId: _state.verificationId!,
-          smsCode: otp.trim(),
+          smsCode: cleanOtp,
         );
         final userCred = await _firebaseAuth?.signInWithCredential(credential);
         user = userCred?.user;
+      } else {
+        debugPrint('[Auth] Neither _webConfirmationResult nor verificationId found!');
+        _state = _state.copyWith(
+          isLoading: false,
+          errorMessage: 'No active verification session. Please request a new OTP code.',
+        );
+        notifyListeners();
+        return false;
       }
 
       if (user != null) {
@@ -299,7 +333,7 @@ class AuthProvider extends ChangeNotifier {
       debugPrint('[Auth] Verify OTP error [${e.code}]: ${e.message}');
       String friendlyMessage = '[${e.code}] ${e.message ?? "OTP verification failed"}';
       if (e.code == 'invalid-verification-code') {
-        friendlyMessage = '[auth/invalid-verification-code] The entered 6-digit code is incorrect. Please check your SMS.';
+        friendlyMessage = '[auth/invalid-verification-code] The entered 6-digit code is incorrect. If using a Firebase test number, enter the exact configured test code.';
       } else if (e.code == 'session-expired') {
         friendlyMessage = '[auth/session-expired] The SMS verification session has expired. Please go back and request a new code.';
       }
@@ -475,6 +509,11 @@ class AuthProvider extends ChangeNotifier {
 
   void logout() async {
     try {
+      if (kIsWeb) {
+        _recaptchaVerifier?.clear();
+        _recaptchaVerifier = null;
+      }
+      _webConfirmationResult = null;
       await _firebaseAuth?.signOut();
     } catch (_) {}
     _state = const AuthState();

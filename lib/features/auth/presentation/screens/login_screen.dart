@@ -28,6 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
   int _selectedTab = 0; // 0: Phone OTP, 1: Email/Password
   bool _isCaptchaVerified = false;
   bool _captchaError = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -39,6 +40,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleSendOtp() async {
+    if (_isSubmitting || context.auth.isLoading) return;
+
     if (!_isCaptchaVerified) {
       setState(() => _captchaError = true);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -55,9 +58,63 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     if (_formKey.currentState?.validate() ?? false) {
-      final phone = AppValidators.normalizePhone(_phoneController.text);
-      await context.authActions.sendOtp(phone);
-      if (mounted) {
+      setState(() => _isSubmitting = true);
+      try {
+        final phone = AppValidators.normalizePhone(_phoneController.text);
+        await context.authActions.sendOtp(phone);
+        if (mounted) {
+          final error = context.auth.errorMessage;
+          if (error != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                backgroundColor: AppColors.danger,
+                duration: const Duration(seconds: 8),
+                content: SelectableText(
+                  error,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+                action: SnackBarAction(
+                  label: 'DISMISS',
+                  textColor: Colors.white,
+                  onPressed: () {},
+                ),
+              ),
+            );
+          }
+        }
+      } finally {
+        if (mounted) setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  void _handleVerifyOtp() async {
+    if (_isSubmitting || context.auth.isLoading) return;
+
+    final rawOtp = _otpController.text;
+    final cleanOtp = rawOtp.replaceAll(RegExp(r'\D'), '');
+
+    if (cleanOtp.length != 6) {
+      final isUrdu = Localizations.localeOf(context).languageCode == 'ur';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.danger,
+          content: Text(
+            isUrdu
+                ? 'براہ کرم مکمل ۶ ہندسوں کا تصدیقی کوڈ درج کریں'
+                : 'Please enter the complete 6-digit OTP code',
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      final success = await context.authActions.verifyOtp(cleanOtp);
+      if (success && mounted) {
+        context.go('/role-selection');
+      } else if (mounted) {
         final error = context.auth.errorMessage;
         if (error != null) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -77,32 +134,8 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       }
-    }
-  }
-
-  void _handleVerifyOtp() async {
-    final success = await context.authActions.verifyOtp(_otpController.text.trim());
-    if (success && mounted) {
-      context.go('/role-selection');
-    } else if (mounted) {
-      final error = context.auth.errorMessage;
-      if (error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: AppColors.danger,
-            duration: const Duration(seconds: 8),
-            content: SelectableText(
-              error,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-            action: SnackBarAction(
-              label: 'DISMISS',
-              textColor: Colors.white,
-              onPressed: () {},
-            ),
-          ),
-        );
-      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -758,8 +791,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 4,
                       ),
-                      onPressed: authState.isLoading ? null : _handleSendOtp,
-                      child: authState.isLoading
+                      onPressed: (authState.isLoading || _isSubmitting) ? null : _handleSendOtp,
+                      child: (authState.isLoading || _isSubmitting)
                           ? const SizedBox(
                               height: 22,
                               width: 22,
@@ -802,6 +835,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     showCursor: true,
                     keyboardType: TextInputType.number,
                     maxLength: 6,
+                    onFieldSubmitted: (_) => _handleVerifyOtp(),
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white.withValues(alpha: 0.08),
@@ -851,8 +885,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 4,
                       ),
-                      onPressed: authState.isLoading ? null : _handleVerifyOtp,
-                      child: authState.isLoading
+                      onPressed: (authState.isLoading || _isSubmitting) ? null : _handleVerifyOtp,
+                      child: (authState.isLoading || _isSubmitting)
                           ? const SizedBox(
                               height: 22,
                               width: 22,
